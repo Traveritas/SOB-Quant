@@ -1,7 +1,7 @@
 Git 与 GitHub 多人协作指南
-1
-2
-3
+
+详细教程：https://blog.csdn.net/yeye_queenmoon/article/details/144472289
+
 在多人协作开发中，Git 负责版本控制，GitHub 作为远程仓库平台，帮助团队共享代码、管理分支与合并请求。核心流程包括：分支管理、代码同步、冲突解决与 Pull Request。
 
 1. 初始化与远程关联
