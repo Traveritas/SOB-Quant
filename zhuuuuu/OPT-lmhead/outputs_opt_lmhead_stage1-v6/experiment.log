@@ -1,0 +1,110 @@
+23:36:43 | INFO | ========== 实验开始 ==========
+23:36:43 | INFO | 实验配置：{
+  "data": {
+    "model_name": "facebook/opt-125m",
+    "dataset_name": "wikitext",
+    "dataset_config": "wikitext-2-raw-v1",
+    "calib_split": "train",
+    "eval_split": "test",
+    "calib_num_tokens": 4096,
+    "eval_num_tokens": null,
+    "tokenizer_use_fast": true
+  },
+  "quant": {
+    "beta": 1.0,
+    "max_iters": 300,
+    "tol": 1e-05,
+    "convergence_check_every": 1,
+    "codebook": [
+      -2.0,
+      -1.0,
+      0.0,
+      1.0,
+      2.0
+    ],
+    "dtype": "float32",
+    "eps": 1e-08,
+    "log_every": 1,
+    "use_separate_scales": true,
+    "scale_percentile": 0.995,
+    "scale_max_samples": 2000000
+  },
+  "eval": {
+    "stride": 512,
+    "device": "cuda"
+  },
+  "output_dir": "./outputs_opt_lmhead_stage1-v6",
+  "seed": 42
+}
+23:36:43 | INFO | 加载模型与 tokenizer：facebook/opt-125m
+23:36:48 | INFO | 模型加载完成 | hidden_size=768 vocab_size=50272 device=cuda elapsed=5.010s
+23:36:48 | INFO | 加载数据集 split=train
+23:36:56 | INFO | split=train 加载完成 | non-empty text blocks=23767 chars=10940522 elapsed=8.284s
+23:36:57 | INFO | 加载数据集 split=test
+23:37:01 | INFO | split=test 加载完成 | non-empty text blocks=2891 chars=1291402 elapsed=4.278s
+23:37:01 | INFO | 开始 PPL 评测 | tag=baseline_fp stride=512 max_eval_tokens=None
+23:38:40 | INFO | PPL 评测完成 | tag=baseline_fp ppl=23.500681 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=99.565s
+23:38:40 | INFO | 根据 codebook 大小推断 SQ baseline bitwidth=3
+23:38:50 | INFO | 校准文本 tokenization 完成 | calib_input_ids_len=4096
+23:38:50 | INFO | 开始收集 lm_head 输入 hidden states | requested_tokens=4096
+23:38:50 | INFO | lm_head 输入收集完成 | collected_tokens=4096 forward_chunks=2 elapsed=0.620s X_shape=[768, 4096]
+23:38:50 | INFO | 开始为 lm_head 构建量化器。
+23:38:50 | INFO | X_calib stats | shape=[768, 4096] dtype=torch.float32 device=cpu mean=-0.082822 std=1.045606 min=-13.247673 max=14.853745 fro=1860.197144
+23:38:51 | INFO | W_lm_head stats | shape=[768, 50272] dtype=torch.float32 device=cpu mean=0.025439 std=0.055403 min=-0.505371 max=0.535156 fro=377.953064
+23:38:51 | INFO | 开始拟合量化器 | d=768 N(tokens)=4096 M(vocab)=50272 beta=1.0000 max_iters=300 tol=1.00e-05 codebook=[-2.0, -1.0, 0.0, 1.0, 2.0]
+23:38:55 | INFO | iter=001 | J=0.437166 J_x=0.265562 J_w=0.171604 rel_change=nan | scale_x=2.736218 scale_w=0.091558 | sat_x[min,max]=[0.0034, 0.0016] sat_w[min,max]=[0.0023, 0.0027] | lambda_x[min,max]=[0.000000, 1.584848] lambda_w[min,max]=[0.674006, 3.266616] | time=4.450s
+23:38:59 | INFO | iter=002 | J=1.122091 J_x=0.985906 J_w=0.136185 rel_change=6.849246e-01 | scale_x=30296486.000000 scale_w=0.102609 | sat_x[min,max]=[0.0027, 0.0023] sat_w[min,max]=[0.0024, 0.0027] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.503904, 3.343267] | time=4.115s
+23:39:04 | INFO | iter=003 | J=0.390997 J_x=0.264258 J_w=0.126739 rel_change=6.515463e-01 | scale_x=276452000.000000 scale_w=0.117835 | sat_x[min,max]=[0.0034, 0.0016] sat_w[min,max]=[0.0025, 0.0026] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.392811, 3.168704] | time=4.209s
+23:39:08 | INFO | iter=004 | J=0.361186 J_x=0.236372 J_w=0.124814 rel_change=2.981058e-02 | scale_x=255186368.000000 scale_w=0.137308 | sat_x[min,max]=[0.0031, 0.0019] sat_w[min,max]=[0.0024, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.315761, 2.934804] | time=4.035s
+23:39:12 | INFO | iter=005 | J=0.347466 J_x=0.222880 J_w=0.124585 rel_change=1.372036e-02 | scale_x=243765856.000000 scale_w=0.159984 | sat_x[min,max]=[0.0030, 0.0021] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.258349, 2.718533] | time=4.128s
+23:39:16 | INFO | iter=006 | J=0.342044 J_x=0.215723 J_w=0.126321 rel_change=5.421221e-03 | scale_x=237730048.000000 scale_w=0.187236 | sat_x[min,max]=[0.0029, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.213779, 2.571711] | time=3.946s
+23:39:20 | INFO | iter=007 | J=0.337702 J_x=0.211153 J_w=0.126549 rel_change=4.342884e-03 | scale_x=233565952.000000 scale_w=0.219213 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.178214, 2.586288] | time=4.056s
+23:39:24 | INFO | iter=008 | J=0.330570 J_x=0.207832 J_w=0.122738 rel_change=7.131249e-03 | scale_x=230308432.000000 scale_w=0.256114 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.149520, 2.667854] | time=3.991s
+23:39:28 | INFO | iter=009 | J=0.327862 J_x=0.205586 J_w=0.122276 rel_change=2.708554e-03 | scale_x=228079248.000000 scale_w=0.300071 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.126389, 2.433289] | time=3.945s
+23:39:32 | INFO | iter=010 | J=0.325825 J_x=0.203913 J_w=0.121912 rel_change=2.037197e-03 | scale_x=226464976.000000 scale_w=0.351262 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.107451, 2.119751] | time=3.785s
+23:39:36 | INFO | iter=011 | J=0.323665 J_x=0.202586 J_w=0.121079 rel_change=2.159268e-03 | scale_x=225390336.000000 scale_w=0.410483 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.091985, 1.834224] | time=4.090s
+23:39:40 | INFO | iter=012 | J=0.322098 J_x=0.201551 J_w=0.120547 rel_change=1.567096e-03 | scale_x=224647552.000000 scale_w=0.480212 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.078910, 1.581842] | time=4.001s
+23:39:44 | INFO | iter=013 | J=0.321473 J_x=0.200996 J_w=0.120477 rel_change=6.251931e-04 | scale_x=224720496.000000 scale_w=0.563486 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0024] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.067785, 1.358074] | time=3.809s
+23:39:48 | INFO | iter=014 | J=0.319867 J_x=0.200246 J_w=0.119622 rel_change=1.605660e-03 | scale_x=224094224.000000 scale_w=0.657879 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.058376, 1.169089] | time=4.000s
+23:39:52 | INFO | iter=015 | J=0.319702 J_x=0.199973 J_w=0.119729 rel_change=1.654923e-04 | scale_x=224416544.000000 scale_w=0.772180 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0024] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.050128, 1.000705] | time=3.979s
+23:39:56 | INFO | iter=016 | J=0.319039 J_x=0.199665 J_w=0.119374 rel_change=6.629527e-04 | scale_x=224467856.000000 scale_w=0.904343 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.042453, 0.856808] | time=4.139s
+23:40:00 | INFO | iter=017 | J=0.317829 J_x=0.199089 J_w=0.118740 rel_change=1.210272e-03 | scale_x=223932576.000000 scale_w=1.056078 | sat_x[min,max]=[0.0028, 0.0023] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.035698, 0.734777] | time=4.036s
+23:40:04 | INFO | iter=018 | J=0.317724 J_x=0.198928 J_w=0.118797 rel_change=1.044273e-04 | scale_x=224196432.000000 scale_w=1.238278 | sat_x[min,max]=[0.0028, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.030015, 0.627484] | time=3.790s
+23:40:08 | INFO | iter=019 | J=0.317456 J_x=0.198863 J_w=0.118594 rel_change=2.681613e-04 | scale_x=224524912.000000 scale_w=1.450444 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.025296, 0.535788] | time=4.038s
+23:40:12 | INFO | iter=020 | J=0.316965 J_x=0.198492 J_w=0.118473 rel_change=4.912913e-04 | scale_x=224184640.000000 scale_w=1.699802 | sat_x[min,max]=[0.0028, 0.0023] sat_w[min,max]=[0.0025, 0.0024] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.021372, 0.457046] | time=3.873s
+23:40:16 | INFO | iter=021 | J=0.316245 J_x=0.198426 J_w=0.117819 rel_change=7.198751e-04 | scale_x=224530384.000000 scale_w=1.983014 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0026, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.018119, 0.391278] | time=3.835s
+23:40:20 | INFO | iter=022 | J=0.316228 J_x=0.198396 J_w=0.117832 rel_change=1.695752e-05 | scale_x=224817520.000000 scale_w=2.321896 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.015377, 0.333900] | time=3.850s
+23:40:24 | INFO | iter=023 | J=0.316026 J_x=0.198413 J_w=0.117613 rel_change=2.020001e-04 | scale_x=225146608.000000 scale_w=2.715516 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.013077, 0.285052] | time=3.913s
+23:40:28 | INFO | iter=024 | J=0.315531 J_x=0.198244 J_w=0.117287 rel_change=4.947484e-04 | scale_x=225030064.000000 scale_w=3.171241 | sat_x[min,max]=[0.0027, 0.0023] sat_w[min,max]=[0.0026, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.011132, 0.243661] | time=3.923s
+23:40:32 | INFO | iter=025 | J=0.315432 J_x=0.198072 J_w=0.117360 rel_change=9.882450e-05 | scale_x=224869488.000000 scale_w=3.714267 | sat_x[min,max]=[0.0028, 0.0023] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.009472, 0.207677] | time=3.849s
+23:40:36 | INFO | iter=026 | J=0.315448 J_x=0.198275 J_w=0.117173 rel_change=1.606345e-05 | scale_x=225580800.000000 scale_w=4.343401 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.008071, 0.177212] | time=3.766s
+23:40:39 | INFO | iter=027 | J=0.315118 J_x=0.198195 J_w=0.116923 rel_change=3.303587e-04 | scale_x=225533248.000000 scale_w=5.073673 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.006893, 0.151347] | time=3.735s
+23:40:44 | INFO | iter=028 | J=0.315127 J_x=0.198207 J_w=0.116920 rel_change=8.910894e-06 | scale_x=225745600.000000 scale_w=5.936664 | sat_x[min,max]=[0.0027, 0.0022] sat_w[min,max]=[0.0025, 0.0025] | lambda_x[min,max]=[0.000000, 0.000000] lambda_w[min,max]=[0.005885, 0.129056] | time=4.415s
+23:40:44 | INFO | 量化器在第 28 轮收敛。
+23:40:48 | INFO | z_cont_x stats | shape=[768, 4096] dtype=torch.float32 device=cpu mean=91231.375000 std=89091272.000000 min=-900494016.000000 max=931882560.000000 fro=157971546112.000000
+23:40:48 | INFO | z_cont_w stats | shape=[768, 50272] dtype=torch.float32 device=cpu mean=-0.001445 std=4.745489 min=-44.409145 max=45.363682 fro=29402.568359
+23:40:48 | INFO | final scales | scale_x=225602432.000000 scale_w=6.930624 | sat_x[min,max]=[0.0027, 0.0023] sat_w[min,max]=[0.0026, 0.0025]
+23:40:48 | INFO | 量化器拟合完成 | convergence_iter=28 total_fit_time=113.093s
+23:40:48 | INFO | 开始计算重建/近似误差。
+23:40:52 | INFO | 误差计算完成 | rel_recon_error_x=0.198179 rel_recon_error_w=0.132976 rel_logits_error=0.086628 elapsed=3.245s
+23:40:53 | INFO | scale_x = 225602432.00000000
+23:40:53 | INFO | scale_w = 6.93062449
+23:40:53 | INFO | z_cont_x stats | shape=[768, 4096] dtype=torch.float32 device=cpu mean=91231.375000 std=89091272.000000 min=-900494016.000000 max=931882560.000000 fro=157971546112.000000
+23:40:53 | INFO | z_cont_w stats | shape=[768, 50272] dtype=torch.float32 device=cpu mean=-0.001445 std=4.745489 min=-44.409145 max=45.363682 fro=29402.568359
+23:40:53 | INFO | 量化 lm_head 构建完成。
+23:40:53 | INFO | 开始构建 SQ baselines（SQ-W 与 SQ-XW）。
+23:40:53 | INFO | 开始计算 sq_w 误差。
+23:40:54 | INFO | sq_w 误差计算完成 | rel_recon_error_w=0.130447 rel_logits_error=0.017701 elapsed=0.939s
+23:40:54 | INFO | 开始计算 sq_xw 误差。
+23:40:55 | INFO | sq_xw 误差计算完成 | rel_recon_error_x=0.333048 rel_recon_error_w=0.130447 rel_logits_error=0.068549 elapsed=0.576s
+23:40:55 | INFO | SQ baselines 构建完成 | bits=3 sq_w_scale=0.07645090 sq_x_scale=2.12196374
+23:40:55 | INFO | 开始 PPL 评测 | tag=sq_w_baseline stride=512 max_eval_tokens=None
+23:42:33 | INFO | PPL 评测完成 | tag=sq_w_baseline ppl=27.302147 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=98.129s
+23:42:33 | INFO | 开始 PPL 评测 | tag=sq_xw_baseline stride=512 max_eval_tokens=None
+23:44:02 | INFO | PPL 评测完成 | tag=sq_xw_baseline ppl=36.949116 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=88.362s
+23:44:02 | INFO | 开始 PPL 评测 | tag=quantized_lm_head stride=512 max_eval_tokens=None
+23:45:14 | INFO | PPL 评测完成 | tag=quantized_lm_head ppl=72.668236 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=72.352s
+23:45:14 | INFO | 量化推理完成，quantized PPL 已得到。
+23:45:16 | INFO | 损失曲线已保存：{'objective_total': 'outputs_opt_lmhead_stage1-v6\\objective_total.png', 'objective_components': 'outputs_opt_lmhead_stage1-v6\\objective_components.png'}
+23:45:16 | INFO | 结果 JSON 与分析摘要已写入输出目录。
+23:45:16 | INFO | ========== 实验结束 ==========

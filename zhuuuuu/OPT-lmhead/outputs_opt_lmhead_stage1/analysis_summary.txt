@@ -1,0 +1,31 @@
+实验结果分析
+- 量化是否完成: True
+- baseline PPL: 23.500681
+- quantized PPL: 46.114555
+- PPL 增量: 22.613874
+
+重建与近似误差
+- rel_recon_error_x: 0.056207
+- rel_recon_error_w: 0.062329
+- rel_logits_error: 0.063228
+
+关键张量
+- X_calib: shape=[768, 4096], dtype=torch.float32, mean=-0.082822, std=1.045606, min=-13.247673, max=14.853745, fro=1860.197144
+- W_lm_head: shape=[768, 50272], dtype=torch.float32, mean=0.025439, std=0.055403, min=-0.505371, max=0.535156, fro=377.953064
+- U: shape=[768, 768], dtype=torch.float32, mean=-0.000015, std=0.036084, min=-0.510597, max=0.816561, fro=27.712671
+- lambda_x: shape=[768], dtype=torch.float32, mean=0.675872, std=0.444928, min=0.346119, max=5.409145, fro=22.424528
+- lambda_w: shape=[768], dtype=torch.float32, mean=0.041724, std=0.017213, min=0.005273, max=0.508077, fro=1.250836
+- Z_w: shape=[768, 50272], dtype=torch.float32, mean=0.001260, std=1.160946, min=-2.000000, max=2.000000, fro=7213.667969
+
+耗时（秒）
+- model_load_sec: 4.3615
+- tokenize_calib_sec: 8.3969
+- collect_lm_head_inputs_sec: 0.4554
+- fit_quantizer_and_metrics_sec: 50.3894
+- fit_quantizer_sec: 48.3075
+
+损失曲线观察
+- 初始 J: 0.921498
+- 最终 J: 0.115270
+- 相对下降比例: 87.490974%
+- J 是否单调不增: True
