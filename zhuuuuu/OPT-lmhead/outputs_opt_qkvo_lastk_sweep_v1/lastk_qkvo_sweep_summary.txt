@@ -1,0 +1,10 @@
+===== Last-k blocks QKVO PPL sweep =====
+
+last 9 blocks | block_indices=[3, 4, 5, 6, 7, 8, 9, 10, 11] | baseline=23.500681 | ours=117.168182 | sq=637.647461 | ours_delta=93.667501 | sq_delta=614.146780
+last 10 blocks | block_indices=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11] | baseline=23.500681 | ours=133.470993 | sq=803.295837 | ours_delta=109.970312 | sq_delta=779.795156
+last 11 blocks | block_indices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] | baseline=23.500681 | ours=162.935150 | sq=1037.937744 | ours_delta=139.434469 | sq_delta=1014.437063
+
+Saved plots:
+- linear: outputs_opt_qkvo_lastk_sweep_v1\ppl_curve_linear.png
+- log: outputs_opt_qkvo_lastk_sweep_v1\ppl_curve_log.png
+- ours_vs_fp: outputs_opt_qkvo_lastk_sweep_v1\ppl_curve_ours_vs_fp.png

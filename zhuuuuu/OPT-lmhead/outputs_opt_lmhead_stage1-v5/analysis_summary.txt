@@ -1,0 +1,45 @@
+实验结果分析
+- 量化是否完成: True
+- bitwidth: 3
+- baseline PPL: 23.500681
+- SQ baseline PPL: 27.302147
+- our quantized PPL: 72.668236
+- SQ PPL 增量: 3.801466
+- Ours PPL 增量: 49.167555
+
+重建与近似误差（Ours）
+- rel_recon_error_x: 0.198179
+- rel_recon_error_w: 0.132976
+- rel_logits_error: 0.086628
+
+重建与近似误差（SQ baseline）
+- rel_recon_error_w: 0.130447
+- rel_logits_error: 0.017701
+
+关键张量
+- X_calib: shape=[768, 4096], dtype=torch.float32, mean=-0.082822, std=1.045606, min=-13.247673, max=14.853745, fro=1860.197144
+- W_lm_head: shape=[768, 50272], dtype=torch.float32, mean=0.025439, std=0.055403, min=-0.505371, max=0.535156, fro=377.953064
+- U: shape=[768, 768], dtype=torch.float32, mean=-0.000027, std=0.036084, min=-0.686470, max=0.749171, fro=27.712662
+- lambda_x: shape=[768], dtype=torch.float32, mean=0.000000, std=0.000000, min=0.000000, max=0.000000, fro=0.000000
+- lambda_w: shape=[768], dtype=torch.float32, mean=0.010860, std=0.005224, min=0.005885, max=0.129056, fro=0.333985
+- Z_w: shape=[768, 50272], dtype=torch.float32, mean=-0.001473, std=5.109048, min=-13.861249, max=13.861249, fro=31734.746094
+- z_cont_x: shape=[768, 4096], dtype=torch.float32, mean=91231.375000, std=89091272.000000, min=-900494016.000000, max=931882560.000000, fro=157971546112.000000
+- z_cont_w: shape=[768, 50272], dtype=torch.float32, mean=-0.001445, std=4.745489, min=-44.409145, max=45.363682, fro=29402.568359
+- scale_x: value=225602432.000000
+- scale_w: value=6.930624
+- sq_scale: value=0.076451
+- sq_weight_q: shape=[50272, 768], dtype=torch.float32, mean=0.025409, std=0.059956, min=-0.535156, max=0.535156, fro=405.111542
+
+耗时（秒）
+- model_load_sec: 4.7420
+- tokenize_calib_sec: 9.0323
+- collect_lm_head_inputs_sec: 0.6772
+- fit_quantizer_and_metrics_sec: 117.1919
+- fit_quantizer_sec: 110.3182
+- build_sq_baseline_sec: 0.8980
+
+损失曲线观察
+- 初始 J: 0.437166
+- 最终 J: 0.315127
+- 相对下降比例: 27.915954%
+- J 是否单调不增: False
