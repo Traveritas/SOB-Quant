@@ -13,7 +13,7 @@ from transformers import AutoConfig
 
 BASE_SCRIPT_PATH = Path(__file__).with_name('opt_all_blocks_qkvo_experiment_v1.py')
 OUTPUT_ROOT = Path('./outputs_opt_qkvo_lastk_sweep_v1')
-DEFAULT_LAST_KS: Tuple[int, ...] = (9, 10, 11)
+DEFAULT_LAST_KS: Tuple[int, ...] = (1,2,4,8,11)
 
 
 def load_base_module(script_path: Path):
