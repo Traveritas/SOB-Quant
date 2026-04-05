@@ -1,0 +1,432 @@
+实验结果分析
+- 量化是否完成: True
+- baseline PPL: 23.500643
+- SQ-AllBlocks-QKVO baseline PPL: 1038.901367
+- Ours-AllBlocks-QKVO quantized PPL: 105.864250
+- Ours 相对 FP 的 PPL 增量: 82.363607
+- SQ 相对 FP 的 PPL 增量: 1015.400724
+
+SQ 对照组各层误差
+- block1.q_proj
+  - rel_recon_error_x: 0.552191
+  - rel_recon_error_w: 0.130860
+  - rel_linear_error: 0.213007
+- block1.k_proj
+  - rel_recon_error_x: 0.552191
+  - rel_recon_error_w: 0.173010
+  - rel_linear_error: 0.209268
+- block1.v_proj
+  - rel_recon_error_x: 0.552191
+  - rel_recon_error_w: 0.174061
+  - rel_linear_error: 0.687149
+- block1.out_proj
+  - rel_recon_error_x: 0.202745
+  - rel_recon_error_w: 0.724268
+  - rel_linear_error: 0.717857
+- block2.q_proj
+  - rel_recon_error_x: 0.282212
+  - rel_recon_error_w: 0.166420
+  - rel_linear_error: 0.254510
+- block2.k_proj
+  - rel_recon_error_x: 0.282212
+  - rel_recon_error_w: 0.249506
+  - rel_linear_error: 0.282977
+- block2.v_proj
+  - rel_recon_error_x: 0.282212
+  - rel_recon_error_w: 0.143813
+  - rel_linear_error: 0.807155
+- block2.out_proj
+  - rel_recon_error_x: 0.312983
+  - rel_recon_error_w: 0.768630
+  - rel_linear_error: 1.123357
+- block3.q_proj
+  - rel_recon_error_x: 0.273098
+  - rel_recon_error_w: 0.133585
+  - rel_linear_error: 0.210719
+- block3.k_proj
+  - rel_recon_error_x: 0.273098
+  - rel_recon_error_w: 0.084797
+  - rel_linear_error: 0.212104
+- block3.v_proj
+  - rel_recon_error_x: 0.273098
+  - rel_recon_error_w: 0.273351
+  - rel_linear_error: 0.889569
+- block3.out_proj
+  - rel_recon_error_x: 0.333882
+  - rel_recon_error_w: 0.817384
+  - rel_linear_error: 1.119871
+- block4.q_proj
+  - rel_recon_error_x: 0.352964
+  - rel_recon_error_w: 0.108870
+  - rel_linear_error: 0.258557
+- block4.k_proj
+  - rel_recon_error_x: 0.352964
+  - rel_recon_error_w: 0.133074
+  - rel_linear_error: 0.211548
+- block4.v_proj
+  - rel_recon_error_x: 0.352964
+  - rel_recon_error_w: 0.291915
+  - rel_linear_error: 0.884394
+- block4.out_proj
+  - rel_recon_error_x: 0.352060
+  - rel_recon_error_w: 0.465331
+  - rel_linear_error: 0.870571
+- block5.q_proj
+  - rel_recon_error_x: 0.378048
+  - rel_recon_error_w: 0.147770
+  - rel_linear_error: 0.233457
+- block5.k_proj
+  - rel_recon_error_x: 0.378048
+  - rel_recon_error_w: 0.150232
+  - rel_linear_error: 0.183315
+- block5.v_proj
+  - rel_recon_error_x: 0.378048
+  - rel_recon_error_w: 0.091720
+  - rel_linear_error: 0.840510
+- block5.out_proj
+  - rel_recon_error_x: 0.265940
+  - rel_recon_error_w: 0.256971
+  - rel_linear_error: 0.794397
+- block6.q_proj
+  - rel_recon_error_x: 0.470887
+  - rel_recon_error_w: 0.110793
+  - rel_linear_error: 0.259773
+- block6.k_proj
+  - rel_recon_error_x: 0.470887
+  - rel_recon_error_w: 0.185459
+  - rel_linear_error: 0.216549
+- block6.v_proj
+  - rel_recon_error_x: 0.470887
+  - rel_recon_error_w: 0.081644
+  - rel_linear_error: 0.888988
+- block6.out_proj
+  - rel_recon_error_x: 0.273324
+  - rel_recon_error_w: 0.340290
+  - rel_linear_error: 0.748040
+- block7.q_proj
+  - rel_recon_error_x: 0.597712
+  - rel_recon_error_w: 0.137404
+  - rel_linear_error: 0.446606
+- block7.k_proj
+  - rel_recon_error_x: 0.597712
+  - rel_recon_error_w: 0.248420
+  - rel_linear_error: 0.376084
+- block7.v_proj
+  - rel_recon_error_x: 0.597712
+  - rel_recon_error_w: 0.085523
+  - rel_linear_error: 0.887176
+- block7.out_proj
+  - rel_recon_error_x: 0.414345
+  - rel_recon_error_w: 0.196515
+  - rel_linear_error: 1.026657
+- block8.q_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.140136
+  - rel_linear_error: 0.497125
+- block8.k_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.301824
+  - rel_linear_error: 0.368565
+- block8.v_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.237513
+  - rel_linear_error: 0.943759
+- block8.out_proj
+  - rel_recon_error_x: 0.213817
+  - rel_recon_error_w: 0.348258
+  - rel_linear_error: 0.717631
+- block9.q_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.157180
+  - rel_linear_error: 0.615857
+- block9.k_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.284215
+  - rel_linear_error: 0.461449
+- block9.v_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.224909
+  - rel_linear_error: 0.941919
+- block9.out_proj
+  - rel_recon_error_x: 0.232639
+  - rel_recon_error_w: 0.362596
+  - rel_linear_error: 0.665637
+- block10.q_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.242187
+  - rel_linear_error: 0.449564
+- block10.k_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.224691
+  - rel_linear_error: 0.384122
+- block10.v_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.266271
+  - rel_linear_error: 1.038680
+- block10.out_proj
+  - rel_recon_error_x: 0.299572
+  - rel_recon_error_w: 0.280512
+  - rel_linear_error: 0.693751
+- block11.q_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.137037
+  - rel_linear_error: 0.841778
+- block11.k_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.159061
+  - rel_linear_error: 0.758373
+- block11.v_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.440576
+  - rel_linear_error: 1.034687
+- block11.out_proj
+  - rel_recon_error_x: 0.192631
+  - rel_recon_error_w: 0.744155
+  - rel_linear_error: 0.829729
+- 平均
+  - rel_linear_error: 0.615836
+  - rel_recon_error_w: 0.259608
+  - rel_recon_error_x: 0.485317
+
+Ours 各层误差
+- block1.q_proj
+  - rel_recon_error_x: 0.068308
+  - rel_recon_error_w: 0.146050
+  - rel_linear_error: 0.175302
+- block1.k_proj
+  - rel_recon_error_x: 0.067782
+  - rel_recon_error_w: 0.086511
+  - rel_linear_error: 0.099616
+- block1.v_proj
+  - rel_recon_error_x: 0.070750
+  - rel_recon_error_w: 0.044362
+  - rel_linear_error: 0.146691
+- block1.out_proj
+  - rel_recon_error_x: 0.045592
+  - rel_recon_error_w: 0.216533
+  - rel_linear_error: 0.368441
+- block2.q_proj
+  - rel_recon_error_x: 0.044531
+  - rel_recon_error_w: 0.058828
+  - rel_linear_error: 0.081804
+- block2.k_proj
+  - rel_recon_error_x: 0.041818
+  - rel_recon_error_w: 0.047578
+  - rel_linear_error: 0.069705
+- block2.v_proj
+  - rel_recon_error_x: 0.042198
+  - rel_recon_error_w: 0.032628
+  - rel_linear_error: 0.194655
+- block2.out_proj
+  - rel_recon_error_x: 0.047030
+  - rel_recon_error_w: 0.047595
+  - rel_linear_error: 0.138722
+- block3.q_proj
+  - rel_recon_error_x: 0.045350
+  - rel_recon_error_w: 0.062554
+  - rel_linear_error: 0.065828
+- block3.k_proj
+  - rel_recon_error_x: 0.043560
+  - rel_recon_error_w: 0.077357
+  - rel_linear_error: 0.072588
+- block3.v_proj
+  - rel_recon_error_x: 0.039613
+  - rel_recon_error_w: 0.030577
+  - rel_linear_error: 0.219760
+- block3.out_proj
+  - rel_recon_error_x: 0.056909
+  - rel_recon_error_w: 0.033350
+  - rel_linear_error: 0.123678
+- block4.q_proj
+  - rel_recon_error_x: 0.045707
+  - rel_recon_error_w: 0.036441
+  - rel_linear_error: 0.049156
+- block4.k_proj
+  - rel_recon_error_x: 0.047377
+  - rel_recon_error_w: 0.037772
+  - rel_linear_error: 0.039795
+- block4.v_proj
+  - rel_recon_error_x: 0.044061
+  - rel_recon_error_w: 0.030445
+  - rel_linear_error: 0.184614
+- block4.out_proj
+  - rel_recon_error_x: 0.065043
+  - rel_recon_error_w: 0.029480
+  - rel_linear_error: 0.117059
+- block5.q_proj
+  - rel_recon_error_x: 0.048291
+  - rel_recon_error_w: 0.036023
+  - rel_linear_error: 0.045760
+- block5.k_proj
+  - rel_recon_error_x: 0.051223
+  - rel_recon_error_w: 0.043372
+  - rel_linear_error: 0.038955
+- block5.v_proj
+  - rel_recon_error_x: 0.048796
+  - rel_recon_error_w: 0.030311
+  - rel_linear_error: 0.183784
+- block5.out_proj
+  - rel_recon_error_x: 0.063150
+  - rel_recon_error_w: 0.028019
+  - rel_linear_error: 0.138497
+- block6.q_proj
+  - rel_recon_error_x: 0.050346
+  - rel_recon_error_w: 0.035590
+  - rel_linear_error: 0.041778
+- block6.k_proj
+  - rel_recon_error_x: 0.052585
+  - rel_recon_error_w: 0.036317
+  - rel_linear_error: 0.031939
+- block6.v_proj
+  - rel_recon_error_x: 0.051538
+  - rel_recon_error_w: 0.034838
+  - rel_linear_error: 0.171528
+- block6.out_proj
+  - rel_recon_error_x: 0.055175
+  - rel_recon_error_w: 0.029827
+  - rel_linear_error: 0.114037
+- block7.q_proj
+  - rel_recon_error_x: 0.052073
+  - rel_recon_error_w: 0.040330
+  - rel_linear_error: 0.052702
+- block7.k_proj
+  - rel_recon_error_x: 0.053466
+  - rel_recon_error_w: 0.038834
+  - rel_linear_error: 0.037628
+- block7.v_proj
+  - rel_recon_error_x: 0.053775
+  - rel_recon_error_w: 0.031220
+  - rel_linear_error: 0.128297
+- block7.out_proj
+  - rel_recon_error_x: 0.062177
+  - rel_recon_error_w: 0.029980
+  - rel_linear_error: 0.169205
+- block8.q_proj
+  - rel_recon_error_x: 0.052544
+  - rel_recon_error_w: 0.043452
+  - rel_linear_error: 0.055344
+- block8.k_proj
+  - rel_recon_error_x: 0.052719
+  - rel_recon_error_w: 0.033319
+  - rel_linear_error: 0.034061
+- block8.v_proj
+  - rel_recon_error_x: 0.052208
+  - rel_recon_error_w: 0.027045
+  - rel_linear_error: 0.127996
+- block8.out_proj
+  - rel_recon_error_x: 0.068718
+  - rel_recon_error_w: 0.030426
+  - rel_linear_error: 0.138623
+- block9.q_proj
+  - rel_recon_error_x: 0.054984
+  - rel_recon_error_w: 0.033270
+  - rel_linear_error: 0.053365
+- block9.k_proj
+  - rel_recon_error_x: 0.055134
+  - rel_recon_error_w: 0.031773
+  - rel_linear_error: 0.038697
+- block9.v_proj
+  - rel_recon_error_x: 0.055986
+  - rel_recon_error_w: 0.029827
+  - rel_linear_error: 0.120333
+- block9.out_proj
+  - rel_recon_error_x: 0.070855
+  - rel_recon_error_w: 0.027157
+  - rel_linear_error: 0.144562
+- block10.q_proj
+  - rel_recon_error_x: 0.055844
+  - rel_recon_error_w: 0.029660
+  - rel_linear_error: 0.042637
+- block10.k_proj
+  - rel_recon_error_x: 0.055946
+  - rel_recon_error_w: 0.029495
+  - rel_linear_error: 0.035625
+- block10.v_proj
+  - rel_recon_error_x: 0.056671
+  - rel_recon_error_w: 0.030661
+  - rel_linear_error: 0.118983
+- block10.out_proj
+  - rel_recon_error_x: 0.070816
+  - rel_recon_error_w: 0.029248
+  - rel_linear_error: 0.151404
+- block11.q_proj
+  - rel_recon_error_x: 0.055339
+  - rel_recon_error_w: 0.030364
+  - rel_linear_error: 0.053427
+- block11.k_proj
+  - rel_recon_error_x: 0.055000
+  - rel_recon_error_w: 0.030091
+  - rel_linear_error: 0.048693
+- block11.v_proj
+  - rel_recon_error_x: 0.055933
+  - rel_recon_error_w: 0.032396
+  - rel_linear_error: 0.132315
+- block11.out_proj
+  - rel_recon_error_x: 0.062672
+  - rel_recon_error_w: 0.063394
+  - rel_linear_error: 0.249619
+- 平均
+  - rel_linear_error: 0.110164
+  - rel_recon_error_w: 0.044643
+  - rel_recon_error_x: 0.054309
+
+各层收敛轮数
+- block1.q_proj: 155
+- block1.k_proj: 145
+- block1.v_proj: 137
+- block1.out_proj: 124
+- block2.q_proj: 218
+- block2.k_proj: 300
+- block2.v_proj: 300
+- block2.out_proj: 140
+- block3.q_proj: 158
+- block3.k_proj: 265
+- block3.v_proj: 297
+- block3.out_proj: 89
+- block4.q_proj: 174
+- block4.k_proj: 164
+- block4.v_proj: 289
+- block4.out_proj: 84
+- block5.q_proj: 188
+- block5.k_proj: 119
+- block5.v_proj: 288
+- block5.out_proj: 95
+- block6.q_proj: 161
+- block6.k_proj: 115
+- block6.v_proj: 174
+- block6.out_proj: 86
+- block7.q_proj: 161
+- block7.k_proj: 117
+- block7.v_proj: 101
+- block7.out_proj: 119
+- block8.q_proj: 198
+- block8.k_proj: 147
+- block8.v_proj: 190
+- block8.out_proj: 120
+- block9.q_proj: 120
+- block9.k_proj: 96
+- block9.v_proj: 109
+- block9.out_proj: 140
+- block10.q_proj: 110
+- block10.k_proj: 118
+- block10.v_proj: 103
+- block10.out_proj: 171
+- block11.q_proj: 97
+- block11.k_proj: 122
+- block11.v_proj: 105
+- block11.out_proj: 149
+
+耗时（秒）
+- model_load_sec: 4.9731
+- tokenize_calib_sec: 16.4002
+- collect_target_inputs_sec: 0.7795
+- build_sq_baseline_sec: 2.8447
+- fit_quantizer_and_metrics_sec: 1661.2774
+- fit_quantizer_sec_total: 1651.4118
+
+目标层
+- block_indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+- num_blocks: 11
+- target_linear_names: ['q_proj', 'k_proj', 'v_proj', 'out_proj']
+- collected_token_counts: {'block1.q_proj': 4096, 'block1.k_proj': 4096, 'block1.v_proj': 4096, 'block1.out_proj': 4096, 'block2.q_proj': 4096, 'block2.k_proj': 4096, 'block2.v_proj': 4096, 'block2.out_proj': 4096, 'block3.q_proj': 4096, 'block3.k_proj': 4096, 'block3.v_proj': 4096, 'block3.out_proj': 4096, 'block4.q_proj': 4096, 'block4.k_proj': 4096, 'block4.v_proj': 4096, 'block4.out_proj': 4096, 'block5.q_proj': 4096, 'block5.k_proj': 4096, 'block5.v_proj': 4096, 'block5.out_proj': 4096, 'block6.q_proj': 4096, 'block6.k_proj': 4096, 'block6.v_proj': 4096, 'block6.out_proj': 4096, 'block7.q_proj': 4096, 'block7.k_proj': 4096, 'block7.v_proj': 4096, 'block7.out_proj': 4096, 'block8.q_proj': 4096, 'block8.k_proj': 4096, 'block8.v_proj': 4096, 'block8.out_proj': 4096, 'block9.q_proj': 4096, 'block9.k_proj': 4096, 'block9.v_proj': 4096, 'block9.out_proj': 4096, 'block10.q_proj': 4096, 'block10.k_proj': 4096, 'block10.v_proj': 4096, 'block10.out_proj': 4096, 'block11.q_proj': 4096, 'block11.k_proj': 4096, 'block11.v_proj': 4096, 'block11.out_proj': 4096}
+- model_name: facebook/opt-125m

@@ -42,6 +42,8 @@ class QuantizerConfig:
     dtype: str = "float32"
     eps: float = 1e-8
     log_every: int = 1
+    init_mode: str = "pca"
+    error_mode: str = "relative"
 
 
 @dataclass
@@ -372,6 +374,12 @@ class LatticeLinearQuantizer:
         U = eigvecs[:, order]
         return U
 
+    def _random_init(self, X: torch.Tensor) -> torch.Tensor:
+        d = X.shape[0]
+        random_mat = torch.randn((d, d), dtype=X.dtype, device=X.device)
+        Q, _ = torch.linalg.qr(random_mat)
+        return Q
+
     def _e_step(self, Data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
         s = U.T @ Data
         safe_lambda = torch.where(
@@ -422,6 +430,10 @@ class LatticeLinearQuantizer:
         inv_norms_x = 1.0 / (torch.sum(X * X, dim=0) + self.config.eps)
         inv_norms_w = 1.0 / (torch.sum(W * W, dim=0) + self.config.eps)
 
+        if getattr(self.config, "error_mode", "relative") == "absolute":
+            inv_norms_x = torch.ones_like(inv_norms_x)
+            inv_norms_w = torch.ones_like(inv_norms_w)
+
         if self.logger is not None:
             self.logger.info(
                 "开始拟合量化器 | tag=%s d=%d N(tokens)=%d M(out_features)=%d beta=%.4f max_iters=%d tol=%.2e codebook=%s",
@@ -435,7 +447,15 @@ class LatticeLinearQuantizer:
                 list(self.config.codebook),
             )
 
-        U = self._pca_init(X)
+        if getattr(self.config, "init_mode", "pca") == "random":
+            if self.logger is not None:
+                self.logger.info("Using Random Orthogonal Initialization")
+            U = self._random_init(X)
+        else:
+            if self.logger is not None:
+                self.logger.info("Using PCA Initialization")
+            U = self._pca_init(X)
+            
         lambda_x = torch.ones(d, dtype=X.dtype, device=device)
         lambda_w = torch.ones(d, dtype=W.dtype, device=device)
 
@@ -556,11 +576,19 @@ class QuantizedLinear(nn.Module):
         orig_shape = hidden_states.shape[:-1]
         d = hidden_states.shape[-1]
         x_flat = hidden_states.reshape(-1, d)
-        z_x = self._encode_x(x_flat)
+        
+        # force x_flat to float32 for encoder stability temporarily since U is stored as float32
+        x_flat_encode = x_flat.to(self.U.dtype)
+        z_x = self._encode_x(x_flat_encode)
+        
+        # match precision of Z_w
+        z_x = z_x.to(self.Z_w.dtype)
+        
         output = (z_x * self.coeff.unsqueeze(0)) @ self.Z_w
         if self.bias is not None:
             output = output + self.bias.unsqueeze(0)
-        return output.reshape(*orig_shape, self.Z_w.shape[1])
+        output = output.reshape(*orig_shape, self.Z_w.shape[1])
+        return output.to(hidden_states.dtype)
 
 
 class ScalarQuantizedXWLinear(nn.Module):
@@ -591,10 +619,12 @@ class ScalarQuantizedXWLinear(nn.Module):
         d = hidden_states.shape[-1]
         x_flat = hidden_states.reshape(-1, d)
         x_q = self._quantize_x(x_flat)
+        x_q = x_q.to(self.weight_quantized.dtype)
         output = x_q @ self.weight_quantized
         if self.bias is not None:
             output = output + self.bias.unsqueeze(0)
-        return output.reshape(*orig_shape, self.weight_quantized.shape[1])
+        output = output.reshape(*orig_shape, self.weight_quantized.shape[1])
+        return output.to(hidden_states.dtype)
 
 
 # ============================================================
@@ -936,7 +966,8 @@ def evaluate_perplexity_sliding_window(
     total_target_tokens = 0
     num_windows = 0
 
-    for begin_loc in range(0, input_ids.size(0), stride):
+    from tqdm import tqdm
+    for begin_loc in tqdm(range(0, input_ids.size(0), stride), desc=f"PPL Eval ({tag})"):
         end_loc = min(begin_loc + max_length, input_ids.size(0))
         trg_len = end_loc - prev_end_loc
         input_ids_chunk = input_ids[begin_loc:end_loc].unsqueeze(0)
