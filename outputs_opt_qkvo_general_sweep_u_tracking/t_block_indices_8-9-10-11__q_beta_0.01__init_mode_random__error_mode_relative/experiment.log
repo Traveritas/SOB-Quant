@@ -1,0 +1,1525 @@
+15:39:49 | INFO | ========== Sweep 单次实验开始 ==========
+15:39:49 | INFO | combo = {
+  "target.block_indices": [
+    8,
+    9,
+    10,
+    11
+  ],
+  "quant.beta": 0.01,
+  "quant_ext.init_mode": "random",
+  "quant_ext.error_mode": "relative"
+}
+15:39:49 | INFO | config = {
+  "data": {
+    "model_name": "facebook/opt-125m",
+    "dataset_name": "wikitext",
+    "dataset_config": "wikitext-2-raw-v1",
+    "calib_split": "train",
+    "eval_split": "test",
+    "calib_num_tokens": 4096,
+    "eval_num_tokens": null,
+    "tokenizer_use_fast": true
+  },
+  "quant": {
+    "beta": 0.01,
+    "max_iters": 80,
+    "tol": 1e-05,
+    "convergence_check_every": 1,
+    "codebook": [
+      -2.0,
+      -1.0,
+      0.0,
+      1.0,
+      2.0
+    ],
+    "dtype": "float32",
+    "eps": 1e-08,
+    "log_every": 1,
+    "init_mode": "random",
+    "error_mode": "relative",
+    "track_u": true,
+    "track_u_every": 1,
+    "track_u_full_matrix": false,
+    "random_init_orthogonal": true,
+    "random_init_scale": 1.0
+  },
+  "eval": {
+    "stride": 512,
+    "device": "cuda"
+  },
+  "target": {
+    "block_indices": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_linear_names": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "out_proj"
+    ]
+  },
+  "output_dir": "outputs_opt_qkvo_general_sweep_u_tracking\\t_block_indices_8-9-10-11__q_beta_0.01__init_mode_random__error_mode_relative",
+  "seed": 42
+}
+15:39:49 | INFO | 加载模型与 tokenizer：facebook/opt-125m
+15:40:33 | INFO | 模型加载完成 | hidden_size=768 vocab_size=50272 device=cuda elapsed=44.798s
+15:40:33 | INFO | 加载数据集 split=train
+15:40:57 | INFO | split=train 加载完成 | non-empty text blocks=23767 chars=10940522 elapsed=23.391s
+15:40:57 | INFO | 加载数据集 split=test
+15:41:55 | INFO | split=test 加载完成 | non-empty text blocks=2891 chars=1291402 elapsed=57.920s
+15:41:55 | INFO | 开始 PPL 评测 | tag=baseline_fp stride=512 max_eval_tokens=None
+15:42:15 | INFO | PPL 评测完成 | tag=baseline_fp ppl=23.500643 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=20.529s
+15:42:27 | INFO | 开始收集目标线性层输入 hidden states | requested_tokens=4096 layers=['block8.q_proj', 'block8.k_proj', 'block8.v_proj', 'block8.out_proj', 'block9.q_proj', 'block9.k_proj', 'block9.v_proj', 'block9.out_proj', 'block10.q_proj', 'block10.k_proj', 'block10.v_proj', 'block10.out_proj', 'block11.q_proj', 'block11.k_proj', 'block11.v_proj', 'block11.out_proj']
+15:42:27 | INFO | 输入收集完成 | layer=block8.q_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block8.k_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block8.v_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block8.out_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block9.q_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block9.k_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block9.v_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block9.out_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block10.q_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block10.k_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block10.v_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block10.out_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block11.q_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block11.k_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block11.v_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 输入收集完成 | layer=block11.out_proj collected_tokens=4096 forward_chunks=2 elapsed=0.254s X_shape=[768, 4096]
+15:42:27 | INFO | 开始为所有目标 transformer blocks 的 Q/K/V/O 线性层构建 SQ-XW 对照组。
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block8.q_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block8.q_proj rel_recon_error_x=0.669210 rel_recon_error_w=0.140136 rel_linear_error=0.497125 elapsed=0.037s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block8.q_proj bits=3 x_scale=3.77678561 w_scale=0.07979911
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block8.k_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block8.k_proj rel_recon_error_x=0.669210 rel_recon_error_w=0.301824 rel_linear_error=0.368565 elapsed=0.033s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block8.k_proj bits=3 x_scale=3.77678561 w_scale=0.11104911
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block8.v_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block8.v_proj rel_recon_error_x=0.669210 rel_recon_error_w=0.237513 rel_linear_error=0.943759 elapsed=0.034s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block8.v_proj bits=3 x_scale=3.77678561 w_scale=0.03899274
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block8.out_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block8.out_proj rel_recon_error_x=0.213817 rel_recon_error_w=0.348258 rel_linear_error=0.717631 elapsed=0.030s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block8.out_proj bits=3 x_scale=0.18889509 w_scale=0.04234096
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block9.q_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block9.q_proj rel_recon_error_x=0.769513 rel_recon_error_w=0.157180 rel_linear_error=0.615857 elapsed=0.031s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block9.q_proj bits=3 x_scale=3.75892854 w_scale=0.08328683
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block9.k_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block9.k_proj rel_recon_error_x=0.769513 rel_recon_error_w=0.284215 rel_linear_error=0.461449 elapsed=0.031s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block9.k_proj bits=3 x_scale=3.75892854 w_scale=0.10804967
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block9.v_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block9.v_proj rel_recon_error_x=0.769513 rel_recon_error_w=0.224909 rel_linear_error=0.941919 elapsed=0.032s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block9.v_proj bits=3 x_scale=3.75892854 w_scale=0.03986468
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block9.out_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block9.out_proj rel_recon_error_x=0.232639 rel_recon_error_w=0.362596 rel_linear_error=0.665637 elapsed=0.032s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block9.out_proj bits=3 x_scale=0.24330357 w_scale=0.04907227
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block10.q_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block10.q_proj rel_recon_error_x=0.805865 rel_recon_error_w=0.242187 rel_linear_error=0.449564 elapsed=0.028s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block10.q_proj bits=3 x_scale=2.64955354 w_scale=0.09577288
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block10.k_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block10.k_proj rel_recon_error_x=0.805865 rel_recon_error_w=0.224691 rel_linear_error=0.384122 elapsed=0.029s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block10.k_proj bits=3 x_scale=2.64955354 w_scale=0.09298270
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block10.v_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block10.v_proj rel_recon_error_x=0.805865 rel_recon_error_w=0.266271 rel_linear_error=1.038680 elapsed=0.029s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block10.v_proj bits=3 x_scale=2.64955354 w_scale=0.04820034
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block10.out_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block10.out_proj rel_recon_error_x=0.299572 rel_recon_error_w=0.280512 rel_linear_error=0.693751 elapsed=0.030s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block10.out_proj bits=3 x_scale=0.26395088 w_scale=0.04938616
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block11.q_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block11.q_proj rel_recon_error_x=0.934975 rel_recon_error_w=0.137037 rel_linear_error=0.841778 elapsed=0.030s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block11.q_proj bits=3 x_scale=3.78571439 w_scale=0.07163783
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block11.k_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block11.k_proj rel_recon_error_x=0.934975 rel_recon_error_w=0.159061 rel_linear_error=0.758373 elapsed=0.030s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block11.k_proj bits=3 x_scale=3.78571439 w_scale=0.07533482
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block11.v_proj
+15:42:27 | INFO | SQ-XW 误差计算完成 | layer=block11.v_proj rel_recon_error_x=0.934975 rel_recon_error_w=0.440576 rel_linear_error=1.034687 elapsed=0.031s
+15:42:27 | INFO | SQ-XW 对照组构建完成 | layer=block11.v_proj bits=3 x_scale=3.78571439 w_scale=0.07139369
+15:42:27 | INFO | 开始计算 SQ-XW 对照组误差 | layer=block11.out_proj
+15:42:28 | INFO | SQ-XW 误差计算完成 | layer=block11.out_proj rel_recon_error_x=0.192631 rel_recon_error_w=0.744155 rel_linear_error=0.829729 elapsed=0.028s
+15:42:28 | INFO | SQ-XW 对照组构建完成 | layer=block11.out_proj bits=3 x_scale=0.22572544 w_scale=0.12772043
+15:42:28 | INFO | 开始 PPL 评测 | tag=sq_all_blocks_qkvo stride=512 max_eval_tokens=None
+15:42:51 | INFO | PPL 评测完成 | tag=sq_all_blocks_qkvo ppl=197.938278 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=23.908s
+15:42:51 | INFO | 开始为目标层构建扩展量化器。
+15:42:51 | INFO | block8.q_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.017816 std=0.586248 min=-26.437500 max=6.972656 fro=1040.184692
+15:42:51 | INFO | block8.q_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000188 std=0.061300 min=-0.553711 max=0.558594 fro=47.078720
+15:42:51 | INFO | 开始拟合量化器 | tag=block8.q_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:42:52 | INFO | tag=block8.q_proj iter=001 | J=0.183488 J_x=0.173488 J_w=1.000000 rel_change=inf | time=0.187s
+15:42:52 | INFO | tag=block8.q_proj iter=002 | J=0.122105 J_x=0.117925 J_w=0.417933 rel_change=6.138308e-02 | time=0.186s
+15:42:52 | INFO | tag=block8.q_proj iter=003 | J=0.098075 J_x=0.096058 J_w=0.201663 rel_change=2.402961e-02 | time=0.176s
+15:42:52 | INFO | tag=block8.q_proj iter=004 | J=0.085838 J_x=0.084441 J_w=0.139719 rel_change=1.223711e-02 | time=0.176s
+15:42:52 | INFO | tag=block8.q_proj iter=005 | J=0.078476 J_x=0.077303 J_w=0.117294 rel_change=7.362165e-03 | time=0.175s
+15:42:53 | INFO | tag=block8.q_proj iter=006 | J=0.073596 J_x=0.072519 J_w=0.107769 rel_change=4.879229e-03 | time=0.181s
+15:42:53 | INFO | tag=block8.q_proj iter=007 | J=0.070130 J_x=0.069098 J_w=0.103238 rel_change=3.466040e-03 | time=0.178s
+15:42:53 | INFO | tag=block8.q_proj iter=008 | J=0.067582 J_x=0.066574 J_w=0.100746 rel_change=2.548784e-03 | time=0.179s
+15:42:53 | INFO | tag=block8.q_proj iter=009 | J=0.065626 J_x=0.064635 J_w=0.099051 rel_change=1.955949e-03 | time=0.184s
+15:42:53 | INFO | tag=block8.q_proj iter=010 | J=0.064077 J_x=0.063096 J_w=0.098101 rel_change=1.548491e-03 | time=0.178s
+15:42:54 | INFO | tag=block8.q_proj iter=011 | J=0.062849 J_x=0.061876 J_w=0.097283 rel_change=1.228265e-03 | time=0.186s
+15:42:54 | INFO | tag=block8.q_proj iter=012 | J=0.061837 J_x=0.060869 J_w=0.096781 rel_change=1.011919e-03 | time=0.196s
+15:42:54 | INFO | tag=block8.q_proj iter=013 | J=0.060993 J_x=0.060029 J_w=0.096380 rel_change=8.437224e-04 | time=0.177s
+15:42:54 | INFO | tag=block8.q_proj iter=014 | J=0.060281 J_x=0.059320 J_w=0.096094 rel_change=7.118285e-04 | time=0.201s
+15:42:54 | INFO | tag=block8.q_proj iter=015 | J=0.059667 J_x=0.058708 J_w=0.095853 rel_change=6.148182e-04 | time=0.185s
+15:42:54 | INFO | tag=block8.q_proj iter=016 | J=0.059130 J_x=0.058174 J_w=0.095645 rel_change=5.364642e-04 | time=0.172s
+15:42:55 | INFO | tag=block8.q_proj iter=017 | J=0.058668 J_x=0.057714 J_w=0.095421 rel_change=4.617609e-04 | time=0.186s
+15:42:55 | INFO | tag=block8.q_proj iter=018 | J=0.058270 J_x=0.057317 J_w=0.095257 rel_change=3.987662e-04 | time=0.187s
+15:42:55 | INFO | tag=block8.q_proj iter=019 | J=0.057923 J_x=0.056971 J_w=0.095173 rel_change=3.467798e-04 | time=0.178s
+15:42:55 | INFO | tag=block8.q_proj iter=020 | J=0.057616 J_x=0.056665 J_w=0.095103 rel_change=3.065690e-04 | time=0.170s
+15:42:55 | INFO | tag=block8.q_proj iter=021 | J=0.057338 J_x=0.056388 J_w=0.095009 rel_change=2.778098e-04 | time=0.181s
+15:42:56 | INFO | tag=block8.q_proj iter=022 | J=0.057089 J_x=0.056140 J_w=0.094932 rel_change=2.495721e-04 | time=0.182s
+15:42:56 | INFO | tag=block8.q_proj iter=023 | J=0.056863 J_x=0.055914 J_w=0.094880 rel_change=2.259538e-04 | time=0.190s
+15:42:56 | INFO | tag=block8.q_proj iter=024 | J=0.056659 J_x=0.055711 J_w=0.094814 rel_change=2.037473e-04 | time=0.181s
+15:42:56 | INFO | tag=block8.q_proj iter=025 | J=0.056470 J_x=0.055523 J_w=0.094754 rel_change=1.890808e-04 | time=0.187s
+15:42:56 | INFO | tag=block8.q_proj iter=026 | J=0.056296 J_x=0.055350 J_w=0.094683 rel_change=1.737326e-04 | time=0.185s
+15:42:57 | INFO | tag=block8.q_proj iter=027 | J=0.056134 J_x=0.055188 J_w=0.094619 rel_change=1.622736e-04 | time=0.178s
+15:42:57 | INFO | tag=block8.q_proj iter=028 | J=0.055987 J_x=0.055042 J_w=0.094568 rel_change=1.468584e-04 | time=0.180s
+15:42:57 | INFO | tag=block8.q_proj iter=029 | J=0.055854 J_x=0.054909 J_w=0.094511 rel_change=1.334324e-04 | time=0.177s
+15:42:57 | INFO | tag=block8.q_proj iter=030 | J=0.055730 J_x=0.054785 J_w=0.094496 rel_change=1.239777e-04 | time=0.176s
+15:42:57 | INFO | tag=block8.q_proj iter=031 | J=0.055615 J_x=0.054670 J_w=0.094467 rel_change=1.148246e-04 | time=0.180s
+15:42:57 | INFO | tag=block8.q_proj iter=032 | J=0.055509 J_x=0.054565 J_w=0.094443 rel_change=1.059771e-04 | time=0.180s
+15:42:58 | INFO | tag=block8.q_proj iter=033 | J=0.055408 J_x=0.054464 J_w=0.094437 rel_change=1.010001e-04 | time=0.184s
+15:42:58 | INFO | tag=block8.q_proj iter=034 | J=0.055316 J_x=0.054371 J_w=0.094433 rel_change=9.249523e-05 | time=0.189s
+15:42:58 | INFO | tag=block8.q_proj iter=035 | J=0.055229 J_x=0.054284 J_w=0.094429 rel_change=8.693337e-05 | time=0.171s
+15:42:58 | INFO | tag=block8.q_proj iter=036 | J=0.055148 J_x=0.054204 J_w=0.094441 rel_change=8.024275e-05 | time=0.186s
+15:42:58 | INFO | tag=block8.q_proj iter=037 | J=0.055073 J_x=0.054129 J_w=0.094425 rel_change=7.493794e-05 | time=0.181s
+15:42:58 | INFO | tag=block8.q_proj iter=038 | J=0.055005 J_x=0.054060 J_w=0.094440 rel_change=6.864965e-05 | time=0.177s
+15:42:59 | INFO | tag=block8.q_proj iter=039 | J=0.054938 J_x=0.053994 J_w=0.094431 rel_change=6.675348e-05 | time=0.180s
+15:42:59 | INFO | tag=block8.q_proj iter=040 | J=0.054879 J_x=0.053935 J_w=0.094408 rel_change=5.855784e-05 | time=0.180s
+15:42:59 | INFO | tag=block8.q_proj iter=041 | J=0.054825 J_x=0.053882 J_w=0.094378 rel_change=5.405396e-05 | time=0.180s
+15:42:59 | INFO | tag=block8.q_proj iter=042 | J=0.054775 J_x=0.053831 J_w=0.094368 rel_change=5.082786e-05 | time=0.177s
+15:42:59 | INFO | tag=block8.q_proj iter=043 | J=0.054725 J_x=0.053781 J_w=0.094353 rel_change=4.980341e-05 | time=0.186s
+15:43:00 | INFO | tag=block8.q_proj iter=044 | J=0.054678 J_x=0.053735 J_w=0.094337 rel_change=4.670396e-05 | time=0.177s
+15:43:00 | INFO | tag=block8.q_proj iter=045 | J=0.054633 J_x=0.053690 J_w=0.094334 rel_change=4.471093e-05 | time=0.175s
+15:43:00 | INFO | tag=block8.q_proj iter=046 | J=0.054589 J_x=0.053646 J_w=0.094334 rel_change=4.402548e-05 | time=0.178s
+15:43:00 | INFO | tag=block8.q_proj iter=047 | J=0.054548 J_x=0.053604 J_w=0.094331 rel_change=4.174560e-05 | time=0.186s
+15:43:00 | INFO | tag=block8.q_proj iter=048 | J=0.054507 J_x=0.053564 J_w=0.094334 rel_change=4.036352e-05 | time=0.181s
+15:43:00 | INFO | tag=block8.q_proj iter=049 | J=0.054470 J_x=0.053527 J_w=0.094315 rel_change=3.733113e-05 | time=0.180s
+15:43:01 | INFO | tag=block8.q_proj iter=050 | J=0.054433 J_x=0.053490 J_w=0.094316 rel_change=3.656372e-05 | time=0.185s
+15:43:01 | INFO | tag=block8.q_proj iter=051 | J=0.054400 J_x=0.053457 J_w=0.094296 rel_change=3.319234e-05 | time=0.175s
+15:43:01 | INFO | tag=block8.q_proj iter=052 | J=0.054370 J_x=0.053427 J_w=0.094292 rel_change=3.029406e-05 | time=0.178s
+15:43:01 | INFO | tag=block8.q_proj iter=053 | J=0.054338 J_x=0.053395 J_w=0.094297 rel_change=3.203750e-05 | time=0.179s
+15:43:01 | INFO | tag=block8.q_proj iter=054 | J=0.054307 J_x=0.053364 J_w=0.094300 rel_change=3.115833e-05 | time=0.184s
+15:43:02 | INFO | tag=block8.q_proj iter=055 | J=0.054277 J_x=0.053334 J_w=0.094288 rel_change=2.980977e-05 | time=0.185s
+15:43:02 | INFO | tag=block8.q_proj iter=056 | J=0.054249 J_x=0.053306 J_w=0.094289 rel_change=2.789870e-05 | time=0.178s
+15:43:02 | INFO | tag=block8.q_proj iter=057 | J=0.054223 J_x=0.053280 J_w=0.094283 rel_change=2.624840e-05 | time=0.183s
+15:43:02 | INFO | tag=block8.q_proj iter=058 | J=0.054197 J_x=0.053254 J_w=0.094285 rel_change=2.605468e-05 | time=0.174s
+15:43:02 | INFO | tag=block8.q_proj iter=059 | J=0.054172 J_x=0.053229 J_w=0.094283 rel_change=2.436340e-05 | time=0.181s
+15:43:02 | INFO | tag=block8.q_proj iter=060 | J=0.054149 J_x=0.053206 J_w=0.094276 rel_change=2.344698e-05 | time=0.176s
+15:43:03 | INFO | tag=block8.q_proj iter=061 | J=0.054125 J_x=0.053183 J_w=0.094287 rel_change=2.336130e-05 | time=0.175s
+15:43:03 | INFO | tag=block8.q_proj iter=062 | J=0.054102 J_x=0.053160 J_w=0.094272 rel_change=2.300739e-05 | time=0.173s
+15:43:03 | INFO | tag=block8.q_proj iter=063 | J=0.054080 J_x=0.053137 J_w=0.094247 rel_change=2.259016e-05 | time=0.187s
+15:43:03 | INFO | tag=block8.q_proj iter=064 | J=0.054058 J_x=0.053115 J_w=0.094245 rel_change=2.194196e-05 | time=0.186s
+15:43:03 | INFO | tag=block8.q_proj iter=065 | J=0.054037 J_x=0.053094 J_w=0.094230 rel_change=2.112985e-05 | time=0.171s
+15:43:04 | INFO | tag=block8.q_proj iter=066 | J=0.054017 J_x=0.053075 J_w=0.094218 rel_change=1.959130e-05 | time=0.184s
+15:43:04 | INFO | tag=block8.q_proj iter=067 | J=0.053999 J_x=0.053057 J_w=0.094217 rel_change=1.844764e-05 | time=0.170s
+15:43:04 | INFO | tag=block8.q_proj iter=068 | J=0.053981 J_x=0.053039 J_w=0.094219 rel_change=1.765788e-05 | time=0.178s
+15:43:04 | INFO | tag=block8.q_proj iter=069 | J=0.053965 J_x=0.053023 J_w=0.094210 rel_change=1.591817e-05 | time=0.182s
+15:43:04 | INFO | tag=block8.q_proj iter=070 | J=0.053950 J_x=0.053008 J_w=0.094204 rel_change=1.537800e-05 | time=0.186s
+15:43:04 | INFO | tag=block8.q_proj iter=071 | J=0.053934 J_x=0.052992 J_w=0.094199 rel_change=1.550466e-05 | time=0.203s
+15:43:05 | INFO | tag=block8.q_proj iter=072 | J=0.053920 J_x=0.052978 J_w=0.094189 rel_change=1.476333e-05 | time=0.174s
+15:43:05 | INFO | tag=block8.q_proj iter=073 | J=0.053905 J_x=0.052963 J_w=0.094187 rel_change=1.469627e-05 | time=0.181s
+15:43:05 | INFO | tag=block8.q_proj iter=074 | J=0.053891 J_x=0.052949 J_w=0.094181 rel_change=1.415238e-05 | time=0.173s
+15:43:05 | INFO | tag=block8.q_proj iter=075 | J=0.053877 J_x=0.052935 J_w=0.094173 rel_change=1.366436e-05 | time=0.179s
+15:43:05 | INFO | tag=block8.q_proj iter=076 | J=0.053864 J_x=0.052923 J_w=0.094162 rel_change=1.261011e-05 | time=0.175s
+15:43:06 | INFO | tag=block8.q_proj iter=077 | J=0.053853 J_x=0.052912 J_w=0.094158 rel_change=1.101196e-05 | time=0.178s
+15:43:06 | INFO | tag=block8.q_proj iter=078 | J=0.053843 J_x=0.052901 J_w=0.094152 rel_change=1.061335e-05 | time=0.173s
+15:43:06 | INFO | tag=block8.q_proj iter=079 | J=0.053833 J_x=0.052892 J_w=0.094147 rel_change=9.719282e-06 | time=0.169s
+15:43:06 | INFO | tag=block8.q_proj 量化器在第 79 轮收敛。
+15:43:06 | INFO | 量化器拟合完成 | tag=block8.q_proj convergence_iter=79 total_fit_time=14.387s
+15:43:06 | INFO | 开始计算重建/近似误差 | layer=block8.q_proj error_mode=relative
+15:43:06 | INFO | 误差计算完成 | layer=block8.q_proj err_x=0.052847 err_w=0.096752 rel_linear_error=0.071798 elapsed=0.125s
+15:43:07 | INFO | block8.k_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.017816 std=0.586248 min=-26.437500 max=6.972656 fro=1040.184692
+15:43:07 | INFO | block8.k_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000047 std=0.057416 min=-0.777344 max=0.675293 fro=44.095657
+15:43:07 | INFO | 开始拟合量化器 | tag=block8.k_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:43:07 | INFO | tag=block8.k_proj iter=001 | J=0.183053 J_x=0.173053 J_w=1.000000 rel_change=inf | time=0.186s
+15:43:08 | INFO | tag=block8.k_proj iter=002 | J=0.121706 J_x=0.117648 J_w=0.405781 rel_change=6.134690e-02 | time=0.180s
+15:43:08 | INFO | tag=block8.k_proj iter=003 | J=0.097611 J_x=0.095698 J_w=0.191314 rel_change=2.409503e-02 | time=0.176s
+15:43:08 | INFO | tag=block8.k_proj iter=004 | J=0.085364 J_x=0.084050 J_w=0.131396 rel_change=1.224719e-02 | time=0.173s
+15:43:08 | INFO | tag=block8.k_proj iter=005 | J=0.077994 J_x=0.076893 J_w=0.110016 rel_change=7.370010e-03 | time=0.173s
+15:43:08 | INFO | tag=block8.k_proj iter=006 | J=0.073133 J_x=0.072122 J_w=0.101110 rel_change=4.860170e-03 | time=0.180s
+15:43:09 | INFO | tag=block8.k_proj iter=007 | J=0.069690 J_x=0.068721 J_w=0.096892 rel_change=3.443711e-03 | time=0.179s
+15:43:09 | INFO | tag=block8.k_proj iter=008 | J=0.067134 J_x=0.066190 J_w=0.094421 rel_change=2.555467e-03 | time=0.180s
+15:43:09 | INFO | tag=block8.k_proj iter=009 | J=0.065196 J_x=0.064266 J_w=0.093046 rel_change=1.938194e-03 | time=0.176s
+15:43:09 | INFO | tag=block8.k_proj iter=010 | J=0.063674 J_x=0.062753 J_w=0.092167 rel_change=1.521692e-03 | time=0.176s
+15:43:09 | INFO | tag=block8.k_proj iter=011 | J=0.062436 J_x=0.061520 J_w=0.091534 rel_change=1.238752e-03 | time=0.173s
+15:43:09 | INFO | tag=block8.k_proj iter=012 | J=0.061418 J_x=0.060507 J_w=0.091063 rel_change=1.017597e-03 | time=0.174s
+15:43:10 | INFO | tag=block8.k_proj iter=013 | J=0.060587 J_x=0.059680 J_w=0.090660 rel_change=8.310825e-04 | time=0.176s
+15:43:10 | INFO | tag=block8.k_proj iter=014 | J=0.059889 J_x=0.058986 J_w=0.090355 rel_change=6.975830e-04 | time=0.183s
+15:43:10 | INFO | tag=block8.k_proj iter=015 | J=0.059288 J_x=0.058386 J_w=0.090131 rel_change=6.014742e-04 | time=0.189s
+15:43:10 | INFO | tag=block8.k_proj iter=016 | J=0.058765 J_x=0.057865 J_w=0.089984 rel_change=5.229972e-04 | time=0.175s
+15:43:10 | INFO | tag=block8.k_proj iter=017 | J=0.058307 J_x=0.057409 J_w=0.089766 rel_change=4.577264e-04 | time=0.182s
+15:43:11 | INFO | tag=block8.k_proj iter=018 | J=0.057914 J_x=0.057017 J_w=0.089622 rel_change=3.935248e-04 | time=0.181s
+15:43:11 | INFO | tag=block8.k_proj iter=019 | J=0.057562 J_x=0.056666 J_w=0.089528 rel_change=3.517829e-04 | time=0.197s
+15:43:11 | INFO | tag=block8.k_proj iter=020 | J=0.057243 J_x=0.056349 J_w=0.089420 rel_change=3.187880e-04 | time=0.170s
+15:43:11 | INFO | tag=block8.k_proj iter=021 | J=0.056951 J_x=0.056057 J_w=0.089380 rel_change=2.924278e-04 | time=0.174s
+15:43:11 | INFO | tag=block8.k_proj iter=022 | J=0.056689 J_x=0.055797 J_w=0.089254 rel_change=2.612881e-04 | time=0.176s
+15:43:11 | INFO | tag=block8.k_proj iter=023 | J=0.056456 J_x=0.055564 J_w=0.089177 rel_change=2.334975e-04 | time=0.179s
+15:43:12 | INFO | tag=block8.k_proj iter=024 | J=0.056242 J_x=0.055351 J_w=0.089109 rel_change=2.140626e-04 | time=0.182s
+15:43:12 | INFO | tag=block8.k_proj iter=025 | J=0.056046 J_x=0.055156 J_w=0.089029 rel_change=1.952611e-04 | time=0.184s
+15:43:12 | INFO | tag=block8.k_proj iter=026 | J=0.055868 J_x=0.054979 J_w=0.088988 rel_change=1.779795e-04 | time=0.176s
+15:43:12 | INFO | tag=block8.k_proj iter=027 | J=0.055703 J_x=0.054814 J_w=0.088934 rel_change=1.651682e-04 | time=0.172s
+15:43:12 | INFO | tag=block8.k_proj iter=028 | J=0.055554 J_x=0.054665 J_w=0.088845 rel_change=1.496412e-04 | time=0.180s
+15:43:12 | INFO | tag=block8.k_proj iter=029 | J=0.055413 J_x=0.054525 J_w=0.088809 rel_change=1.410358e-04 | time=0.180s
+15:43:13 | INFO | tag=block8.k_proj iter=030 | J=0.055284 J_x=0.054396 J_w=0.088777 rel_change=1.286454e-04 | time=0.181s
+15:43:13 | INFO | tag=block8.k_proj iter=031 | J=0.055164 J_x=0.054277 J_w=0.088744 rel_change=1.195259e-04 | time=0.181s
+15:43:13 | INFO | tag=block8.k_proj iter=032 | J=0.055049 J_x=0.054162 J_w=0.088743 rel_change=1.150295e-04 | time=0.174s
+15:43:13 | INFO | tag=block8.k_proj iter=033 | J=0.054943 J_x=0.054056 J_w=0.088705 rel_change=1.067407e-04 | time=0.182s
+15:43:13 | INFO | tag=block8.k_proj iter=034 | J=0.054843 J_x=0.053956 J_w=0.088687 rel_change=9.977445e-05 | time=0.181s
+15:43:14 | INFO | tag=block8.k_proj iter=035 | J=0.054746 J_x=0.053859 J_w=0.088692 rel_change=9.701028e-05 | time=0.190s
+15:43:14 | INFO | tag=block8.k_proj iter=036 | J=0.054657 J_x=0.053770 J_w=0.088694 rel_change=8.929893e-05 | time=0.183s
+15:43:14 | INFO | tag=block8.k_proj iter=037 | J=0.054570 J_x=0.053683 J_w=0.088671 rel_change=8.673221e-05 | time=0.173s
+15:43:14 | INFO | tag=block8.k_proj iter=038 | J=0.054491 J_x=0.053604 J_w=0.088643 rel_change=7.921830e-05 | time=0.190s
+15:43:14 | INFO | tag=block8.k_proj iter=039 | J=0.054418 J_x=0.053532 J_w=0.088615 rel_change=7.280707e-05 | time=0.195s
+15:43:15 | INFO | tag=block8.k_proj iter=040 | J=0.054350 J_x=0.053464 J_w=0.088598 rel_change=6.742030e-05 | time=0.190s
+15:43:15 | INFO | tag=block8.k_proj iter=041 | J=0.054290 J_x=0.053404 J_w=0.088595 rel_change=6.060675e-05 | time=0.175s
+15:43:15 | INFO | tag=block8.k_proj iter=042 | J=0.054232 J_x=0.053346 J_w=0.088565 rel_change=5.775318e-05 | time=0.182s
+15:43:15 | INFO | tag=block8.k_proj iter=043 | J=0.054177 J_x=0.053292 J_w=0.088557 rel_change=5.497783e-05 | time=0.171s
+15:43:15 | INFO | tag=block8.k_proj iter=044 | J=0.054125 J_x=0.053240 J_w=0.088543 rel_change=5.171821e-05 | time=0.184s
+15:43:15 | INFO | tag=block8.k_proj iter=045 | J=0.054079 J_x=0.053194 J_w=0.088541 rel_change=4.642084e-05 | time=0.182s
+15:43:16 | INFO | tag=block8.k_proj iter=046 | J=0.054034 J_x=0.053148 J_w=0.088532 rel_change=4.513934e-05 | time=0.183s
+15:43:16 | INFO | tag=block8.k_proj iter=047 | J=0.053992 J_x=0.053107 J_w=0.088531 rel_change=4.165992e-05 | time=0.197s
+15:43:16 | INFO | tag=block8.k_proj iter=048 | J=0.053952 J_x=0.053067 J_w=0.088534 rel_change=4.016981e-05 | time=0.184s
+15:43:16 | INFO | tag=block8.k_proj iter=049 | J=0.053913 J_x=0.053027 J_w=0.088531 rel_change=3.922731e-05 | time=0.176s
+15:43:16 | INFO | tag=block8.k_proj iter=050 | J=0.053876 J_x=0.052990 J_w=0.088523 rel_change=3.721938e-05 | time=0.184s
+15:43:17 | INFO | tag=block8.k_proj iter=051 | J=0.053840 J_x=0.052955 J_w=0.088515 rel_change=3.517419e-05 | time=0.181s
+15:43:17 | INFO | tag=block8.k_proj iter=052 | J=0.053806 J_x=0.052921 J_w=0.088523 rel_change=3.428757e-05 | time=0.183s
+15:43:17 | INFO | tag=block8.k_proj iter=053 | J=0.053774 J_x=0.052889 J_w=0.088505 rel_change=3.170595e-05 | time=0.183s
+15:43:17 | INFO | tag=block8.k_proj iter=054 | J=0.053744 J_x=0.052859 J_w=0.088498 rel_change=3.029034e-05 | time=0.185s
+15:43:17 | INFO | tag=block8.k_proj iter=055 | J=0.053713 J_x=0.052828 J_w=0.088488 rel_change=3.083423e-05 | time=0.184s
+15:43:17 | INFO | tag=block8.k_proj iter=056 | J=0.053683 J_x=0.052798 J_w=0.088491 rel_change=3.046915e-05 | time=0.186s
+15:43:18 | INFO | tag=block8.k_proj iter=057 | J=0.053653 J_x=0.052768 J_w=0.088493 rel_change=2.971292e-05 | time=0.185s
+15:43:18 | INFO | tag=block8.k_proj iter=058 | J=0.053624 J_x=0.052739 J_w=0.088491 rel_change=2.907217e-05 | time=0.179s
+15:43:18 | INFO | tag=block8.k_proj iter=059 | J=0.053597 J_x=0.052712 J_w=0.088489 rel_change=2.681836e-05 | time=0.186s
+15:43:18 | INFO | tag=block8.k_proj iter=060 | J=0.053571 J_x=0.052686 J_w=0.088481 rel_change=2.627075e-05 | time=0.179s
+15:43:18 | INFO | tag=block8.k_proj iter=061 | J=0.053547 J_x=0.052662 J_w=0.088471 rel_change=2.396479e-05 | time=0.179s
+15:43:19 | INFO | tag=block8.k_proj iter=062 | J=0.053523 J_x=0.052639 J_w=0.088472 rel_change=2.357364e-05 | time=0.194s
+15:43:19 | INFO | tag=block8.k_proj iter=063 | J=0.053500 J_x=0.052615 J_w=0.088472 rel_change=2.381578e-05 | time=0.185s
+15:43:19 | INFO | tag=block8.k_proj iter=064 | J=0.053477 J_x=0.052593 J_w=0.088462 rel_change=2.216548e-05 | time=0.181s
+15:43:19 | INFO | tag=block8.k_proj iter=065 | J=0.053456 J_x=0.052571 J_w=0.088457 rel_change=2.183765e-05 | time=0.186s
+15:43:19 | INFO | tag=block8.k_proj iter=066 | J=0.053435 J_x=0.052551 J_w=0.088458 rel_change=2.043694e-05 | time=0.174s
+15:43:19 | INFO | tag=block8.k_proj iter=067 | J=0.053418 J_x=0.052533 J_w=0.088442 rel_change=1.757964e-05 | time=0.187s
+15:43:20 | INFO | tag=block8.k_proj iter=068 | J=0.053401 J_x=0.052516 J_w=0.088444 rel_change=1.685694e-05 | time=0.173s
+15:43:20 | INFO | tag=block8.k_proj iter=069 | J=0.053384 J_x=0.052499 J_w=0.088450 rel_change=1.669675e-05 | time=0.185s
+15:43:20 | INFO | tag=block8.k_proj iter=070 | J=0.053368 J_x=0.052484 J_w=0.088447 rel_change=1.566112e-05 | time=0.176s
+15:43:20 | INFO | tag=block8.k_proj iter=071 | J=0.053353 J_x=0.052469 J_w=0.088445 rel_change=1.512840e-05 | time=0.187s
+15:43:20 | INFO | tag=block8.k_proj iter=072 | J=0.053339 J_x=0.052454 J_w=0.088443 rel_change=1.433492e-05 | time=0.179s
+15:43:21 | INFO | tag=block8.k_proj iter=073 | J=0.053324 J_x=0.052440 J_w=0.088444 rel_change=1.466274e-05 | time=0.177s
+15:43:21 | INFO | tag=block8.k_proj iter=074 | J=0.053310 J_x=0.052426 J_w=0.088441 rel_change=1.425669e-05 | time=0.176s
+15:43:21 | INFO | tag=block8.k_proj iter=075 | J=0.053297 J_x=0.052412 J_w=0.088446 rel_change=1.330674e-05 | time=0.177s
+15:43:21 | INFO | tag=block8.k_proj iter=076 | J=0.053284 J_x=0.052399 J_w=0.088444 rel_change=1.299381e-05 | time=0.180s
+15:43:21 | INFO | tag=block8.k_proj iter=077 | J=0.053270 J_x=0.052386 J_w=0.088445 rel_change=1.315027e-05 | time=0.185s
+15:43:21 | INFO | tag=block8.k_proj iter=078 | J=0.053258 J_x=0.052373 J_w=0.088446 rel_change=1.275167e-05 | time=0.186s
+15:43:22 | INFO | tag=block8.k_proj iter=079 | J=0.053246 J_x=0.052361 J_w=0.088442 rel_change=1.218915e-05 | time=0.183s
+15:43:22 | INFO | tag=block8.k_proj iter=080 | J=0.053234 J_x=0.052350 J_w=0.088437 rel_change=1.151115e-05 | time=0.189s
+15:43:22 | INFO | 量化器拟合完成 | tag=block8.k_proj convergence_iter=80 total_fit_time=14.600s
+15:43:22 | INFO | 开始计算重建/近似误差 | layer=block8.k_proj error_mode=relative
+15:43:22 | INFO | 误差计算完成 | layer=block8.k_proj err_x=0.052307 err_w=0.087449 rel_linear_error=0.048502 elapsed=0.123s
+15:43:23 | INFO | block8.v_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.017816 std=0.586248 min=-26.437500 max=6.972656 fro=1040.184692
+15:43:23 | INFO | block8.v_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000025 std=0.022838 min=-0.272949 max=0.210815 fro=17.539980
+15:43:23 | INFO | 开始拟合量化器 | tag=block8.v_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:43:23 | INFO | tag=block8.v_proj iter=001 | J=0.182690 J_x=0.172690 J_w=1.000000 rel_change=inf | time=0.203s
+15:43:24 | INFO | tag=block8.v_proj iter=002 | J=0.121289 J_x=0.117302 J_w=0.398772 rel_change=6.140106e-02 | time=0.165s
+15:43:24 | INFO | tag=block8.v_proj iter=003 | J=0.097451 J_x=0.095586 J_w=0.186512 rel_change=2.383801e-02 | time=0.170s
+15:43:24 | INFO | tag=block8.v_proj iter=004 | J=0.085315 J_x=0.084036 J_w=0.127906 rel_change=1.213656e-02 | time=0.177s
+15:43:24 | INFO | tag=block8.v_proj iter=005 | J=0.077993 J_x=0.076924 J_w=0.106931 rel_change=7.321708e-03 | time=0.171s
+15:43:24 | INFO | tag=block8.v_proj iter=006 | J=0.073145 J_x=0.072167 J_w=0.097766 rel_change=4.848495e-03 | time=0.175s
+15:43:24 | INFO | tag=block8.v_proj iter=007 | J=0.069711 J_x=0.068779 J_w=0.093189 rel_change=3.433809e-03 | time=0.172s
+15:43:25 | INFO | tag=block8.v_proj iter=008 | J=0.067147 J_x=0.066239 J_w=0.090828 rel_change=2.563752e-03 | time=0.172s
+15:43:25 | INFO | tag=block8.v_proj iter=009 | J=0.065161 J_x=0.064269 J_w=0.089209 rel_change=1.986340e-03 | time=0.172s
+15:43:25 | INFO | tag=block8.v_proj iter=010 | J=0.063604 J_x=0.062724 J_w=0.088003 rel_change=1.556762e-03 | time=0.171s
+15:43:25 | INFO | tag=block8.v_proj iter=011 | J=0.062349 J_x=0.061478 J_w=0.087164 rel_change=1.254730e-03 | time=0.167s
+15:43:25 | INFO | tag=block8.v_proj iter=012 | J=0.061319 J_x=0.060453 J_w=0.086576 rel_change=1.030181e-03 | time=0.174s
+15:43:25 | INFO | tag=block8.v_proj iter=013 | J=0.060471 J_x=0.059610 J_w=0.086118 rel_change=8.481778e-04 | time=0.171s
+15:43:26 | INFO | tag=block8.v_proj iter=014 | J=0.059764 J_x=0.058907 J_w=0.085691 rel_change=7.068999e-04 | time=0.175s
+15:43:26 | INFO | tag=block8.v_proj iter=015 | J=0.059160 J_x=0.058306 J_w=0.085385 rel_change=6.042719e-04 | time=0.167s
+15:43:26 | INFO | tag=block8.v_proj iter=016 | J=0.058630 J_x=0.057778 J_w=0.085160 rel_change=5.296171e-04 | time=0.171s
+15:43:26 | INFO | tag=block8.v_proj iter=017 | J=0.058165 J_x=0.057316 J_w=0.084930 rel_change=4.649274e-04 | time=0.172s
+15:43:26 | INFO | tag=block8.v_proj iter=018 | J=0.057753 J_x=0.056905 J_w=0.084753 rel_change=4.124418e-04 | time=0.166s
+15:43:26 | INFO | tag=block8.v_proj iter=019 | J=0.057394 J_x=0.056548 J_w=0.084580 rel_change=3.588088e-04 | time=0.169s
+15:43:27 | INFO | tag=block8.v_proj iter=020 | J=0.057082 J_x=0.056238 J_w=0.084426 rel_change=3.117062e-04 | time=0.168s
+15:43:27 | INFO | tag=block8.v_proj iter=021 | J=0.056806 J_x=0.055963 J_w=0.084314 rel_change=2.758466e-04 | time=0.227s
+15:43:27 | INFO | tag=block8.v_proj iter=022 | J=0.056559 J_x=0.055716 J_w=0.084281 rel_change=2.475902e-04 | time=0.205s
+15:43:27 | INFO | tag=block8.v_proj iter=023 | J=0.056336 J_x=0.055494 J_w=0.084198 rel_change=2.222843e-04 | time=0.190s
+15:43:27 | INFO | tag=block8.v_proj iter=024 | J=0.056129 J_x=0.055287 J_w=0.084171 rel_change=2.074540e-04 | time=0.181s
+15:43:28 | INFO | tag=block8.v_proj iter=025 | J=0.055942 J_x=0.055101 J_w=0.084096 rel_change=1.866333e-04 | time=0.180s
+15:43:28 | INFO | tag=block8.v_proj iter=026 | J=0.055771 J_x=0.054930 J_w=0.084078 rel_change=1.716055e-04 | time=0.173s
+15:43:28 | INFO | tag=block8.v_proj iter=027 | J=0.055615 J_x=0.054775 J_w=0.084023 rel_change=1.555756e-04 | time=0.181s
+15:43:28 | INFO | tag=block8.v_proj iter=028 | J=0.055466 J_x=0.054627 J_w=0.083992 rel_change=1.487136e-04 | time=0.169s
+15:43:28 | INFO | tag=block8.v_proj iter=029 | J=0.055330 J_x=0.054491 J_w=0.083962 rel_change=1.359880e-04 | time=0.190s
+15:43:29 | INFO | tag=block8.v_proj iter=030 | J=0.055201 J_x=0.054361 J_w=0.083922 rel_change=1.297593e-04 | time=0.167s
+15:43:29 | INFO | tag=block8.v_proj iter=031 | J=0.055080 J_x=0.054242 J_w=0.083869 rel_change=1.202598e-04 | time=0.170s
+15:43:29 | INFO | tag=block8.v_proj iter=032 | J=0.054971 J_x=0.054132 J_w=0.083819 rel_change=1.097806e-04 | time=0.172s
+15:43:29 | INFO | tag=block8.v_proj iter=033 | J=0.054868 J_x=0.054030 J_w=0.083767 rel_change=1.031421e-04 | time=0.164s
+15:43:29 | INFO | tag=block8.v_proj iter=034 | J=0.054775 J_x=0.053938 J_w=0.083719 rel_change=9.214506e-05 | time=0.177s
+15:43:29 | INFO | tag=block8.v_proj iter=035 | J=0.054689 J_x=0.053852 J_w=0.083693 rel_change=8.599460e-05 | time=0.178s
+15:43:30 | INFO | tag=block8.v_proj iter=036 | J=0.054609 J_x=0.053772 J_w=0.083663 rel_change=8.069351e-05 | time=0.177s
+15:43:30 | INFO | tag=block8.v_proj iter=037 | J=0.054534 J_x=0.053697 J_w=0.083658 rel_change=7.490069e-05 | time=0.172s
+15:43:30 | INFO | tag=block8.v_proj iter=038 | J=0.054462 J_x=0.053626 J_w=0.083641 rel_change=7.129461e-05 | time=0.172s
+15:43:30 | INFO | tag=block8.v_proj iter=039 | J=0.054396 J_x=0.053559 J_w=0.083637 rel_change=6.692111e-05 | time=0.186s
+15:43:30 | INFO | tag=block8.v_proj iter=040 | J=0.054332 J_x=0.053495 J_w=0.083620 rel_change=6.394461e-05 | time=0.167s
+15:43:30 | INFO | tag=block8.v_proj iter=041 | J=0.054270 J_x=0.053434 J_w=0.083598 rel_change=6.114691e-05 | time=0.182s
+15:43:31 | INFO | tag=block8.v_proj iter=042 | J=0.054214 J_x=0.053378 J_w=0.083573 rel_change=5.630031e-05 | time=0.176s
+15:43:31 | INFO | tag=block8.v_proj iter=043 | J=0.054163 J_x=0.053327 J_w=0.083545 rel_change=5.134195e-05 | time=0.175s
+15:43:31 | INFO | tag=block8.v_proj iter=044 | J=0.054115 J_x=0.053280 J_w=0.083536 rel_change=4.767254e-05 | time=0.178s
+15:43:31 | INFO | tag=block8.v_proj iter=045 | J=0.054068 J_x=0.053233 J_w=0.083531 rel_change=4.720315e-05 | time=0.170s
+15:43:31 | INFO | tag=block8.v_proj iter=046 | J=0.054022 J_x=0.053186 J_w=0.083544 rel_change=4.628301e-05 | time=0.176s
+15:43:31 | INFO | tag=block8.v_proj iter=047 | J=0.053977 J_x=0.053142 J_w=0.083539 rel_change=4.417822e-05 | time=0.177s
+15:43:32 | INFO | tag=block8.v_proj iter=048 | J=0.053933 J_x=0.053098 J_w=0.083530 rel_change=4.410371e-05 | time=0.170s
+15:43:32 | INFO | tag=block8.v_proj iter=049 | J=0.053893 J_x=0.053058 J_w=0.083519 rel_change=4.001707e-05 | time=0.177s
+15:43:32 | INFO | tag=block8.v_proj iter=050 | J=0.053856 J_x=0.053021 J_w=0.083505 rel_change=3.755465e-05 | time=0.174s
+15:43:32 | INFO | tag=block8.v_proj iter=051 | J=0.053820 J_x=0.052985 J_w=0.083484 rel_change=3.562123e-05 | time=0.177s
+15:43:32 | INFO | tag=block8.v_proj iter=052 | J=0.053788 J_x=0.052954 J_w=0.083460 rel_change=3.193319e-05 | time=0.180s
+15:43:33 | INFO | tag=block8.v_proj iter=053 | J=0.053757 J_x=0.052923 J_w=0.083452 rel_change=3.120303e-05 | time=0.174s
+15:43:33 | INFO | tag=block8.v_proj iter=054 | J=0.053727 J_x=0.052893 J_w=0.083442 rel_change=2.980977e-05 | time=0.193s
+15:43:33 | INFO | tag=block8.v_proj iter=055 | J=0.053699 J_x=0.052864 J_w=0.083445 rel_change=2.842769e-05 | time=0.172s
+15:43:33 | INFO | tag=block8.v_proj iter=056 | J=0.053672 J_x=0.052838 J_w=0.083434 rel_change=2.644584e-05 | time=0.175s
+15:43:33 | INFO | tag=block8.v_proj iter=057 | J=0.053647 J_x=0.052812 J_w=0.083431 rel_change=2.573058e-05 | time=0.171s
+15:43:33 | INFO | tag=block8.v_proj iter=058 | J=0.053622 J_x=0.052788 J_w=0.083412 rel_change=2.455339e-05 | time=0.169s
+15:43:34 | INFO | tag=block8.v_proj iter=059 | J=0.053598 J_x=0.052764 J_w=0.083413 rel_change=2.359226e-05 | time=0.172s
+15:43:34 | INFO | tag=block8.v_proj iter=060 | J=0.053576 J_x=0.052742 J_w=0.083408 rel_change=2.260879e-05 | time=0.165s
+15:43:34 | INFO | tag=block8.v_proj iter=061 | J=0.053556 J_x=0.052722 J_w=0.083407 rel_change=1.978874e-05 | time=0.171s
+15:43:34 | INFO | tag=block8.v_proj iter=062 | J=0.053535 J_x=0.052701 J_w=0.083406 rel_change=2.085418e-05 | time=0.183s
+15:43:34 | INFO | tag=block8.v_proj iter=063 | J=0.053515 J_x=0.052681 J_w=0.083407 rel_change=2.024323e-05 | time=0.163s
+15:43:34 | INFO | tag=block8.v_proj iter=064 | J=0.053495 J_x=0.052661 J_w=0.083409 rel_change=2.022088e-05 | time=0.182s
+15:43:35 | INFO | tag=block8.v_proj iter=065 | J=0.053474 J_x=0.052640 J_w=0.083418 rel_change=2.040341e-05 | time=0.169s
+15:43:35 | INFO | tag=block8.v_proj iter=066 | J=0.053455 J_x=0.052621 J_w=0.083414 rel_change=1.941249e-05 | time=0.171s
+15:43:35 | INFO | tag=block8.v_proj iter=067 | J=0.053437 J_x=0.052602 J_w=0.083408 rel_change=1.842156e-05 | time=0.167s
+15:43:35 | INFO | tag=block8.v_proj iter=068 | J=0.053419 J_x=0.052585 J_w=0.083403 rel_change=1.721829e-05 | time=0.175s
+15:43:35 | INFO | tag=block8.v_proj iter=069 | J=0.053403 J_x=0.052569 J_w=0.083394 rel_change=1.668558e-05 | time=0.187s
+15:43:35 | INFO | tag=block8.v_proj iter=070 | J=0.053387 J_x=0.052553 J_w=0.083393 rel_change=1.593679e-05 | time=0.170s
+15:43:36 | INFO | tag=block8.v_proj iter=071 | J=0.053371 J_x=0.052537 J_w=0.083387 rel_change=1.544505e-05 | time=0.170s
+15:43:36 | INFO | tag=block8.v_proj iter=072 | J=0.053358 J_x=0.052524 J_w=0.083380 rel_change=1.372769e-05 | time=0.167s
+15:43:36 | INFO | tag=block8.v_proj iter=073 | J=0.053344 J_x=0.052510 J_w=0.083376 rel_change=1.379102e-05 | time=0.167s
+15:43:36 | INFO | tag=block8.v_proj iter=074 | J=0.053330 J_x=0.052496 J_w=0.083371 rel_change=1.410767e-05 | time=0.167s
+15:43:36 | INFO | tag=block8.v_proj iter=075 | J=0.053316 J_x=0.052482 J_w=0.083374 rel_change=1.412630e-05 | time=0.168s
+15:43:37 | INFO | tag=block8.v_proj iter=076 | J=0.053301 J_x=0.052467 J_w=0.083385 rel_change=1.487136e-05 | time=0.173s
+15:43:37 | INFO | tag=block8.v_proj iter=077 | J=0.053286 J_x=0.052452 J_w=0.083387 rel_change=1.467764e-05 | time=0.182s
+15:43:37 | INFO | tag=block8.v_proj iter=078 | J=0.053272 J_x=0.052438 J_w=0.083379 rel_change=1.366809e-05 | time=0.177s
+15:43:37 | INFO | tag=block8.v_proj iter=079 | J=0.053259 J_x=0.052425 J_w=0.083367 rel_change=1.323223e-05 | time=0.171s
+15:43:37 | INFO | tag=block8.v_proj iter=080 | J=0.053246 J_x=0.052413 J_w=0.083361 rel_change=1.273304e-05 | time=0.164s
+15:43:37 | INFO | 量化器拟合完成 | tag=block8.v_proj convergence_iter=80 total_fit_time=14.050s
+15:43:37 | INFO | 开始计算重建/近似误差 | layer=block8.v_proj error_mode=relative
+15:43:37 | INFO | 误差计算完成 | layer=block8.v_proj err_x=0.052371 err_w=0.082731 rel_linear_error=0.173683 elapsed=0.127s
+15:43:39 | INFO | block8.out_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=0.000046 std=0.090946 min=-1.322266 max=1.240234 fro=161.277512
+15:43:39 | INFO | block8.out_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000015 std=0.020283 min=-0.294922 max=0.296387 fro=15.577361
+15:43:39 | INFO | 开始拟合量化器 | tag=block8.out_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:43:39 | INFO | tag=block8.out_proj iter=001 | J=1.005361 J_x=0.995361 J_w=1.000000 rel_change=inf | time=0.167s
+15:43:39 | INFO | tag=block8.out_proj iter=002 | J=0.403518 J_x=0.396283 J_w=0.723510 rel_change=5.986336e-01 | time=0.167s
+15:43:39 | INFO | tag=block8.out_proj iter=003 | J=0.192713 J_x=0.189800 J_w=0.291313 rel_change=2.108048e-01 | time=0.160s
+15:43:39 | INFO | tag=block8.out_proj iter=004 | J=0.132483 J_x=0.130720 J_w=0.176355 rel_change=6.022997e-02 | time=0.175s
+15:43:39 | INFO | tag=block8.out_proj iter=005 | J=0.108752 J_x=0.107375 J_w=0.137649 rel_change=2.373181e-02 | time=0.174s
+15:43:40 | INFO | tag=block8.out_proj iter=006 | J=0.096815 J_x=0.095619 J_w=0.119633 rel_change=1.193632e-02 | time=0.184s
+15:43:40 | INFO | tag=block8.out_proj iter=007 | J=0.089805 J_x=0.088703 J_w=0.110190 rel_change=7.009894e-03 | time=0.185s
+15:43:40 | INFO | tag=block8.out_proj iter=008 | J=0.085157 J_x=0.084108 J_w=0.104831 rel_change=4.648663e-03 | time=0.179s
+15:43:40 | INFO | tag=block8.out_proj iter=009 | J=0.081894 J_x=0.080878 J_w=0.101592 rel_change=3.262870e-03 | time=0.182s
+15:43:40 | INFO | tag=block8.out_proj iter=010 | J=0.079464 J_x=0.078470 J_w=0.099414 rel_change=2.429485e-03 | time=0.165s
+15:43:40 | INFO | tag=block8.out_proj iter=011 | J=0.077558 J_x=0.076580 J_w=0.097806 rel_change=1.906253e-03 | time=0.169s
+15:43:41 | INFO | tag=block8.out_proj iter=012 | J=0.076002 J_x=0.075035 J_w=0.096694 rel_change=1.555808e-03 | time=0.240s
+15:43:41 | INFO | tag=block8.out_proj iter=013 | J=0.074741 J_x=0.073783 J_w=0.095760 rel_change=1.261562e-03 | time=0.290s
+15:43:41 | INFO | tag=block8.out_proj iter=014 | J=0.073693 J_x=0.072742 J_w=0.095129 rel_change=1.047358e-03 | time=0.295s
+15:43:42 | INFO | tag=block8.out_proj iter=015 | J=0.072802 J_x=0.071856 J_w=0.094638 rel_change=8.911714e-04 | time=0.321s
+15:43:42 | INFO | tag=block8.out_proj iter=016 | J=0.072045 J_x=0.071103 J_w=0.094186 rel_change=7.571578e-04 | time=0.323s
+15:43:42 | INFO | tag=block8.out_proj iter=017 | J=0.071401 J_x=0.070463 J_w=0.093755 rel_change=6.441996e-04 | time=0.335s
+15:43:43 | INFO | tag=block8.out_proj iter=018 | J=0.070840 J_x=0.069906 J_w=0.093446 rel_change=5.604625e-04 | time=0.322s
+15:43:43 | INFO | tag=block8.out_proj iter=019 | J=0.070351 J_x=0.069420 J_w=0.093134 rel_change=4.893616e-04 | time=0.346s
+15:43:43 | INFO | tag=block8.out_proj iter=020 | J=0.069917 J_x=0.068989 J_w=0.092868 rel_change=4.337206e-04 | time=0.315s
+15:43:44 | INFO | tag=block8.out_proj iter=021 | J=0.069536 J_x=0.068610 J_w=0.092596 rel_change=3.816411e-04 | time=0.354s
+15:43:44 | INFO | tag=block8.out_proj iter=022 | J=0.069190 J_x=0.068266 J_w=0.092422 rel_change=3.452301e-04 | time=0.413s
+15:43:44 | INFO | tag=block8.out_proj iter=023 | J=0.068886 J_x=0.067963 J_w=0.092207 rel_change=3.049001e-04 | time=0.351s
+15:43:45 | INFO | tag=block8.out_proj iter=024 | J=0.068613 J_x=0.067691 J_w=0.092130 rel_change=2.729818e-04 | time=0.335s
+15:43:45 | INFO | tag=block8.out_proj iter=025 | J=0.068362 J_x=0.067442 J_w=0.091992 rel_change=2.504215e-04 | time=0.349s
+15:43:45 | INFO | tag=block8.out_proj iter=026 | J=0.068135 J_x=0.067216 J_w=0.091844 rel_change=2.271831e-04 | time=0.309s
+15:43:46 | INFO | tag=block8.out_proj iter=027 | J=0.067929 J_x=0.067012 J_w=0.091742 rel_change=2.057850e-04 | time=0.313s
+15:43:46 | INFO | tag=block8.out_proj iter=028 | J=0.067741 J_x=0.066824 J_w=0.091674 rel_change=1.879930e-04 | time=0.316s
+15:43:46 | INFO | tag=block8.out_proj iter=029 | J=0.067562 J_x=0.066646 J_w=0.091571 rel_change=1.789480e-04 | time=0.348s
+15:43:47 | INFO | tag=block8.out_proj iter=030 | J=0.067401 J_x=0.066486 J_w=0.091497 rel_change=1.616403e-04 | time=0.336s
+15:43:47 | INFO | tag=block8.out_proj iter=031 | J=0.067252 J_x=0.066337 J_w=0.091441 rel_change=1.488626e-04 | time=0.321s
+15:43:47 | INFO | tag=block8.out_proj iter=032 | J=0.067112 J_x=0.066199 J_w=0.091359 rel_change=1.392588e-04 | time=0.301s
+15:43:48 | INFO | tag=block8.out_proj iter=033 | J=0.066979 J_x=0.066066 J_w=0.091338 rel_change=1.334473e-04 | time=0.296s
+15:43:48 | INFO | tag=block8.out_proj iter=034 | J=0.066856 J_x=0.065943 J_w=0.091310 rel_change=1.230910e-04 | time=0.284s
+15:43:48 | INFO | tag=block8.out_proj iter=035 | J=0.066743 J_x=0.065830 J_w=0.091244 rel_change=1.131147e-04 | time=0.282s
+15:43:48 | INFO | tag=block8.out_proj iter=036 | J=0.066634 J_x=0.065722 J_w=0.091236 rel_change=1.085550e-04 | time=0.288s
+15:43:49 | INFO | tag=block8.out_proj iter=037 | J=0.066536 J_x=0.065624 J_w=0.091211 rel_change=9.839982e-05 | time=0.291s
+15:43:49 | INFO | tag=block8.out_proj iter=038 | J=0.066445 J_x=0.065533 J_w=0.091169 rel_change=9.093434e-05 | time=0.294s
+15:43:49 | INFO | tag=block8.out_proj iter=039 | J=0.066359 J_x=0.065447 J_w=0.091150 rel_change=8.605421e-05 | time=0.293s
+15:43:50 | INFO | tag=block8.out_proj iter=040 | J=0.066276 J_x=0.065365 J_w=0.091111 rel_change=8.274615e-05 | time=0.295s
+15:43:50 | INFO | tag=block8.out_proj iter=041 | J=0.066197 J_x=0.065286 J_w=0.091093 rel_change=7.940829e-05 | time=0.311s
+15:43:50 | INFO | tag=block8.out_proj iter=042 | J=0.066123 J_x=0.065213 J_w=0.091065 rel_change=7.343292e-05 | time=0.308s
+15:43:51 | INFO | tag=block8.out_proj iter=043 | J=0.066054 J_x=0.065144 J_w=0.091041 rel_change=6.885082e-05 | time=0.355s
+15:43:51 | INFO | tag=block8.out_proj iter=044 | J=0.065986 J_x=0.065076 J_w=0.091024 rel_change=6.816536e-05 | time=0.321s
+15:43:51 | INFO | tag=block8.out_proj iter=045 | J=0.065920 J_x=0.065010 J_w=0.090988 rel_change=6.594509e-05 | time=0.409s
+15:43:52 | INFO | tag=block8.out_proj iter=046 | J=0.065858 J_x=0.064948 J_w=0.090969 rel_change=6.237626e-05 | time=0.235s
+15:43:52 | INFO | tag=block8.out_proj iter=047 | J=0.065798 J_x=0.064888 J_w=0.090927 rel_change=6.017089e-05 | time=0.198s
+15:43:52 | INFO | tag=block8.out_proj iter=048 | J=0.065740 J_x=0.064831 J_w=0.090906 rel_change=5.806237e-05 | time=0.203s
+15:43:52 | INFO | tag=block8.out_proj iter=049 | J=0.065688 J_x=0.064779 J_w=0.090866 rel_change=5.163997e-05 | time=0.313s
+15:43:53 | INFO | tag=block8.out_proj iter=050 | J=0.065640 J_x=0.064732 J_w=0.090849 rel_change=4.757196e-05 | time=0.311s
+15:43:53 | INFO | tag=block8.out_proj iter=051 | J=0.065596 J_x=0.064688 J_w=0.090834 rel_change=4.441291e-05 | time=0.307s
+15:43:53 | INFO | tag=block8.out_proj iter=052 | J=0.065554 J_x=0.064646 J_w=0.090794 rel_change=4.200637e-05 | time=0.308s
+15:43:54 | INFO | tag=block8.out_proj iter=053 | J=0.065514 J_x=0.064606 J_w=0.090796 rel_change=3.971905e-05 | time=0.311s
+15:43:54 | INFO | tag=block8.out_proj iter=054 | J=0.065477 J_x=0.064569 J_w=0.090796 rel_change=3.736466e-05 | time=0.308s
+15:43:54 | INFO | tag=block8.out_proj iter=055 | J=0.065442 J_x=0.064534 J_w=0.090781 rel_change=3.529340e-05 | time=0.318s
+15:43:54 | INFO | tag=block8.out_proj iter=056 | J=0.065408 J_x=0.064500 J_w=0.090780 rel_change=3.355742e-05 | time=0.297s
+15:43:55 | INFO | tag=block8.out_proj iter=057 | J=0.065379 J_x=0.064471 J_w=0.090757 rel_change=2.951175e-05 | time=0.320s
+15:43:55 | INFO | tag=block8.out_proj iter=058 | J=0.065350 J_x=0.064442 J_w=0.090777 rel_change=2.886355e-05 | time=0.304s
+15:43:55 | INFO | tag=block8.out_proj iter=059 | J=0.065323 J_x=0.064415 J_w=0.090768 rel_change=2.720207e-05 | time=0.310s
+15:43:56 | INFO | tag=block8.out_proj iter=060 | J=0.065296 J_x=0.064388 J_w=0.090769 rel_change=2.690405e-05 | time=0.303s
+15:43:56 | INFO | tag=block8.out_proj iter=061 | J=0.065269 J_x=0.064362 J_w=0.090756 rel_change=2.656877e-05 | time=0.297s
+15:43:56 | INFO | tag=block8.out_proj iter=062 | J=0.065244 J_x=0.064336 J_w=0.090743 rel_change=2.533942e-05 | time=0.306s
+15:43:57 | INFO | tag=block8.out_proj iter=063 | J=0.065220 J_x=0.064313 J_w=0.090743 rel_change=2.373755e-05 | time=0.300s
+15:43:57 | INFO | tag=block8.out_proj iter=064 | J=0.065197 J_x=0.064290 J_w=0.090745 rel_change=2.259761e-05 | time=0.298s
+15:43:57 | INFO | tag=block8.out_proj iter=065 | J=0.065175 J_x=0.064268 J_w=0.090735 rel_change=2.234429e-05 | time=0.283s
+15:43:57 | INFO | tag=block8.out_proj iter=066 | J=0.065154 J_x=0.064247 J_w=0.090708 rel_change=2.086163e-05 | time=0.294s
+15:43:58 | INFO | tag=block8.out_proj iter=067 | J=0.065135 J_x=0.064228 J_w=0.090688 rel_change=1.962483e-05 | time=0.308s
+15:43:58 | INFO | tag=block8.out_proj iter=068 | J=0.065116 J_x=0.064209 J_w=0.090679 rel_change=1.853704e-05 | time=0.304s
+15:43:58 | INFO | tag=block8.out_proj iter=069 | J=0.065099 J_x=0.064192 J_w=0.090683 rel_change=1.744926e-05 | time=0.284s
+15:43:59 | INFO | tag=block8.out_proj iter=070 | J=0.065081 J_x=0.064174 J_w=0.090671 rel_change=1.746416e-05 | time=0.289s
+15:43:59 | INFO | tag=block8.out_proj iter=071 | J=0.065063 J_x=0.064157 J_w=0.090664 rel_change=1.763552e-05 | time=0.312s
+15:43:59 | INFO | tag=block8.out_proj iter=072 | J=0.065046 J_x=0.064139 J_w=0.090650 rel_change=1.760572e-05 | time=0.300s
+15:44:00 | INFO | tag=block8.out_proj iter=073 | J=0.065029 J_x=0.064123 J_w=0.090641 rel_change=1.658499e-05 | time=0.303s
+15:44:00 | INFO | tag=block8.out_proj iter=074 | J=0.065014 J_x=0.064108 J_w=0.090636 rel_change=1.487136e-05 | time=0.308s
+15:44:00 | INFO | tag=block8.out_proj iter=075 | J=0.064999 J_x=0.064093 J_w=0.090640 rel_change=1.536310e-05 | time=0.304s
+15:44:01 | INFO | tag=block8.out_proj iter=076 | J=0.064985 J_x=0.064078 J_w=0.090629 rel_change=1.449138e-05 | time=0.309s
+15:44:01 | INFO | tag=block8.out_proj iter=077 | J=0.064970 J_x=0.064064 J_w=0.090628 rel_change=1.412630e-05 | time=0.299s
+15:44:01 | INFO | tag=block8.out_proj iter=078 | J=0.064957 J_x=0.064050 J_w=0.090635 rel_change=1.367182e-05 | time=0.305s
+15:44:01 | INFO | tag=block8.out_proj iter=079 | J=0.064944 J_x=0.064038 J_w=0.090621 rel_change=1.283735e-05 | time=0.284s
+15:44:02 | INFO | tag=block8.out_proj iter=080 | J=0.064932 J_x=0.064026 J_w=0.090602 rel_change=1.231581e-05 | time=0.297s
+15:44:02 | INFO | 量化器拟合完成 | tag=block8.out_proj convergence_iter=80 total_fit_time=23.160s
+15:44:02 | INFO | 开始计算重建/近似误差 | layer=block8.out_proj error_mode=relative
+15:44:02 | INFO | 误差计算完成 | layer=block8.out_proj err_x=0.059419 err_w=0.084491 rel_linear_error=0.160218 elapsed=0.201s
+15:44:04 | INFO | block9.q_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.022928 std=0.574282 min=-26.312500 max=5.914062 fro=1019.310608
+15:44:04 | INFO | block9.q_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000229 std=0.060512 min=-0.515137 max=0.583008 fro=46.473362
+15:44:04 | INFO | 开始拟合量化器 | tag=block9.q_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:44:04 | INFO | tag=block9.q_proj iter=001 | J=0.189454 J_x=0.179454 J_w=1.000000 rel_change=inf | time=0.285s
+15:44:05 | INFO | tag=block9.q_proj iter=002 | J=0.125146 J_x=0.121093 J_w=0.405311 rel_change=6.430800e-02 | time=0.295s
+15:44:05 | INFO | tag=block9.q_proj iter=003 | J=0.100327 J_x=0.098440 J_w=0.188670 rel_change=2.481935e-02 | time=0.336s
+15:44:05 | INFO | tag=block9.q_proj iter=004 | J=0.087749 J_x=0.086455 J_w=0.129408 rel_change=1.257792e-02 | time=0.308s
+15:44:05 | INFO | tag=block9.q_proj iter=005 | J=0.080199 J_x=0.079116 J_w=0.108268 rel_change=7.550523e-03 | time=0.311s
+15:44:06 | INFO | tag=block9.q_proj iter=006 | J=0.075200 J_x=0.074206 J_w=0.099436 rel_change=4.998699e-03 | time=0.309s
+15:44:06 | INFO | tag=block9.q_proj iter=007 | J=0.071676 J_x=0.070724 J_w=0.095160 rel_change=3.523849e-03 | time=0.294s
+15:44:06 | INFO | tag=block9.q_proj iter=008 | J=0.069054 J_x=0.068126 J_w=0.092753 rel_change=2.622209e-03 | time=0.301s
+15:44:07 | INFO | tag=block9.q_proj iter=009 | J=0.067040 J_x=0.066127 J_w=0.091255 rel_change=2.014264e-03 | time=0.305s
+15:44:07 | INFO | tag=block9.q_proj iter=010 | J=0.065458 J_x=0.064555 J_w=0.090313 rel_change=1.581505e-03 | time=0.284s
+15:44:07 | INFO | tag=block9.q_proj iter=011 | J=0.064170 J_x=0.063273 J_w=0.089708 rel_change=1.287840e-03 | time=0.299s
+15:44:08 | INFO | tag=block9.q_proj iter=012 | J=0.063102 J_x=0.062211 J_w=0.089186 rel_change=1.067825e-03 | time=0.323s
+15:44:08 | INFO | tag=block9.q_proj iter=013 | J=0.062214 J_x=0.061327 J_w=0.088717 rel_change=8.881092e-04 | time=0.286s
+15:44:08 | INFO | tag=block9.q_proj iter=014 | J=0.061472 J_x=0.060588 J_w=0.088414 rel_change=7.424317e-04 | time=0.289s
+15:44:08 | INFO | tag=block9.q_proj iter=015 | J=0.060846 J_x=0.059964 J_w=0.088155 rel_change=6.263591e-04 | time=0.289s
+15:44:09 | INFO | tag=block9.q_proj iter=016 | J=0.060301 J_x=0.059422 J_w=0.087913 rel_change=5.441643e-04 | time=0.282s
+15:44:09 | INFO | tag=block9.q_proj iter=017 | J=0.059831 J_x=0.058953 J_w=0.087742 rel_change=4.707985e-04 | time=0.276s
+15:44:09 | INFO | tag=block9.q_proj iter=018 | J=0.059413 J_x=0.058536 J_w=0.087636 rel_change=4.177727e-04 | time=0.286s
+15:44:10 | INFO | tag=block9.q_proj iter=019 | J=0.059044 J_x=0.058169 J_w=0.087471 rel_change=3.686212e-04 | time=0.292s
+15:44:10 | INFO | tag=block9.q_proj iter=020 | J=0.058722 J_x=0.057848 J_w=0.087349 rel_change=3.225245e-04 | time=0.301s
+15:44:10 | INFO | tag=block9.q_proj iter=021 | J=0.058430 J_x=0.057558 J_w=0.087237 rel_change=2.913140e-04 | time=0.313s
+15:44:10 | INFO | tag=block9.q_proj iter=022 | J=0.058173 J_x=0.057302 J_w=0.087153 rel_change=2.570264e-04 | time=0.280s
+15:44:11 | INFO | tag=block9.q_proj iter=023 | J=0.057947 J_x=0.057076 J_w=0.087098 rel_change=2.260394e-04 | time=0.294s
+15:44:11 | INFO | tag=block9.q_proj iter=024 | J=0.057742 J_x=0.056872 J_w=0.087027 rel_change=2.049170e-04 | time=0.291s
+15:44:11 | INFO | tag=block9.q_proj iter=025 | J=0.057551 J_x=0.056681 J_w=0.087015 rel_change=1.909696e-04 | time=0.299s
+15:44:12 | INFO | tag=block9.q_proj iter=026 | J=0.057372 J_x=0.056503 J_w=0.086958 rel_change=1.788847e-04 | time=0.284s
+15:44:12 | INFO | tag=block9.q_proj iter=027 | J=0.057210 J_x=0.056341 J_w=0.086922 rel_change=1.620464e-04 | time=0.297s
+15:44:12 | INFO | tag=block9.q_proj iter=028 | J=0.057062 J_x=0.056193 J_w=0.086897 rel_change=1.484975e-04 | time=0.284s
+15:44:13 | INFO | tag=block9.q_proj iter=029 | J=0.056924 J_x=0.056055 J_w=0.086851 rel_change=1.381561e-04 | time=0.281s
+15:44:13 | INFO | tag=block9.q_proj iter=030 | J=0.056792 J_x=0.055924 J_w=0.086810 rel_change=1.316592e-04 | time=0.296s
+15:44:13 | INFO | tag=block9.q_proj iter=031 | J=0.056673 J_x=0.055805 J_w=0.086774 rel_change=1.194626e-04 | time=0.280s
+15:44:13 | INFO | tag=block9.q_proj iter=032 | J=0.056562 J_x=0.055694 J_w=0.086762 rel_change=1.110956e-04 | time=0.295s
+15:44:14 | INFO | tag=block9.q_proj iter=033 | J=0.056460 J_x=0.055592 J_w=0.086739 rel_change=1.020506e-04 | time=0.289s
+15:44:14 | INFO | tag=block9.q_proj iter=034 | J=0.056364 J_x=0.055497 J_w=0.086710 rel_change=9.502098e-05 | time=0.294s
+15:44:14 | INFO | tag=block9.q_proj iter=035 | J=0.056274 J_x=0.055407 J_w=0.086697 rel_change=9.053573e-05 | time=0.309s
+15:44:15 | INFO | tag=block9.q_proj iter=036 | J=0.056190 J_x=0.055323 J_w=0.086678 rel_change=8.441135e-05 | time=0.295s
+15:44:15 | INFO | tag=block9.q_proj iter=037 | J=0.056111 J_x=0.055244 J_w=0.086679 rel_change=7.901713e-05 | time=0.298s
+15:44:15 | INFO | tag=block9.q_proj iter=038 | J=0.056035 J_x=0.055168 J_w=0.086663 rel_change=7.567555e-05 | time=0.306s
+15:44:15 | INFO | tag=block9.q_proj iter=039 | J=0.055963 J_x=0.055096 J_w=0.086644 rel_change=7.227808e-05 | time=0.307s
+15:44:16 | INFO | tag=block9.q_proj iter=040 | J=0.055899 J_x=0.055033 J_w=0.086628 rel_change=6.357953e-05 | time=0.299s
+15:44:16 | INFO | tag=block9.q_proj iter=041 | J=0.055837 J_x=0.054971 J_w=0.086613 rel_change=6.176904e-05 | time=0.300s
+15:44:16 | INFO | tag=block9.q_proj iter=042 | J=0.055780 J_x=0.054914 J_w=0.086612 rel_change=5.706772e-05 | time=0.295s
+15:44:17 | INFO | tag=block9.q_proj iter=043 | J=0.055725 J_x=0.054859 J_w=0.086614 rel_change=5.481392e-05 | time=0.292s
+15:44:17 | INFO | tag=block9.q_proj iter=044 | J=0.055672 J_x=0.054806 J_w=0.086615 rel_change=5.326793e-05 | time=0.296s
+15:44:17 | INFO | tag=block9.q_proj iter=045 | J=0.055622 J_x=0.054756 J_w=0.086613 rel_change=4.967675e-05 | time=0.289s
+15:44:18 | INFO | tag=block9.q_proj iter=046 | J=0.055576 J_x=0.054710 J_w=0.086608 rel_change=4.654750e-05 | time=0.302s
+15:44:18 | INFO | tag=block9.q_proj iter=047 | J=0.055532 J_x=0.054666 J_w=0.086594 rel_change=4.350394e-05 | time=0.289s
+15:44:18 | INFO | tag=block9.q_proj iter=048 | J=0.055492 J_x=0.054626 J_w=0.086584 rel_change=4.005805e-05 | time=0.281s
+15:44:18 | INFO | tag=block9.q_proj iter=049 | J=0.055456 J_x=0.054590 J_w=0.086591 rel_change=3.622845e-05 | time=0.298s
+15:44:19 | INFO | tag=block9.q_proj iter=050 | J=0.055421 J_x=0.054556 J_w=0.086589 rel_change=3.460050e-05 | time=0.299s
+15:44:19 | INFO | tag=block9.q_proj iter=051 | J=0.055389 J_x=0.054523 J_w=0.086592 rel_change=3.249943e-05 | time=0.308s
+15:44:19 | INFO | tag=block9.q_proj iter=052 | J=0.055358 J_x=0.054492 J_w=0.086583 rel_change=3.123656e-05 | time=0.288s
+15:44:20 | INFO | tag=block9.q_proj iter=053 | J=0.055328 J_x=0.054462 J_w=0.086584 rel_change=2.953783e-05 | time=0.276s
+15:44:20 | INFO | tag=block9.q_proj iter=054 | J=0.055300 J_x=0.054434 J_w=0.086579 rel_change=2.811104e-05 | time=0.282s
+15:44:20 | INFO | tag=block9.q_proj iter=055 | J=0.055273 J_x=0.054407 J_w=0.086588 rel_change=2.712011e-05 | time=0.286s
+15:44:20 | INFO | tag=block9.q_proj iter=056 | J=0.055247 J_x=0.054381 J_w=0.086585 rel_change=2.594292e-05 | time=0.295s
+15:44:21 | INFO | tag=block9.q_proj iter=057 | J=0.055223 J_x=0.054358 J_w=0.086560 rel_change=2.351403e-05 | time=0.300s
+15:44:21 | INFO | tag=block9.q_proj iter=058 | J=0.055200 J_x=0.054335 J_w=0.086563 rel_change=2.333522e-05 | time=0.281s
+15:44:21 | INFO | tag=block9.q_proj iter=059 | J=0.055175 J_x=0.054310 J_w=0.086553 rel_change=2.506748e-05 | time=0.296s
+15:44:22 | INFO | tag=block9.q_proj iter=060 | J=0.055150 J_x=0.054284 J_w=0.086551 rel_change=2.523512e-05 | time=0.287s
+15:44:22 | INFO | tag=block9.q_proj iter=061 | J=0.055125 J_x=0.054259 J_w=0.086555 rel_change=2.488121e-05 | time=0.306s
+15:44:22 | INFO | tag=block9.q_proj iter=062 | J=0.055104 J_x=0.054238 J_w=0.086545 rel_change=2.108887e-05 | time=0.288s
+15:44:23 | INFO | tag=block9.q_proj iter=063 | J=0.055083 J_x=0.054218 J_w=0.086550 rel_change=2.063438e-05 | time=0.290s
+15:44:23 | INFO | tag=block9.q_proj iter=064 | J=0.055063 J_x=0.054197 J_w=0.086538 rel_change=2.058595e-05 | time=0.292s
+15:44:23 | INFO | tag=block9.q_proj iter=065 | J=0.055043 J_x=0.054178 J_w=0.086531 rel_change=1.934171e-05 | time=0.288s
+15:44:23 | INFO | tag=block9.q_proj iter=066 | J=0.055024 J_x=0.054159 J_w=0.086532 rel_change=1.924857e-05 | time=0.296s
+15:44:24 | INFO | tag=block9.q_proj iter=067 | J=0.055005 J_x=0.054140 J_w=0.086534 rel_change=1.870468e-05 | time=0.284s
+15:44:24 | INFO | tag=block9.q_proj iter=068 | J=0.054987 J_x=0.054122 J_w=0.086525 rel_change=1.828745e-05 | time=0.303s
+15:44:24 | INFO | tag=block9.q_proj iter=069 | J=0.054970 J_x=0.054105 J_w=0.086522 rel_change=1.731142e-05 | time=0.290s
+15:44:25 | INFO | tag=block9.q_proj iter=070 | J=0.054955 J_x=0.054090 J_w=0.086503 rel_change=1.452863e-05 | time=0.301s
+15:44:25 | INFO | tag=block9.q_proj iter=071 | J=0.054941 J_x=0.054076 J_w=0.086503 rel_change=1.412258e-05 | time=0.318s
+15:44:25 | INFO | tag=block9.q_proj iter=072 | J=0.054929 J_x=0.054064 J_w=0.086502 rel_change=1.249835e-05 | time=0.290s
+15:44:25 | INFO | tag=block9.q_proj iter=073 | J=0.054917 J_x=0.054052 J_w=0.086498 rel_change=1.142174e-05 | time=0.286s
+15:44:26 | INFO | tag=block9.q_proj iter=074 | J=0.054906 J_x=0.054041 J_w=0.086496 rel_change=1.166761e-05 | time=0.292s
+15:44:26 | INFO | tag=block9.q_proj iter=075 | J=0.054895 J_x=0.054030 J_w=0.086487 rel_change=1.101196e-05 | time=0.294s
+15:44:26 | INFO | tag=block9.q_proj iter=076 | J=0.054883 J_x=0.054018 J_w=0.086481 rel_change=1.147762e-05 | time=0.291s
+15:44:27 | INFO | tag=block9.q_proj iter=077 | J=0.054873 J_x=0.054008 J_w=0.086482 rel_change=1.042336e-05 | time=0.302s
+15:44:27 | INFO | tag=block9.q_proj iter=078 | J=0.054862 J_x=0.053997 J_w=0.086488 rel_change=1.041964e-05 | time=0.294s
+15:44:27 | INFO | tag=block9.q_proj iter=079 | J=0.054851 J_x=0.053986 J_w=0.086490 rel_change=1.119077e-05 | time=0.289s
+15:44:28 | INFO | tag=block9.q_proj iter=080 | J=0.054841 J_x=0.053976 J_w=0.086491 rel_change=9.782612e-06 | time=0.288s
+15:44:28 | INFO | tag=block9.q_proj 量化器在第 80 轮收敛。
+15:44:28 | INFO | 量化器拟合完成 | tag=block9.q_proj convergence_iter=80 total_fit_time=23.637s
+15:44:28 | INFO | 开始计算重建/近似误差 | layer=block9.q_proj error_mode=relative
+15:44:28 | INFO | 误差计算完成 | layer=block9.q_proj err_x=0.053918 err_w=0.085286 rel_linear_error=0.073630 elapsed=0.189s
+15:44:30 | INFO | block9.k_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.022928 std=0.574282 min=-26.312500 max=5.914062 fro=1019.310608
+15:44:30 | INFO | block9.k_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000067 std=0.058068 min=-0.756348 max=0.624023 fro=44.596180
+15:44:30 | INFO | 开始拟合量化器 | tag=block9.k_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:44:30 | INFO | tag=block9.k_proj iter=001 | J=0.189344 J_x=0.179344 J_w=1.000000 rel_change=inf | time=0.301s
+15:44:30 | INFO | tag=block9.k_proj iter=002 | J=0.125081 J_x=0.121089 J_w=0.399192 rel_change=6.426291e-02 | time=0.299s
+15:44:31 | INFO | tag=block9.k_proj iter=003 | J=0.100207 J_x=0.098359 J_w=0.184784 rel_change=2.487334e-02 | time=0.296s
+15:44:31 | INFO | tag=block9.k_proj iter=004 | J=0.087664 J_x=0.086404 J_w=0.126021 rel_change=1.254305e-02 | time=0.297s
+15:44:31 | INFO | tag=block9.k_proj iter=005 | J=0.080074 J_x=0.079014 J_w=0.105979 rel_change=7.590279e-03 | time=0.300s
+15:44:31 | INFO | tag=block9.k_proj iter=006 | J=0.075044 J_x=0.074068 J_w=0.097608 rel_change=5.029678e-03 | time=0.309s
+15:44:32 | INFO | tag=block9.k_proj iter=007 | J=0.071526 J_x=0.070592 J_w=0.093402 rel_change=3.518298e-03 | time=0.319s
+15:44:32 | INFO | tag=block9.k_proj iter=008 | J=0.068906 J_x=0.067995 J_w=0.091109 rel_change=2.619736e-03 | time=0.300s
+15:44:32 | INFO | tag=block9.k_proj iter=009 | J=0.066907 J_x=0.066010 J_w=0.089699 rel_change=1.999177e-03 | time=0.298s
+15:44:33 | INFO | tag=block9.k_proj iter=010 | J=0.065315 J_x=0.064427 J_w=0.088859 rel_change=1.591869e-03 | time=0.296s
+15:44:33 | INFO | tag=block9.k_proj iter=011 | J=0.064043 J_x=0.063161 J_w=0.088273 rel_change=1.271740e-03 | time=0.285s
+15:44:33 | INFO | tag=block9.k_proj iter=012 | J=0.063004 J_x=0.062125 J_w=0.087822 rel_change=1.039974e-03 | time=0.288s
+15:44:34 | INFO | tag=block9.k_proj iter=013 | J=0.062145 J_x=0.061270 J_w=0.087461 rel_change=8.586198e-04 | time=0.288s
+15:44:34 | INFO | tag=block9.k_proj iter=014 | J=0.061416 J_x=0.060544 J_w=0.087220 rel_change=7.291958e-04 | time=0.298s
+15:44:34 | INFO | tag=block9.k_proj iter=015 | J=0.060797 J_x=0.059928 J_w=0.086949 rel_change=6.184131e-04 | time=0.289s
+15:44:34 | INFO | tag=block9.k_proj iter=016 | J=0.060265 J_x=0.059397 J_w=0.086781 rel_change=5.325787e-04 | time=0.303s
+15:44:35 | INFO | tag=block9.k_proj iter=017 | J=0.059795 J_x=0.058928 J_w=0.086654 rel_change=4.697219e-04 | time=0.297s
+15:44:35 | INFO | tag=block9.k_proj iter=018 | J=0.059380 J_x=0.058515 J_w=0.086484 rel_change=4.152954e-04 | time=0.303s
+15:44:35 | INFO | tag=block9.k_proj iter=019 | J=0.059010 J_x=0.058147 J_w=0.086336 rel_change=3.694482e-04 | time=0.294s
+15:44:36 | INFO | tag=block9.k_proj iter=020 | J=0.058688 J_x=0.057826 J_w=0.086210 rel_change=3.225580e-04 | time=0.286s
+15:44:36 | INFO | tag=block9.k_proj iter=021 | J=0.058402 J_x=0.057541 J_w=0.086086 rel_change=2.854429e-04 | time=0.304s
+15:44:36 | INFO | tag=block9.k_proj iter=022 | J=0.058146 J_x=0.057286 J_w=0.086001 rel_change=2.561733e-04 | time=0.303s
+15:44:37 | INFO | tag=block9.k_proj iter=023 | J=0.057916 J_x=0.057057 J_w=0.085925 rel_change=2.298765e-04 | time=0.297s
+15:44:37 | INFO | tag=block9.k_proj iter=024 | J=0.057710 J_x=0.056851 J_w=0.085871 rel_change=2.061762e-04 | time=0.296s
+15:44:37 | INFO | tag=block9.k_proj iter=025 | J=0.057524 J_x=0.056666 J_w=0.085839 rel_change=1.861118e-04 | time=0.292s
+15:44:37 | INFO | tag=block9.k_proj iter=026 | J=0.057352 J_x=0.056494 J_w=0.085793 rel_change=1.718923e-04 | time=0.299s
+15:44:38 | INFO | tag=block9.k_proj iter=027 | J=0.057195 J_x=0.056338 J_w=0.085742 rel_change=1.570694e-04 | time=0.297s
+15:44:38 | INFO | tag=block9.k_proj iter=028 | J=0.057053 J_x=0.056196 J_w=0.085695 rel_change=1.416951e-04 | time=0.295s
+15:44:38 | INFO | tag=block9.k_proj iter=029 | J=0.056921 J_x=0.056065 J_w=0.085687 rel_change=1.317821e-04 | time=0.290s
+15:44:39 | INFO | tag=block9.k_proj iter=030 | J=0.056797 J_x=0.055940 J_w=0.085663 rel_change=1.244731e-04 | time=0.292s
+15:44:39 | INFO | tag=block9.k_proj iter=031 | J=0.056682 J_x=0.055826 J_w=0.085621 rel_change=1.148582e-04 | time=0.286s
+15:44:39 | INFO | tag=block9.k_proj iter=032 | J=0.056574 J_x=0.055718 J_w=0.085599 rel_change=1.082718e-04 | time=0.293s
+15:44:39 | INFO | tag=block9.k_proj iter=033 | J=0.056474 J_x=0.055618 J_w=0.085574 rel_change=9.968504e-05 | time=0.284s
+15:44:40 | INFO | tag=block9.k_proj iter=034 | J=0.056382 J_x=0.055526 J_w=0.085576 rel_change=9.193644e-05 | time=0.287s
+15:44:40 | INFO | tag=block9.k_proj iter=035 | J=0.056297 J_x=0.055441 J_w=0.085565 rel_change=8.551776e-05 | time=0.291s
+15:44:40 | INFO | tag=block9.k_proj iter=036 | J=0.056216 J_x=0.055361 J_w=0.085551 rel_change=8.026510e-05 | time=0.288s
+15:44:41 | INFO | tag=block9.k_proj iter=037 | J=0.056142 J_x=0.055286 J_w=0.085539 rel_change=7.482246e-05 | time=0.291s
+15:44:41 | INFO | tag=block9.k_proj iter=038 | J=0.056070 J_x=0.055215 J_w=0.085526 rel_change=7.136911e-05 | time=0.289s
+15:44:41 | INFO | tag=block9.k_proj iter=039 | J=0.056003 J_x=0.055148 J_w=0.085527 rel_change=6.723776e-05 | time=0.284s
+15:44:42 | INFO | tag=block9.k_proj iter=040 | J=0.055942 J_x=0.055086 J_w=0.085519 rel_change=6.148592e-05 | time=0.289s
+15:44:42 | INFO | tag=block9.k_proj iter=041 | J=0.055881 J_x=0.055026 J_w=0.085526 rel_change=6.059185e-05 | time=0.287s
+15:44:42 | INFO | tag=block9.k_proj iter=042 | J=0.055823 J_x=0.054968 J_w=0.085517 rel_change=5.814061e-05 | time=0.292s
+15:44:42 | INFO | tag=block9.k_proj iter=043 | J=0.055767 J_x=0.054912 J_w=0.085506 rel_change=5.557388e-05 | time=0.290s
+15:44:43 | INFO | tag=block9.k_proj iter=044 | J=0.055712 J_x=0.054857 J_w=0.085502 rel_change=5.537644e-05 | time=0.282s
+15:44:43 | INFO | tag=block9.k_proj iter=045 | J=0.055661 J_x=0.054806 J_w=0.085489 rel_change=5.048141e-05 | time=0.294s
+15:44:43 | INFO | tag=block9.k_proj iter=046 | J=0.055613 J_x=0.054758 J_w=0.085484 rel_change=4.848465e-05 | time=0.289s
+15:44:44 | INFO | tag=block9.k_proj iter=047 | J=0.055569 J_x=0.054714 J_w=0.085484 rel_change=4.379451e-05 | time=0.281s
+15:44:44 | INFO | tag=block9.k_proj iter=048 | J=0.055529 J_x=0.054675 J_w=0.085468 rel_change=3.963709e-05 | time=0.289s
+15:44:44 | INFO | tag=block9.k_proj iter=049 | J=0.055491 J_x=0.054636 J_w=0.085469 rel_change=3.886223e-05 | time=0.292s
+15:44:44 | INFO | tag=block9.k_proj iter=050 | J=0.055452 J_x=0.054598 J_w=0.085477 rel_change=3.832579e-05 | time=0.290s
+15:44:45 | INFO | tag=block9.k_proj iter=051 | J=0.055416 J_x=0.054562 J_w=0.085469 rel_change=3.580004e-05 | time=0.285s
+15:44:45 | INFO | tag=block9.k_proj iter=052 | J=0.055380 J_x=0.054525 J_w=0.085465 rel_change=3.641099e-05 | time=0.300s
+15:44:45 | INFO | tag=block9.k_proj iter=053 | J=0.055348 J_x=0.054493 J_w=0.085458 rel_change=3.248826e-05 | time=0.293s
+15:44:46 | INFO | tag=block9.k_proj iter=054 | J=0.055317 J_x=0.054462 J_w=0.085453 rel_change=3.070757e-05 | time=0.289s
+15:44:46 | INFO | tag=block9.k_proj iter=055 | J=0.055289 J_x=0.054435 J_w=0.085453 rel_change=2.749264e-05 | time=0.290s
+15:44:46 | INFO | tag=block9.k_proj iter=056 | J=0.055264 J_x=0.054409 J_w=0.085445 rel_change=2.567470e-05 | time=0.299s
+15:44:46 | INFO | tag=block9.k_proj iter=057 | J=0.055239 J_x=0.054385 J_w=0.085431 rel_change=2.478808e-05 | time=0.285s
+15:44:47 | INFO | tag=block9.k_proj iter=058 | J=0.055215 J_x=0.054361 J_w=0.085425 rel_change=2.361834e-05 | time=0.307s
+15:44:47 | INFO | tag=block9.k_proj iter=059 | J=0.055192 J_x=0.054338 J_w=0.085422 rel_change=2.347678e-05 | time=0.312s
+15:44:47 | INFO | tag=block9.k_proj iter=060 | J=0.055168 J_x=0.054314 J_w=0.085430 rel_change=2.348796e-05 | time=0.281s
+15:44:48 | INFO | tag=block9.k_proj iter=061 | J=0.055147 J_x=0.054293 J_w=0.085425 rel_change=2.142414e-05 | time=0.309s
+15:44:48 | INFO | tag=block9.k_proj iter=062 | J=0.055125 J_x=0.054270 J_w=0.085432 rel_change=2.228841e-05 | time=0.285s
+15:44:48 | INFO | tag=block9.k_proj iter=063 | J=0.055103 J_x=0.054249 J_w=0.085430 rel_change=2.133474e-05 | time=0.283s
+15:44:49 | INFO | tag=block9.k_proj iter=064 | J=0.055085 J_x=0.054230 J_w=0.085420 rel_change=1.865625e-05 | time=0.292s
+15:44:49 | INFO | tag=block9.k_proj iter=065 | J=0.055067 J_x=0.054213 J_w=0.085419 rel_change=1.760572e-05 | time=0.290s
+15:44:49 | INFO | tag=block9.k_proj iter=066 | J=0.055049 J_x=0.054195 J_w=0.085415 rel_change=1.815706e-05 | time=0.290s
+15:44:49 | INFO | tag=block9.k_proj iter=067 | J=0.055032 J_x=0.054177 J_w=0.085413 rel_change=1.728535e-05 | time=0.297s
+15:44:50 | INFO | tag=block9.k_proj iter=068 | J=0.055015 J_x=0.054161 J_w=0.085415 rel_change=1.639873e-05 | time=0.281s
+15:44:50 | INFO | tag=block9.k_proj iter=069 | J=0.054999 J_x=0.054145 J_w=0.085412 rel_change=1.614168e-05 | time=0.294s
+15:44:50 | INFO | tag=block9.k_proj iter=070 | J=0.054984 J_x=0.054130 J_w=0.085404 rel_change=1.481920e-05 | time=0.282s
+15:44:51 | INFO | tag=block9.k_proj iter=071 | J=0.054970 J_x=0.054116 J_w=0.085404 rel_change=1.418963e-05 | time=0.276s
+15:44:51 | INFO | tag=block9.k_proj iter=072 | J=0.054957 J_x=0.054103 J_w=0.085403 rel_change=1.295656e-05 | time=0.293s
+15:44:51 | INFO | tag=block9.k_proj iter=073 | J=0.054944 J_x=0.054090 J_w=0.085405 rel_change=1.315027e-05 | time=0.297s
+15:44:51 | INFO | tag=block9.k_proj iter=074 | J=0.054932 J_x=0.054078 J_w=0.085407 rel_change=1.229718e-05 | time=0.291s
+15:44:52 | INFO | tag=block9.k_proj iter=075 | J=0.054919 J_x=0.054065 J_w=0.085411 rel_change=1.218542e-05 | time=0.287s
+15:44:52 | INFO | tag=block9.k_proj iter=076 | J=0.054907 J_x=0.054053 J_w=0.085407 rel_change=1.220778e-05 | time=0.284s
+15:44:52 | INFO | tag=block9.k_proj iter=077 | J=0.054894 J_x=0.054040 J_w=0.085406 rel_change=1.308694e-05 | time=0.288s
+15:44:53 | INFO | tag=block9.k_proj iter=078 | J=0.054882 J_x=0.054028 J_w=0.085401 rel_change=1.184642e-05 | time=0.282s
+15:44:53 | INFO | tag=block9.k_proj iter=079 | J=0.054871 J_x=0.054017 J_w=0.085399 rel_change=1.151860e-05 | time=0.285s
+15:44:53 | INFO | tag=block9.k_proj iter=080 | J=0.054859 J_x=0.054005 J_w=0.085390 rel_change=1.157448e-05 | time=0.287s
+15:44:53 | INFO | 量化器拟合完成 | tag=block9.k_proj convergence_iter=80 total_fit_time=23.466s
+15:44:53 | INFO | 开始计算重建/近似误差 | layer=block9.k_proj error_mode=relative
+15:44:53 | INFO | 误差计算完成 | layer=block9.k_proj err_x=0.053948 err_w=0.084201 rel_linear_error=0.054730 elapsed=0.191s
+15:44:55 | INFO | block9.v_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.022928 std=0.574282 min=-26.312500 max=5.914062 fro=1019.310608
+15:44:55 | INFO | block9.v_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000074 std=0.023988 min=-0.279053 max=0.160645 fro=18.422712
+15:44:55 | INFO | 开始拟合量化器 | tag=block9.v_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:44:56 | INFO | tag=block9.v_proj iter=001 | J=0.189207 J_x=0.179207 J_w=1.000000 rel_change=inf | time=0.274s
+15:44:56 | INFO | tag=block9.v_proj iter=002 | J=0.125117 J_x=0.121065 J_w=0.405279 rel_change=6.408991e-02 | time=0.294s
+15:44:56 | INFO | tag=block9.v_proj iter=003 | J=0.100316 J_x=0.098395 J_w=0.192143 rel_change=2.480130e-02 | time=0.300s
+15:44:56 | INFO | tag=block9.v_proj iter=004 | J=0.087631 J_x=0.086313 J_w=0.131847 rel_change=1.268476e-02 | time=0.294s
+15:44:57 | INFO | tag=block9.v_proj iter=005 | J=0.079989 J_x=0.078890 J_w=0.109917 rel_change=7.642247e-03 | time=0.300s
+15:44:57 | INFO | tag=block9.v_proj iter=006 | J=0.074960 J_x=0.073955 J_w=0.100533 rel_change=5.028725e-03 | time=0.304s
+15:44:57 | INFO | tag=block9.v_proj iter=007 | J=0.071404 J_x=0.070443 J_w=0.096036 rel_change=3.556691e-03 | time=0.307s
+15:44:58 | INFO | tag=block9.v_proj iter=008 | J=0.068801 J_x=0.067866 J_w=0.093539 rel_change=2.602600e-03 | time=0.287s
+15:44:58 | INFO | tag=block9.v_proj iter=009 | J=0.066799 J_x=0.065879 J_w=0.092005 rel_change=2.002262e-03 | time=0.293s
+15:44:58 | INFO | tag=block9.v_proj iter=010 | J=0.065233 J_x=0.064323 J_w=0.091004 rel_change=1.565352e-03 | time=0.300s
+15:44:59 | INFO | tag=block9.v_proj iter=011 | J=0.063987 J_x=0.063084 J_w=0.090292 rel_change=1.246877e-03 | time=0.295s
+15:44:59 | INFO | tag=block9.v_proj iter=012 | J=0.062963 J_x=0.062066 J_w=0.089763 rel_change=1.023181e-03 | time=0.297s
+15:44:59 | INFO | tag=block9.v_proj iter=013 | J=0.062115 J_x=0.061222 J_w=0.089283 rel_change=8.483380e-04 | time=0.297s
+15:44:59 | INFO | tag=block9.v_proj iter=014 | J=0.061397 J_x=0.060506 J_w=0.089040 rel_change=7.184632e-04 | time=0.297s
+15:45:00 | INFO | tag=block9.v_proj iter=015 | J=0.060785 J_x=0.059897 J_w=0.088827 rel_change=6.113388e-04 | time=0.304s
+15:45:00 | INFO | tag=block9.v_proj iter=016 | J=0.060259 J_x=0.059373 J_w=0.088570 rel_change=5.260892e-04 | time=0.307s
+15:45:00 | INFO | tag=block9.v_proj iter=017 | J=0.059803 J_x=0.058919 J_w=0.088404 rel_change=4.560538e-04 | time=0.302s
+15:45:01 | INFO | tag=block9.v_proj iter=018 | J=0.059400 J_x=0.058518 J_w=0.088227 rel_change=4.030913e-04 | time=0.292s
+15:45:01 | INFO | tag=block9.v_proj iter=019 | J=0.059037 J_x=0.058156 J_w=0.088130 rel_change=3.625788e-04 | time=0.303s
+15:45:01 | INFO | tag=block9.v_proj iter=020 | J=0.058714 J_x=0.057834 J_w=0.088031 rel_change=3.229566e-04 | time=0.309s
+15:45:02 | INFO | tag=block9.v_proj iter=021 | J=0.058423 J_x=0.057544 J_w=0.087955 rel_change=2.912171e-04 | time=0.322s
+15:45:02 | INFO | tag=block9.v_proj iter=022 | J=0.058166 J_x=0.057288 J_w=0.087822 rel_change=2.571642e-04 | time=0.321s
+15:45:02 | INFO | tag=block9.v_proj iter=023 | J=0.057929 J_x=0.057052 J_w=0.087776 rel_change=2.367459e-04 | time=0.290s
+15:45:02 | INFO | tag=block9.v_proj iter=024 | J=0.057711 J_x=0.056834 J_w=0.087709 rel_change=2.185367e-04 | time=0.285s
+15:45:03 | INFO | tag=block9.v_proj iter=025 | J=0.057511 J_x=0.056635 J_w=0.087615 rel_change=1.998171e-04 | time=0.292s
+15:45:03 | INFO | tag=block9.v_proj iter=026 | J=0.057329 J_x=0.056454 J_w=0.087539 rel_change=1.820512e-04 | time=0.283s
+15:45:03 | INFO | tag=block9.v_proj iter=027 | J=0.057164 J_x=0.056289 J_w=0.087479 rel_change=1.650788e-04 | time=0.290s
+15:45:04 | INFO | tag=block9.v_proj iter=028 | J=0.057012 J_x=0.056138 J_w=0.087477 rel_change=1.514144e-04 | time=0.293s
+15:45:04 | INFO | tag=block9.v_proj iter=029 | J=0.056874 J_x=0.055999 J_w=0.087425 rel_change=1.389123e-04 | time=0.323s
+15:45:04 | INFO | tag=block9.v_proj iter=030 | J=0.056746 J_x=0.055872 J_w=0.087368 rel_change=1.279041e-04 | time=0.292s
+15:45:05 | INFO | tag=block9.v_proj iter=031 | J=0.056626 J_x=0.055753 J_w=0.087329 rel_change=1.195185e-04 | time=0.277s
+15:45:05 | INFO | tag=block9.v_proj iter=032 | J=0.056516 J_x=0.055644 J_w=0.087277 rel_change=1.097098e-04 | time=0.295s
+15:45:05 | INFO | tag=block9.v_proj iter=033 | J=0.056415 J_x=0.055542 J_w=0.087252 rel_change=1.017079e-04 | time=0.296s
+15:45:05 | INFO | tag=block9.v_proj iter=034 | J=0.056319 J_x=0.055446 J_w=0.087254 rel_change=9.576604e-05 | time=0.314s
+15:45:06 | INFO | tag=block9.v_proj iter=035 | J=0.056233 J_x=0.055360 J_w=0.087231 rel_change=8.637458e-05 | time=0.297s
+15:45:06 | INFO | tag=block9.v_proj iter=036 | J=0.056153 J_x=0.055280 J_w=0.087217 rel_change=7.992983e-05 | time=0.293s
+15:45:06 | INFO | tag=block9.v_proj iter=037 | J=0.056077 J_x=0.055205 J_w=0.087189 rel_change=7.548556e-05 | time=0.299s
+15:45:07 | INFO | tag=block9.v_proj iter=038 | J=0.056007 J_x=0.055135 J_w=0.087160 rel_change=7.031485e-05 | time=0.294s
+15:45:07 | INFO | tag=block9.v_proj iter=039 | J=0.055942 J_x=0.055070 J_w=0.087131 rel_change=6.503984e-05 | time=0.293s
+15:45:07 | INFO | tag=block9.v_proj iter=040 | J=0.055879 J_x=0.055008 J_w=0.087127 rel_change=6.233901e-05 | time=0.302s
+15:45:07 | INFO | tag=block9.v_proj iter=041 | J=0.055821 J_x=0.054950 J_w=0.087104 rel_change=5.856156e-05 | time=0.220s
+15:45:08 | INFO | tag=block9.v_proj iter=042 | J=0.055764 J_x=0.054893 J_w=0.087095 rel_change=5.660206e-05 | time=0.160s
+15:45:08 | INFO | tag=block9.v_proj iter=043 | J=0.055712 J_x=0.054841 J_w=0.087076 rel_change=5.213544e-05 | time=0.161s
+15:45:08 | INFO | tag=block9.v_proj iter=044 | J=0.055664 J_x=0.054794 J_w=0.087056 rel_change=4.804507e-05 | time=0.229s
+15:45:08 | INFO | tag=block9.v_proj iter=045 | J=0.055619 J_x=0.054749 J_w=0.087045 rel_change=4.494935e-05 | time=0.297s
+15:45:09 | INFO | tag=block9.v_proj iter=046 | J=0.055578 J_x=0.054708 J_w=0.087039 rel_change=4.122779e-05 | time=0.295s
+15:45:09 | INFO | tag=block9.v_proj iter=047 | J=0.055541 J_x=0.054670 J_w=0.087034 rel_change=3.709272e-05 | time=0.313s
+15:45:09 | INFO | tag=block9.v_proj iter=048 | J=0.055505 J_x=0.054635 J_w=0.087035 rel_change=3.570318e-05 | time=0.297s
+15:45:09 | INFO | tag=block9.v_proj iter=049 | J=0.055471 J_x=0.054600 J_w=0.087032 rel_change=3.431365e-05 | time=0.317s
+15:45:10 | INFO | tag=block9.v_proj iter=050 | J=0.055437 J_x=0.054567 J_w=0.087045 rel_change=3.348663e-05 | time=0.295s
+15:45:10 | INFO | tag=block9.v_proj iter=051 | J=0.055405 J_x=0.054535 J_w=0.087030 rel_change=3.193691e-05 | time=0.309s
+15:45:10 | INFO | tag=block9.v_proj iter=052 | J=0.055375 J_x=0.054505 J_w=0.087018 rel_change=3.010035e-05 | time=0.303s
+15:45:11 | INFO | tag=block9.v_proj iter=053 | J=0.055347 J_x=0.054477 J_w=0.087008 rel_change=2.819672e-05 | time=0.299s
+15:45:11 | INFO | tag=block9.v_proj iter=054 | J=0.055322 J_x=0.054452 J_w=0.087003 rel_change=2.475828e-05 | time=0.305s
+15:45:11 | INFO | tag=block9.v_proj iter=055 | J=0.055298 J_x=0.054428 J_w=0.086998 rel_change=2.428144e-05 | time=0.307s
+15:45:12 | INFO | tag=block9.v_proj iter=056 | J=0.055276 J_x=0.054406 J_w=0.086981 rel_change=2.249703e-05 | time=0.313s
+15:45:12 | INFO | tag=block9.v_proj iter=057 | J=0.055255 J_x=0.054385 J_w=0.086970 rel_change=2.079085e-05 | time=0.311s
+15:45:12 | INFO | tag=block9.v_proj iter=058 | J=0.055234 J_x=0.054364 J_w=0.086965 rel_change=2.064928e-05 | time=0.302s
+15:45:13 | INFO | tag=block9.v_proj iter=059 | J=0.055216 J_x=0.054347 J_w=0.086960 rel_change=1.775101e-05 | time=0.305s
+15:45:13 | INFO | tag=block9.v_proj iter=060 | J=0.055198 J_x=0.054329 J_w=0.086954 rel_change=1.808628e-05 | time=0.298s
+15:45:13 | INFO | tag=block9.v_proj iter=061 | J=0.055180 J_x=0.054311 J_w=0.086947 rel_change=1.793355e-05 | time=0.303s
+15:45:13 | INFO | tag=block9.v_proj iter=062 | J=0.055164 J_x=0.054295 J_w=0.086941 rel_change=1.635775e-05 | time=0.294s
+15:45:14 | INFO | tag=block9.v_proj iter=063 | J=0.055149 J_x=0.054279 J_w=0.086948 rel_change=1.531094e-05 | time=0.297s
+15:45:14 | INFO | tag=block9.v_proj iter=064 | J=0.055132 J_x=0.054263 J_w=0.086939 rel_change=1.619384e-05 | time=0.298s
+15:45:14 | INFO | tag=block9.v_proj iter=065 | J=0.055115 J_x=0.054246 J_w=0.086944 rel_change=1.707301e-05 | time=0.293s
+15:45:15 | INFO | tag=block9.v_proj iter=066 | J=0.055099 J_x=0.054230 J_w=0.086935 rel_change=1.622736e-05 | time=0.305s
+15:45:15 | INFO | tag=block9.v_proj iter=067 | J=0.055082 J_x=0.054213 J_w=0.086928 rel_change=1.733750e-05 | time=0.305s
+15:45:15 | INFO | tag=block9.v_proj iter=068 | J=0.055066 J_x=0.054196 J_w=0.086921 rel_change=1.626834e-05 | time=0.294s
+15:45:16 | INFO | tag=block9.v_proj iter=069 | J=0.055050 J_x=0.054181 J_w=0.086911 rel_change=1.524016e-05 | time=0.300s
+15:45:16 | INFO | tag=block9.v_proj iter=070 | J=0.055035 J_x=0.054166 J_w=0.086909 rel_change=1.548231e-05 | time=0.346s
+15:45:16 | INFO | tag=block9.v_proj iter=071 | J=0.055019 J_x=0.054150 J_w=0.086906 rel_change=1.584738e-05 | time=0.300s
+15:45:16 | INFO | tag=block9.v_proj iter=072 | J=0.055003 J_x=0.054134 J_w=0.086915 rel_change=1.604483e-05 | time=0.300s
+15:45:17 | INFO | tag=block9.v_proj iter=073 | J=0.054988 J_x=0.054119 J_w=0.086914 rel_change=1.487881e-05 | time=0.287s
+15:45:17 | INFO | tag=block9.v_proj iter=074 | J=0.054974 J_x=0.054105 J_w=0.086917 rel_change=1.408532e-05 | time=0.284s
+15:45:17 | INFO | tag=block9.v_proj iter=075 | J=0.054961 J_x=0.054092 J_w=0.086914 rel_change=1.289323e-05 | time=0.288s
+15:45:18 | INFO | tag=block9.v_proj iter=076 | J=0.054948 J_x=0.054079 J_w=0.086910 rel_change=1.294911e-05 | time=0.301s
+15:45:18 | INFO | tag=block9.v_proj iter=077 | J=0.054936 J_x=0.054067 J_w=0.086905 rel_change=1.240522e-05 | time=0.291s
+15:45:18 | INFO | tag=block9.v_proj iter=078 | J=0.054923 J_x=0.054054 J_w=0.086903 rel_change=1.240894e-05 | time=0.284s
+15:45:19 | INFO | tag=block9.v_proj iter=079 | J=0.054911 J_x=0.054042 J_w=0.086900 rel_change=1.209974e-05 | time=0.292s
+15:45:19 | INFO | tag=block9.v_proj iter=080 | J=0.054899 J_x=0.054030 J_w=0.086898 rel_change=1.188740e-05 | time=0.295s
+15:45:19 | INFO | 量化器拟合完成 | tag=block9.v_proj convergence_iter=80 total_fit_time=23.573s
+15:45:19 | INFO | 开始计算重建/近似误差 | layer=block9.v_proj error_mode=relative
+15:45:19 | INFO | 误差计算完成 | layer=block9.v_proj err_x=0.053972 err_w=0.085302 rel_linear_error=0.163762 elapsed=0.189s
+15:45:21 | INFO | block9.out_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.002448 std=0.114145 min=-1.703125 max=1.291992 fro=202.464844
+15:45:21 | INFO | block9.out_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000011 std=0.022842 min=-0.308105 max=0.343506 fro=17.542364
+15:45:21 | INFO | 开始拟合量化器 | tag=block9.out_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:45:21 | INFO | tag=block9.out_proj iter=001 | J=0.986636 J_x=0.976636 J_w=1.000000 rel_change=inf | time=0.266s
+15:45:22 | INFO | tag=block9.out_proj iter=002 | J=0.328684 J_x=0.320586 J_w=0.809826 rel_change=6.579515e-01 | time=0.292s
+15:45:22 | INFO | tag=block9.out_proj iter=003 | J=0.207220 J_x=0.203772 J_w=0.344823 rel_change=1.214645e-01 | time=0.313s
+15:45:22 | INFO | tag=block9.out_proj iter=004 | J=0.161464 J_x=0.159408 J_w=0.205574 rel_change=4.575573e-02 | time=0.298s
+15:45:23 | INFO | tag=block9.out_proj iter=005 | J=0.138751 J_x=0.137189 J_w=0.156187 rel_change=2.271330e-02 | time=0.323s
+15:45:23 | INFO | tag=block9.out_proj iter=006 | J=0.125950 J_x=0.124624 J_w=0.132598 rel_change=1.280048e-02 | time=0.308s
+15:45:23 | INFO | tag=block9.out_proj iter=007 | J=0.117684 J_x=0.116486 J_w=0.119740 rel_change=8.266740e-03 | time=0.304s
+15:45:23 | INFO | tag=block9.out_proj iter=008 | J=0.111772 J_x=0.110651 J_w=0.112119 rel_change=5.911216e-03 | time=0.295s
+15:45:24 | INFO | tag=block9.out_proj iter=009 | J=0.107290 J_x=0.106219 J_w=0.107109 rel_change=4.482225e-03 | time=0.301s
+15:45:24 | INFO | tag=block9.out_proj iter=010 | J=0.103760 J_x=0.102723 J_w=0.103731 rel_change=3.529839e-03 | time=0.296s
+15:45:24 | INFO | tag=block9.out_proj iter=011 | J=0.100920 J_x=0.099908 J_w=0.101151 rel_change=2.840735e-03 | time=0.296s
+15:45:25 | INFO | tag=block9.out_proj iter=012 | J=0.098610 J_x=0.097620 J_w=0.099024 rel_change=2.309531e-03 | time=0.295s
+15:45:25 | INFO | tag=block9.out_proj iter=013 | J=0.096607 J_x=0.095627 J_w=0.098016 rel_change=2.002910e-03 | time=0.289s
+15:45:25 | INFO | tag=block9.out_proj iter=014 | J=0.094852 J_x=0.093881 J_w=0.097111 rel_change=1.754679e-03 | time=0.293s
+15:45:26 | INFO | tag=block9.out_proj iter=015 | J=0.093312 J_x=0.092350 J_w=0.096203 rel_change=1.540601e-03 | time=0.293s
+15:45:26 | INFO | tag=block9.out_proj iter=016 | J=0.091932 J_x=0.090977 J_w=0.095480 rel_change=1.379736e-03 | time=0.282s
+15:45:26 | INFO | tag=block9.out_proj iter=017 | J=0.090729 J_x=0.089780 J_w=0.094860 rel_change=1.203403e-03 | time=0.282s
+15:45:26 | INFO | tag=block9.out_proj iter=018 | J=0.089642 J_x=0.088700 J_w=0.094281 rel_change=1.086317e-03 | time=0.282s
+15:45:27 | INFO | tag=block9.out_proj iter=019 | J=0.088662 J_x=0.087727 J_w=0.093578 rel_change=9.799674e-04 | time=0.293s
+15:45:27 | INFO | tag=block9.out_proj iter=020 | J=0.087784 J_x=0.086853 J_w=0.093045 rel_change=8.786917e-04 | time=0.284s
+15:45:27 | INFO | tag=block9.out_proj iter=021 | J=0.086991 J_x=0.086064 J_w=0.092640 rel_change=7.930174e-04 | time=0.294s
+15:45:28 | INFO | tag=block9.out_proj iter=022 | J=0.086283 J_x=0.085361 J_w=0.092266 rel_change=7.074326e-04 | time=0.291s
+15:45:28 | INFO | tag=block9.out_proj iter=023 | J=0.085645 J_x=0.084727 J_w=0.091863 rel_change=6.378144e-04 | time=0.299s
+15:45:28 | INFO | tag=block9.out_proj iter=024 | J=0.085060 J_x=0.084142 J_w=0.091772 rel_change=5.856156e-04 | time=0.295s
+15:45:28 | INFO | tag=block9.out_proj iter=025 | J=0.084525 J_x=0.083610 J_w=0.091470 rel_change=5.351678e-04 | time=0.291s
+15:45:29 | INFO | tag=block9.out_proj iter=026 | J=0.084031 J_x=0.083118 J_w=0.091249 rel_change=4.938021e-04 | time=0.306s
+15:45:29 | INFO | tag=block9.out_proj iter=027 | J=0.083575 J_x=0.082663 J_w=0.091226 rel_change=4.557073e-04 | time=0.307s
+15:45:29 | INFO | tag=block9.out_proj iter=028 | J=0.083154 J_x=0.082245 J_w=0.090891 rel_change=4.207790e-04 | time=0.284s
+15:45:30 | INFO | tag=block9.out_proj iter=029 | J=0.082769 J_x=0.081864 J_w=0.090535 rel_change=3.853291e-04 | time=0.276s
+15:45:30 | INFO | tag=block9.out_proj iter=030 | J=0.082416 J_x=0.081513 J_w=0.090242 rel_change=3.534108e-04 | time=0.279s
+15:45:30 | INFO | tag=block9.out_proj iter=031 | J=0.082082 J_x=0.081181 J_w=0.090113 rel_change=3.333241e-04 | time=0.286s
+15:45:30 | INFO | tag=block9.out_proj iter=032 | J=0.081767 J_x=0.080868 J_w=0.089957 rel_change=3.149658e-04 | time=0.291s
+15:45:31 | INFO | tag=block9.out_proj iter=033 | J=0.081478 J_x=0.080581 J_w=0.089702 rel_change=2.894923e-04 | time=0.286s
+15:45:31 | INFO | tag=block9.out_proj iter=034 | J=0.081203 J_x=0.080307 J_w=0.089601 rel_change=2.743229e-04 | time=0.294s
+15:45:31 | INFO | tag=block9.out_proj iter=035 | J=0.080943 J_x=0.080048 J_w=0.089514 rel_change=2.602711e-04 | time=0.294s
+15:45:32 | INFO | tag=block9.out_proj iter=036 | J=0.080706 J_x=0.079813 J_w=0.089266 rel_change=2.374649e-04 | time=0.297s
+15:45:32 | INFO | tag=block9.out_proj iter=037 | J=0.080484 J_x=0.079593 J_w=0.089140 rel_change=2.215281e-04 | time=0.289s
+15:45:32 | INFO | tag=block9.out_proj iter=038 | J=0.080278 J_x=0.079388 J_w=0.088980 rel_change=2.061054e-04 | time=0.282s
+15:45:33 | INFO | tag=block9.out_proj iter=039 | J=0.080079 J_x=0.079190 J_w=0.088945 rel_change=1.986548e-04 | time=0.285s
+15:45:33 | INFO | tag=block9.out_proj iter=040 | J=0.079886 J_x=0.078998 J_w=0.088874 rel_change=1.930147e-04 | time=0.292s
+15:45:33 | INFO | tag=block9.out_proj iter=041 | J=0.079700 J_x=0.078811 J_w=0.088867 rel_change=1.867488e-04 | time=0.296s
+15:45:33 | INFO | tag=block9.out_proj iter=042 | J=0.079517 J_x=0.078627 J_w=0.089020 rel_change=1.824424e-04 | time=0.283s
+15:45:34 | INFO | tag=block9.out_proj iter=043 | J=0.079331 J_x=0.078441 J_w=0.089031 rel_change=1.859814e-04 | time=0.294s
+15:45:34 | INFO | tag=block9.out_proj iter=044 | J=0.079152 J_x=0.078264 J_w=0.088865 rel_change=1.788661e-04 | time=0.292s
+15:45:34 | INFO | tag=block9.out_proj iter=045 | J=0.078982 J_x=0.078094 J_w=0.088744 rel_change=1.707450e-04 | time=0.289s
+15:45:35 | INFO | tag=block9.out_proj iter=046 | J=0.078824 J_x=0.077937 J_w=0.088685 rel_change=1.579076e-04 | time=0.295s
+15:45:35 | INFO | tag=block9.out_proj iter=047 | J=0.078670 J_x=0.077782 J_w=0.088836 rel_change=1.537874e-04 | time=0.293s
+15:45:35 | INFO | tag=block9.out_proj iter=048 | J=0.078522 J_x=0.077635 J_w=0.088775 rel_change=1.474768e-04 | time=0.279s
+15:45:35 | INFO | tag=block9.out_proj iter=049 | J=0.078386 J_x=0.077500 J_w=0.088588 rel_change=1.366884e-04 | time=0.286s
+15:45:36 | INFO | tag=block9.out_proj iter=050 | J=0.078255 J_x=0.077370 J_w=0.088481 rel_change=1.309589e-04 | time=0.289s
+15:45:36 | INFO | tag=block9.out_proj iter=051 | J=0.078128 J_x=0.077245 J_w=0.088357 rel_change=1.264960e-04 | time=0.286s
+15:45:36 | INFO | tag=block9.out_proj iter=052 | J=0.077999 J_x=0.077115 J_w=0.088337 rel_change=1.297295e-04 | time=0.285s
+15:45:37 | INFO | tag=block9.out_proj iter=053 | J=0.077876 J_x=0.076993 J_w=0.088280 rel_change=1.228973e-04 | time=0.282s
+15:45:37 | INFO | tag=block9.out_proj iter=054 | J=0.077760 J_x=0.076878 J_w=0.088209 rel_change=1.159310e-04 | time=0.305s
+15:45:37 | INFO | tag=block9.out_proj iter=055 | J=0.077643 J_x=0.076761 J_w=0.088197 rel_change=1.165867e-04 | time=0.301s
+15:45:37 | INFO | tag=block9.out_proj iter=056 | J=0.077532 J_x=0.076651 J_w=0.088122 rel_change=1.111850e-04 | time=0.283s
+15:45:38 | INFO | tag=block9.out_proj iter=057 | J=0.077420 J_x=0.076538 J_w=0.088178 rel_change=1.121685e-04 | time=0.289s
+15:45:38 | INFO | tag=block9.out_proj iter=058 | J=0.077313 J_x=0.076432 J_w=0.088164 rel_change=1.067072e-04 | time=0.275s
+15:45:38 | INFO | tag=block9.out_proj iter=059 | J=0.077212 J_x=0.076331 J_w=0.088110 rel_change=1.008883e-04 | time=0.280s
+15:45:39 | INFO | tag=block9.out_proj iter=060 | J=0.077114 J_x=0.076233 J_w=0.088082 rel_change=9.855628e-05 | time=0.286s
+15:45:39 | INFO | tag=block9.out_proj iter=061 | J=0.077020 J_x=0.076140 J_w=0.088025 rel_change=9.387732e-05 | time=0.283s
+15:45:39 | INFO | tag=block9.out_proj iter=062 | J=0.076930 J_x=0.076050 J_w=0.087944 rel_change=9.024888e-05 | time=0.279s
+15:45:39 | INFO | tag=block9.out_proj iter=063 | J=0.076846 J_x=0.075966 J_w=0.087914 rel_change=8.402020e-05 | time=0.284s
+15:45:40 | INFO | tag=block9.out_proj iter=064 | J=0.076766 J_x=0.075888 J_w=0.087807 rel_change=7.991493e-05 | time=0.287s
+15:45:40 | INFO | tag=block9.out_proj iter=065 | J=0.076689 J_x=0.075811 J_w=0.087793 rel_change=7.635355e-05 | time=0.279s
+15:45:40 | INFO | tag=block9.out_proj iter=066 | J=0.076618 J_x=0.075740 J_w=0.087752 rel_change=7.163733e-05 | time=0.277s
+15:45:41 | INFO | tag=block9.out_proj iter=067 | J=0.076546 J_x=0.075669 J_w=0.087759 rel_change=7.119030e-05 | time=0.280s
+15:45:41 | INFO | tag=block9.out_proj iter=068 | J=0.076478 J_x=0.075601 J_w=0.087756 rel_change=6.823987e-05 | time=0.281s
+15:45:41 | INFO | tag=block9.out_proj iter=069 | J=0.076414 J_x=0.075537 J_w=0.087723 rel_change=6.397069e-05 | time=0.285s
+15:45:41 | INFO | tag=block9.out_proj iter=070 | J=0.076351 J_x=0.075474 J_w=0.087730 rel_change=6.309152e-05 | time=0.284s
+15:45:42 | INFO | tag=block9.out_proj iter=071 | J=0.076290 J_x=0.075412 J_w=0.087717 rel_change=6.155670e-05 | time=0.286s
+15:45:42 | INFO | tag=block9.out_proj iter=072 | J=0.076233 J_x=0.075356 J_w=0.087686 rel_change=5.698949e-05 | time=0.292s
+15:45:42 | INFO | tag=block9.out_proj iter=073 | J=0.076179 J_x=0.075302 J_w=0.087642 rel_change=5.400926e-05 | time=0.288s
+15:45:43 | INFO | tag=block9.out_proj iter=074 | J=0.076128 J_x=0.075251 J_w=0.087658 rel_change=5.079061e-05 | time=0.291s
+15:45:43 | INFO | tag=block9.out_proj iter=075 | J=0.076072 J_x=0.075196 J_w=0.087658 rel_change=5.551428e-05 | time=0.286s
+15:45:43 | INFO | tag=block9.out_proj iter=076 | J=0.076020 J_x=0.075144 J_w=0.087614 rel_change=5.233288e-05 | time=0.295s
+15:45:43 | INFO | tag=block9.out_proj iter=077 | J=0.075972 J_x=0.075096 J_w=0.087576 rel_change=4.813820e-05 | time=0.308s
+15:45:44 | INFO | tag=block9.out_proj iter=078 | J=0.075924 J_x=0.075048 J_w=0.087597 rel_change=4.747510e-05 | time=0.308s
+15:45:44 | INFO | tag=block9.out_proj iter=079 | J=0.075878 J_x=0.075002 J_w=0.087601 rel_change=4.619360e-05 | time=0.301s
+15:45:44 | INFO | tag=block9.out_proj iter=080 | J=0.075833 J_x=0.074957 J_w=0.087588 rel_change=4.529953e-05 | time=0.301s
+15:45:44 | INFO | 量化器拟合完成 | tag=block9.out_proj convergence_iter=80 total_fit_time=23.318s
+15:45:44 | INFO | 开始计算重建/近似误差 | layer=block9.out_proj error_mode=relative
+15:45:45 | INFO | 误差计算完成 | layer=block9.out_proj err_x=0.063501 err_w=0.081407 rel_linear_error=0.161179 elapsed=0.205s
+15:45:47 | INFO | block10.q_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.031367 std=0.549057 min=-18.546875 max=5.191406 fro=975.352356
+15:45:47 | INFO | block10.q_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000217 std=0.056007 min=-0.529297 max=0.670410 fro=43.013680
+15:45:47 | INFO | 开始拟合量化器 | tag=block10.q_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:45:47 | INFO | tag=block10.q_proj iter=001 | J=0.202447 J_x=0.192447 J_w=1.000000 rel_change=inf | time=0.319s
+15:45:48 | INFO | tag=block10.q_proj iter=002 | J=0.131543 J_x=0.127553 J_w=0.398910 rel_change=7.090467e-02 | time=0.353s
+15:45:48 | INFO | tag=block10.q_proj iter=003 | J=0.104583 J_x=0.102731 J_w=0.185178 rel_change=2.695997e-02 | time=0.338s
+15:45:48 | INFO | tag=block10.q_proj iter=004 | J=0.090849 J_x=0.089583 J_w=0.126605 rel_change=1.373322e-02 | time=0.336s
+15:45:49 | INFO | tag=block10.q_proj iter=005 | J=0.082632 J_x=0.081575 J_w=0.105718 rel_change=8.217230e-03 | time=0.308s
+15:45:49 | INFO | tag=block10.q_proj iter=006 | J=0.077218 J_x=0.076250 J_w=0.096854 rel_change=5.413711e-03 | time=0.305s
+15:45:49 | INFO | tag=block10.q_proj iter=007 | J=0.073410 J_x=0.072484 J_w=0.092670 rel_change=3.807984e-03 | time=0.322s
+15:45:50 | INFO | tag=block10.q_proj iter=008 | J=0.070603 J_x=0.069700 J_w=0.090325 rel_change=2.807051e-03 | time=0.323s
+15:45:50 | INFO | tag=block10.q_proj iter=009 | J=0.068454 J_x=0.067568 J_w=0.088678 rel_change=2.149016e-03 | time=0.298s
+15:45:50 | INFO | tag=block10.q_proj iter=010 | J=0.066778 J_x=0.065901 J_w=0.087650 rel_change=1.676552e-03 | time=0.318s
+15:45:51 | INFO | tag=block10.q_proj iter=011 | J=0.065441 J_x=0.064571 J_w=0.087035 rel_change=1.336433e-03 | time=0.318s
+15:45:51 | INFO | tag=block10.q_proj iter=012 | J=0.064346 J_x=0.063480 J_w=0.086586 rel_change=1.095802e-03 | time=0.339s
+15:45:51 | INFO | tag=block10.q_proj iter=013 | J=0.063436 J_x=0.062574 J_w=0.086179 rel_change=9.098947e-04 | time=0.331s
+15:45:52 | INFO | tag=block10.q_proj iter=014 | J=0.062674 J_x=0.061815 J_w=0.085885 rel_change=7.615760e-04 | time=0.319s
+15:45:52 | INFO | tag=block10.q_proj iter=015 | J=0.062025 J_x=0.061168 J_w=0.085647 rel_change=6.491728e-04 | time=0.270s
+15:45:52 | INFO | tag=block10.q_proj iter=016 | J=0.061468 J_x=0.060614 J_w=0.085457 rel_change=5.566254e-04 | time=0.192s
+15:45:52 | INFO | tag=block10.q_proj iter=017 | J=0.060984 J_x=0.060131 J_w=0.085301 rel_change=4.846714e-04 | time=0.185s
+15:45:52 | INFO | tag=block10.q_proj iter=018 | J=0.060550 J_x=0.059698 J_w=0.085147 rel_change=4.340112e-04 | time=0.185s
+15:45:53 | INFO | tag=block10.q_proj iter=019 | J=0.060161 J_x=0.059311 J_w=0.084956 rel_change=3.889799e-04 | time=0.200s
+15:45:53 | INFO | tag=block10.q_proj iter=020 | J=0.059822 J_x=0.058974 J_w=0.084815 rel_change=3.388897e-04 | time=0.182s
+15:45:53 | INFO | tag=block10.q_proj iter=021 | J=0.059522 J_x=0.058675 J_w=0.084704 rel_change=2.997294e-04 | time=0.198s
+15:45:53 | INFO | tag=block10.q_proj iter=022 | J=0.059259 J_x=0.058413 J_w=0.084558 rel_change=2.635010e-04 | time=0.174s
+15:45:53 | INFO | tag=block10.q_proj iter=023 | J=0.059018 J_x=0.058173 J_w=0.084498 rel_change=2.405830e-04 | time=0.174s
+15:45:54 | INFO | tag=block10.q_proj iter=024 | J=0.058800 J_x=0.057956 J_w=0.084441 rel_change=2.176464e-04 | time=0.179s
+15:45:54 | INFO | tag=block10.q_proj iter=025 | J=0.058604 J_x=0.057760 J_w=0.084389 rel_change=1.966693e-04 | time=0.244s
+15:45:54 | INFO | tag=block10.q_proj iter=026 | J=0.058426 J_x=0.057583 J_w=0.084324 rel_change=1.776889e-04 | time=0.315s
+15:45:54 | INFO | tag=block10.q_proj iter=027 | J=0.058259 J_x=0.057416 J_w=0.084271 rel_change=1.673065e-04 | time=0.312s
+15:45:55 | INFO | tag=block10.q_proj iter=028 | J=0.058107 J_x=0.057265 J_w=0.084235 rel_change=1.513846e-04 | time=0.289s
+15:45:55 | INFO | tag=block10.q_proj iter=029 | J=0.057972 J_x=0.057131 J_w=0.084180 rel_change=1.348034e-04 | time=0.301s
+15:45:55 | INFO | tag=block10.q_proj iter=030 | J=0.057847 J_x=0.057006 J_w=0.084138 rel_change=1.255348e-04 | time=0.301s
+15:45:56 | INFO | tag=block10.q_proj iter=031 | J=0.057729 J_x=0.056888 J_w=0.084099 rel_change=1.182184e-04 | time=0.293s
+15:45:56 | INFO | tag=block10.q_proj iter=032 | J=0.057621 J_x=0.056781 J_w=0.084059 rel_change=1.074150e-04 | time=0.298s
+15:45:56 | INFO | tag=block10.q_proj iter=033 | J=0.057522 J_x=0.056682 J_w=0.084016 rel_change=9.935722e-05 | time=0.306s
+15:45:57 | INFO | tag=block10.q_proj iter=034 | J=0.057432 J_x=0.056592 J_w=0.083975 rel_change=9.042397e-05 | time=0.298s
+15:45:57 | INFO | tag=block10.q_proj iter=035 | J=0.057345 J_x=0.056505 J_w=0.083971 rel_change=8.646026e-05 | time=0.229s
+15:45:57 | INFO | tag=block10.q_proj iter=036 | J=0.057265 J_x=0.056425 J_w=0.083940 rel_change=8.022413e-05 | time=0.167s
+15:45:57 | INFO | tag=block10.q_proj iter=037 | J=0.057186 J_x=0.056347 J_w=0.083935 rel_change=7.885695e-05 | time=0.166s
+15:45:57 | INFO | tag=block10.q_proj iter=038 | J=0.057113 J_x=0.056274 J_w=0.083900 rel_change=7.289648e-05 | time=0.212s
+15:45:58 | INFO | tag=block10.q_proj iter=039 | J=0.057043 J_x=0.056205 J_w=0.083889 rel_change=6.966665e-05 | time=0.298s
+15:45:58 | INFO | tag=block10.q_proj iter=040 | J=0.056976 J_x=0.056137 J_w=0.083873 rel_change=6.743148e-05 | time=0.297s
+15:45:58 | INFO | tag=block10.q_proj iter=041 | J=0.056912 J_x=0.056073 J_w=0.083861 rel_change=6.442145e-05 | time=0.309s
+15:45:59 | INFO | tag=block10.q_proj iter=042 | J=0.056851 J_x=0.056013 J_w=0.083853 rel_change=6.036833e-05 | time=0.299s
+15:45:59 | INFO | tag=block10.q_proj iter=043 | J=0.056792 J_x=0.055954 J_w=0.083843 rel_change=5.878136e-05 | time=0.299s
+15:45:59 | INFO | tag=block10.q_proj iter=044 | J=0.056739 J_x=0.055901 J_w=0.083822 rel_change=5.361065e-05 | time=0.296s
+15:45:59 | INFO | tag=block10.q_proj iter=045 | J=0.056689 J_x=0.055851 J_w=0.083818 rel_change=4.976615e-05 | time=0.296s
+15:46:00 | INFO | tag=block10.q_proj iter=046 | J=0.056641 J_x=0.055803 J_w=0.083807 rel_change=4.762039e-05 | time=0.301s
+15:46:00 | INFO | tag=block10.q_proj iter=047 | J=0.056596 J_x=0.055758 J_w=0.083809 rel_change=4.543737e-05 | time=0.313s
+15:46:00 | INFO | tag=block10.q_proj iter=048 | J=0.056554 J_x=0.055716 J_w=0.083804 rel_change=4.196912e-05 | time=0.299s
+15:46:01 | INFO | tag=block10.q_proj iter=049 | J=0.056516 J_x=0.055678 J_w=0.083798 rel_change=3.829226e-05 | time=0.294s
+15:46:01 | INFO | tag=block10.q_proj iter=050 | J=0.056480 J_x=0.055642 J_w=0.083790 rel_change=3.560260e-05 | time=0.294s
+15:46:01 | INFO | tag=block10.q_proj iter=051 | J=0.056444 J_x=0.055607 J_w=0.083792 rel_change=3.566593e-05 | time=0.288s
+15:46:02 | INFO | tag=block10.q_proj iter=052 | J=0.056412 J_x=0.055574 J_w=0.083788 rel_change=3.215298e-05 | time=0.303s
+15:46:02 | INFO | tag=block10.q_proj iter=053 | J=0.056381 J_x=0.055543 J_w=0.083793 rel_change=3.138557e-05 | time=0.302s
+15:46:02 | INFO | tag=block10.q_proj iter=054 | J=0.056349 J_x=0.055511 J_w=0.083803 rel_change=3.175065e-05 | time=0.292s
+15:46:02 | INFO | tag=block10.q_proj iter=055 | J=0.056319 J_x=0.055481 J_w=0.083795 rel_change=3.030151e-05 | time=0.302s
+15:46:03 | INFO | tag=block10.q_proj iter=056 | J=0.056291 J_x=0.055453 J_w=0.083794 rel_change=2.821907e-05 | time=0.293s
+15:46:03 | INFO | tag=block10.q_proj iter=057 | J=0.056263 J_x=0.055425 J_w=0.083797 rel_change=2.751499e-05 | time=0.298s
+15:46:03 | INFO | tag=block10.q_proj iter=058 | J=0.056236 J_x=0.055398 J_w=0.083808 rel_change=2.736226e-05 | time=0.298s
+15:46:04 | INFO | tag=block10.q_proj iter=059 | J=0.056209 J_x=0.055371 J_w=0.083798 rel_change=2.699345e-05 | time=0.296s
+15:46:04 | INFO | tag=block10.q_proj iter=060 | J=0.056185 J_x=0.055347 J_w=0.083792 rel_change=2.422929e-05 | time=0.295s
+15:46:04 | INFO | tag=block10.q_proj iter=061 | J=0.056161 J_x=0.055323 J_w=0.083787 rel_change=2.384186e-05 | time=0.300s
+15:46:04 | INFO | tag=block10.q_proj iter=062 | J=0.056136 J_x=0.055298 J_w=0.083806 rel_change=2.425537e-05 | time=0.296s
+15:46:05 | INFO | tag=block10.q_proj iter=063 | J=0.056113 J_x=0.055275 J_w=0.083796 rel_change=2.306700e-05 | time=0.294s
+15:46:05 | INFO | tag=block10.q_proj iter=064 | J=0.056092 J_x=0.055254 J_w=0.083785 rel_change=2.124906e-05 | time=0.300s
+15:46:05 | INFO | tag=block10.q_proj iter=065 | J=0.056072 J_x=0.055234 J_w=0.083793 rel_change=1.979992e-05 | time=0.300s
+15:46:06 | INFO | tag=block10.q_proj iter=066 | J=0.056054 J_x=0.055216 J_w=0.083786 rel_change=1.819432e-05 | time=0.291s
+15:46:06 | INFO | tag=block10.q_proj iter=067 | J=0.056038 J_x=0.055200 J_w=0.083786 rel_change=1.583621e-05 | time=0.303s
+15:46:06 | INFO | tag=block10.q_proj iter=068 | J=0.056023 J_x=0.055185 J_w=0.083782 rel_change=1.498684e-05 | time=0.306s
+15:46:07 | INFO | tag=block10.q_proj iter=069 | J=0.056009 J_x=0.055171 J_w=0.083783 rel_change=1.439825e-05 | time=0.306s
+15:46:07 | INFO | tag=block10.q_proj iter=070 | J=0.055995 J_x=0.055157 J_w=0.083782 rel_change=1.395494e-05 | time=0.299s
+15:46:07 | INFO | tag=block10.q_proj iter=071 | J=0.055981 J_x=0.055143 J_w=0.083781 rel_change=1.400337e-05 | time=0.305s
+15:46:08 | INFO | tag=block10.q_proj iter=072 | J=0.055966 J_x=0.055128 J_w=0.083790 rel_change=1.512468e-05 | time=0.299s
+15:46:08 | INFO | tag=block10.q_proj iter=073 | J=0.055950 J_x=0.055113 J_w=0.083788 rel_change=1.538172e-05 | time=0.294s
+15:46:08 | INFO | tag=block10.q_proj iter=074 | J=0.055938 J_x=0.055100 J_w=0.083784 rel_change=1.281127e-05 | time=0.301s
+15:46:08 | INFO | tag=block10.q_proj iter=075 | J=0.055925 J_x=0.055087 J_w=0.083784 rel_change=1.265109e-05 | time=0.297s
+15:46:09 | INFO | tag=block10.q_proj iter=076 | J=0.055913 J_x=0.055075 J_w=0.083779 rel_change=1.225993e-05 | time=0.297s
+15:46:09 | INFO | tag=block10.q_proj iter=077 | J=0.055901 J_x=0.055063 J_w=0.083776 rel_change=1.175702e-05 | time=0.295s
+15:46:09 | INFO | tag=block10.q_proj iter=078 | J=0.055890 J_x=0.055052 J_w=0.083769 rel_change=1.139566e-05 | time=0.314s
+15:46:10 | INFO | tag=block10.q_proj iter=079 | J=0.055879 J_x=0.055041 J_w=0.083768 rel_change=1.088902e-05 | time=0.298s
+15:46:10 | INFO | tag=block10.q_proj iter=080 | J=0.055868 J_x=0.055031 J_w=0.083764 rel_change=1.037121e-05 | time=0.301s
+15:46:10 | INFO | 量化器拟合完成 | tag=block10.q_proj convergence_iter=80 total_fit_time=22.825s
+15:46:10 | INFO | 开始计算重建/近似误差 | layer=block10.q_proj error_mode=relative
+15:46:10 | INFO | 误差计算完成 | layer=block10.q_proj err_x=0.054930 err_w=0.083073 rel_linear_error=0.060713 elapsed=0.195s
+15:46:12 | INFO | block10.k_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.031367 std=0.549057 min=-18.546875 max=5.191406 fro=975.352356
+15:46:12 | INFO | block10.k_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000059 std=0.056557 min=-0.650879 max=0.627930 fro=43.435982
+15:46:12 | INFO | 开始拟合量化器 | tag=block10.k_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:46:12 | INFO | tag=block10.k_proj iter=001 | J=0.202476 J_x=0.192476 J_w=1.000000 rel_change=inf | time=0.291s
+15:46:13 | INFO | tag=block10.k_proj iter=002 | J=0.131398 J_x=0.127461 J_w=0.393749 rel_change=7.107741e-02 | time=0.301s
+15:46:13 | INFO | tag=block10.k_proj iter=003 | J=0.104416 J_x=0.102606 J_w=0.180953 rel_change=2.698221e-02 | time=0.307s
+15:46:13 | INFO | tag=block10.k_proj iter=004 | J=0.090721 J_x=0.089483 J_w=0.123775 rel_change=1.369533e-02 | time=0.310s
+15:46:14 | INFO | tag=block10.k_proj iter=005 | J=0.082518 J_x=0.081481 J_w=0.103756 rel_change=8.202240e-03 | time=0.316s
+15:46:14 | INFO | tag=block10.k_proj iter=006 | J=0.077111 J_x=0.076158 J_w=0.095339 rel_change=5.406909e-03 | time=0.305s
+15:46:14 | INFO | tag=block10.k_proj iter=007 | J=0.073326 J_x=0.072413 J_w=0.091330 rel_change=3.785655e-03 | time=0.312s
+15:46:15 | INFO | tag=block10.k_proj iter=008 | J=0.070529 J_x=0.069639 J_w=0.089060 rel_change=2.796687e-03 | time=0.301s
+15:46:15 | INFO | tag=block10.k_proj iter=009 | J=0.068391 J_x=0.067514 J_w=0.087677 rel_change=2.138324e-03 | time=0.292s
+15:46:15 | INFO | tag=block10.k_proj iter=010 | J=0.066705 J_x=0.065838 J_w=0.086713 rel_change=1.686007e-03 | time=0.305s
+15:46:16 | INFO | tag=block10.k_proj iter=011 | J=0.065356 J_x=0.064495 J_w=0.086112 rel_change=1.349129e-03 | time=0.300s
+15:46:16 | INFO | tag=block10.k_proj iter=012 | J=0.064249 J_x=0.063393 J_w=0.085606 rel_change=1.106963e-03 | time=0.300s
+15:46:16 | INFO | tag=block10.k_proj iter=013 | J=0.063323 J_x=0.062470 J_w=0.085253 rel_change=9.261072e-04 | time=0.296s
+15:46:16 | INFO | tag=block10.k_proj iter=014 | J=0.062546 J_x=0.061696 J_w=0.084961 rel_change=7.770434e-04 | time=0.301s
+15:46:17 | INFO | tag=block10.k_proj iter=015 | J=0.061885 J_x=0.061039 J_w=0.084682 rel_change=6.601848e-04 | time=0.296s
+15:46:17 | INFO | tag=block10.k_proj iter=016 | J=0.061320 J_x=0.060476 J_w=0.084465 rel_change=5.652271e-04 | time=0.311s
+15:46:17 | INFO | tag=block10.k_proj iter=017 | J=0.060832 J_x=0.059989 J_w=0.084310 rel_change=4.881322e-04 | time=0.291s
+15:46:18 | INFO | tag=block10.k_proj iter=018 | J=0.060400 J_x=0.059558 J_w=0.084159 rel_change=4.325137e-04 | time=0.301s
+15:46:18 | INFO | tag=block10.k_proj iter=019 | J=0.060016 J_x=0.059176 J_w=0.084016 rel_change=3.831312e-04 | time=0.309s
+15:46:18 | INFO | tag=block10.k_proj iter=020 | J=0.059678 J_x=0.058838 J_w=0.083948 rel_change=3.387295e-04 | time=0.285s
+15:46:18 | INFO | tag=block10.k_proj iter=021 | J=0.059374 J_x=0.058535 J_w=0.083878 rel_change=3.034659e-04 | time=0.294s
+15:46:19 | INFO | tag=block10.k_proj iter=022 | J=0.059101 J_x=0.058263 J_w=0.083784 rel_change=2.734736e-04 | time=0.293s
+15:46:19 | INFO | tag=block10.k_proj iter=023 | J=0.058858 J_x=0.058021 J_w=0.083692 rel_change=2.431981e-04 | time=0.296s
+15:46:19 | INFO | tag=block10.k_proj iter=024 | J=0.058637 J_x=0.057800 J_w=0.083634 rel_change=2.207495e-04 | time=0.301s
+15:46:20 | INFO | tag=block10.k_proj iter=025 | J=0.058436 J_x=0.057600 J_w=0.083593 rel_change=2.006255e-04 | time=0.297s
+15:46:20 | INFO | tag=block10.k_proj iter=026 | J=0.058252 J_x=0.057416 J_w=0.083547 rel_change=1.843087e-04 | time=0.288s
+15:46:20 | INFO | tag=block10.k_proj iter=027 | J=0.058082 J_x=0.057247 J_w=0.083503 rel_change=1.695640e-04 | time=0.298s
+15:46:21 | INFO | tag=block10.k_proj iter=028 | J=0.057928 J_x=0.057093 J_w=0.083491 rel_change=1.543947e-04 | time=0.294s
+15:46:21 | INFO | tag=block10.k_proj iter=029 | J=0.057784 J_x=0.056949 J_w=0.083473 rel_change=1.438707e-04 | time=0.299s
+15:46:21 | INFO | tag=block10.k_proj iter=030 | J=0.057655 J_x=0.056821 J_w=0.083455 rel_change=1.288615e-04 | time=0.299s
+15:46:21 | INFO | tag=block10.k_proj iter=031 | J=0.057535 J_x=0.056700 J_w=0.083463 rel_change=1.202337e-04 | time=0.291s
+15:46:22 | INFO | tag=block10.k_proj iter=032 | J=0.057427 J_x=0.056593 J_w=0.083411 rel_change=1.081266e-04 | time=0.294s
+15:46:22 | INFO | tag=block10.k_proj iter=033 | J=0.057327 J_x=0.056493 J_w=0.083388 rel_change=1.000166e-04 | time=0.294s
+15:46:22 | INFO | tag=block10.k_proj iter=034 | J=0.057236 J_x=0.056403 J_w=0.083356 rel_change=9.047613e-05 | time=0.296s
+15:46:23 | INFO | tag=block10.k_proj iter=035 | J=0.057150 J_x=0.056317 J_w=0.083342 rel_change=8.598715e-05 | time=0.287s
+15:46:23 | INFO | tag=block10.k_proj iter=036 | J=0.057070 J_x=0.056237 J_w=0.083319 rel_change=8.040294e-05 | time=0.312s
+15:46:23 | INFO | tag=block10.k_proj iter=037 | J=0.056995 J_x=0.056162 J_w=0.083308 rel_change=7.503480e-05 | time=0.305s
+15:46:24 | INFO | tag=block10.k_proj iter=038 | J=0.056924 J_x=0.056091 J_w=0.083281 rel_change=7.076189e-05 | time=0.298s
+15:46:24 | INFO | tag=block10.k_proj iter=039 | J=0.056857 J_x=0.056025 J_w=0.083274 rel_change=6.670877e-05 | time=0.299s
+15:46:24 | INFO | tag=block10.k_proj iter=040 | J=0.056793 J_x=0.055960 J_w=0.083268 rel_change=6.459281e-05 | time=0.305s
+15:46:24 | INFO | tag=block10.k_proj iter=041 | J=0.056731 J_x=0.055898 J_w=0.083245 rel_change=6.198883e-05 | time=0.296s
+15:46:25 | INFO | tag=block10.k_proj iter=042 | J=0.056672 J_x=0.055840 J_w=0.083213 rel_change=5.873665e-05 | time=0.302s
+15:46:25 | INFO | tag=block10.k_proj iter=043 | J=0.056617 J_x=0.055785 J_w=0.083212 rel_change=5.511940e-05 | time=0.296s
+15:46:25 | INFO | tag=block10.k_proj iter=044 | J=0.056564 J_x=0.055732 J_w=0.083202 rel_change=5.309656e-05 | time=0.305s
+15:46:26 | INFO | tag=block10.k_proj iter=045 | J=0.056514 J_x=0.055682 J_w=0.083193 rel_change=4.945323e-05 | time=0.299s
+15:46:26 | INFO | tag=block10.k_proj iter=046 | J=0.056468 J_x=0.055636 J_w=0.083181 rel_change=4.674122e-05 | time=0.294s
+15:46:26 | INFO | tag=block10.k_proj iter=047 | J=0.056422 J_x=0.055590 J_w=0.083170 rel_change=4.568696e-05 | time=0.295s
+15:46:27 | INFO | tag=block10.k_proj iter=048 | J=0.056380 J_x=0.055548 J_w=0.083161 rel_change=4.243106e-05 | time=0.306s
+15:46:27 | INFO | tag=block10.k_proj iter=049 | J=0.056340 J_x=0.055508 J_w=0.083146 rel_change=3.980845e-05 | time=0.300s
+15:46:27 | INFO | tag=block10.k_proj iter=050 | J=0.056303 J_x=0.055471 J_w=0.083140 rel_change=3.708526e-05 | time=0.298s
+15:46:27 | INFO | tag=block10.k_proj iter=051 | J=0.056267 J_x=0.055436 J_w=0.083141 rel_change=3.569946e-05 | time=0.298s
+15:46:28 | INFO | tag=block10.k_proj iter=052 | J=0.056231 J_x=0.055400 J_w=0.083143 rel_change=3.574789e-05 | time=0.295s
+15:46:28 | INFO | tag=block10.k_proj iter=053 | J=0.056199 J_x=0.055368 J_w=0.083134 rel_change=3.191456e-05 | time=0.298s
+15:46:28 | INFO | tag=block10.k_proj iter=054 | J=0.056169 J_x=0.055337 J_w=0.083133 rel_change=3.047287e-05 | time=0.295s
+15:46:29 | INFO | tag=block10.k_proj iter=055 | J=0.056140 J_x=0.055309 J_w=0.083114 rel_change=2.848729e-05 | time=0.296s
+15:46:29 | INFO | tag=block10.k_proj iter=056 | J=0.056114 J_x=0.055283 J_w=0.083101 rel_change=2.592057e-05 | time=0.291s
+15:46:29 | INFO | tag=block10.k_proj iter=057 | J=0.056089 J_x=0.055258 J_w=0.083095 rel_change=2.582371e-05 | time=0.304s
+15:46:30 | INFO | tag=block10.k_proj iter=058 | J=0.056062 J_x=0.055231 J_w=0.083091 rel_change=2.678484e-05 | time=0.296s
+15:46:30 | INFO | tag=block10.k_proj iter=059 | J=0.056038 J_x=0.055207 J_w=0.083087 rel_change=2.387539e-05 | time=0.300s
+15:46:30 | INFO | tag=block10.k_proj iter=060 | J=0.056014 J_x=0.055183 J_w=0.083085 rel_change=2.373382e-05 | time=0.303s
+15:46:30 | INFO | tag=block10.k_proj iter=061 | J=0.055990 J_x=0.055160 J_w=0.083076 rel_change=2.374873e-05 | time=0.296s
+15:46:31 | INFO | tag=block10.k_proj iter=062 | J=0.055969 J_x=0.055138 J_w=0.083069 rel_change=2.190471e-05 | time=0.297s
+15:46:31 | INFO | tag=block10.k_proj iter=063 | J=0.055949 J_x=0.055118 J_w=0.083066 rel_change=1.996383e-05 | time=0.292s
+15:46:31 | INFO | tag=block10.k_proj iter=064 | J=0.055930 J_x=0.055099 J_w=0.083068 rel_change=1.891330e-05 | time=0.302s
+15:46:32 | INFO | tag=block10.k_proj iter=065 | J=0.055911 J_x=0.055080 J_w=0.083078 rel_change=1.868606e-05 | time=0.307s
+15:46:32 | INFO | tag=block10.k_proj iter=066 | J=0.055894 J_x=0.055063 J_w=0.083065 rel_change=1.692772e-05 | time=0.294s
+15:46:32 | INFO | tag=block10.k_proj iter=067 | J=0.055878 J_x=0.055048 J_w=0.083060 rel_change=1.573190e-05 | time=0.294s
+15:46:33 | INFO | tag=block10.k_proj iter=068 | J=0.055863 J_x=0.055033 J_w=0.083068 rel_change=1.506880e-05 | time=0.297s
+15:46:33 | INFO | tag=block10.k_proj iter=069 | J=0.055849 J_x=0.055018 J_w=0.083065 rel_change=1.419708e-05 | time=0.297s
+15:46:33 | INFO | tag=block10.k_proj iter=070 | J=0.055835 J_x=0.055004 J_w=0.083062 rel_change=1.431257e-05 | time=0.300s
+15:46:33 | INFO | tag=block10.k_proj iter=071 | J=0.055821 J_x=0.054991 J_w=0.083048 rel_change=1.357123e-05 | time=0.294s
+15:46:34 | INFO | tag=block10.k_proj iter=072 | J=0.055808 J_x=0.054978 J_w=0.083047 rel_change=1.309067e-05 | time=0.288s
+15:46:34 | INFO | tag=block10.k_proj iter=073 | J=0.055795 J_x=0.054964 J_w=0.083050 rel_change=1.312420e-05 | time=0.291s
+15:46:34 | INFO | tag=block10.k_proj iter=074 | J=0.055782 J_x=0.054951 J_w=0.083053 rel_change=1.316890e-05 | time=0.296s
+15:46:35 | INFO | tag=block10.k_proj iter=075 | J=0.055768 J_x=0.054938 J_w=0.083044 rel_change=1.361966e-05 | time=0.291s
+15:46:35 | INFO | tag=block10.k_proj iter=076 | J=0.055755 J_x=0.054925 J_w=0.083044 rel_change=1.306087e-05 | time=0.284s
+15:46:35 | INFO | tag=block10.k_proj iter=077 | J=0.055742 J_x=0.054912 J_w=0.083043 rel_change=1.274422e-05 | time=0.292s
+15:46:35 | INFO | tag=block10.k_proj iter=078 | J=0.055730 J_x=0.054900 J_w=0.083041 rel_change=1.218542e-05 | time=0.295s
+15:46:36 | INFO | tag=block10.k_proj iter=079 | J=0.055717 J_x=0.054887 J_w=0.083041 rel_change=1.275167e-05 | time=0.302s
+15:46:36 | INFO | tag=block10.k_proj iter=080 | J=0.055706 J_x=0.054875 J_w=0.083043 rel_change=1.175702e-05 | time=0.297s
+15:46:36 | INFO | 量化器拟合完成 | tag=block10.k_proj convergence_iter=80 total_fit_time=23.917s
+15:46:36 | INFO | 开始计算重建/近似误差 | layer=block10.k_proj error_mode=relative
+15:46:36 | INFO | 误差计算完成 | layer=block10.k_proj err_x=0.054771 err_w=0.082752 rel_linear_error=0.051385 elapsed=0.191s
+15:46:38 | INFO | block10.v_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.031367 std=0.549057 min=-18.546875 max=5.191406 fro=975.352356
+15:46:38 | INFO | block10.v_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000007 std=0.026652 min=-0.337402 max=0.203247 fro=20.468746
+15:46:38 | INFO | 开始拟合量化器 | tag=block10.v_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:46:39 | INFO | tag=block10.v_proj iter=001 | J=0.202253 J_x=0.192253 J_w=1.000000 rel_change=inf | time=0.298s
+15:46:39 | INFO | tag=block10.v_proj iter=002 | J=0.131403 J_x=0.127319 J_w=0.408341 rel_change=7.085064e-02 | time=0.310s
+15:46:39 | INFO | tag=block10.v_proj iter=003 | J=0.104532 J_x=0.102590 J_w=0.194199 rel_change=2.687046e-02 | time=0.307s
+15:46:39 | INFO | tag=block10.v_proj iter=004 | J=0.090800 J_x=0.089466 J_w=0.133401 rel_change=1.373217e-02 | time=0.302s
+15:46:40 | INFO | tag=block10.v_proj iter=005 | J=0.082568 J_x=0.081453 J_w=0.111491 rel_change=8.232348e-03 | time=0.313s
+15:46:40 | INFO | tag=block10.v_proj iter=006 | J=0.077138 J_x=0.076120 J_w=0.101781 rel_change=5.430304e-03 | time=0.313s
+15:46:40 | INFO | tag=block10.v_proj iter=007 | J=0.073306 J_x=0.072336 J_w=0.097055 rel_change=3.831215e-03 | time=0.315s
+15:46:41 | INFO | tag=block10.v_proj iter=008 | J=0.070479 J_x=0.069534 J_w=0.094538 rel_change=2.827376e-03 | time=0.303s
+15:46:41 | INFO | tag=block10.v_proj iter=009 | J=0.068309 J_x=0.067381 J_w=0.092797 rel_change=2.170332e-03 | time=0.285s
+15:46:41 | INFO | tag=block10.v_proj iter=010 | J=0.066608 J_x=0.065692 J_w=0.091580 rel_change=1.700409e-03 | time=0.296s
+15:46:42 | INFO | tag=block10.v_proj iter=011 | J=0.065254 J_x=0.064346 J_w=0.090762 rel_change=1.354396e-03 | time=0.309s
+15:46:42 | INFO | tag=block10.v_proj iter=012 | J=0.064141 J_x=0.063239 J_w=0.090194 rel_change=1.112416e-03 | time=0.299s
+15:46:42 | INFO | tag=block10.v_proj iter=013 | J=0.063228 J_x=0.062330 J_w=0.089782 rel_change=9.133890e-04 | time=0.295s
+15:46:43 | INFO | tag=block10.v_proj iter=014 | J=0.062447 J_x=0.061552 J_w=0.089468 rel_change=7.814579e-04 | time=0.298s
+15:46:43 | INFO | tag=block10.v_proj iter=015 | J=0.061779 J_x=0.060888 J_w=0.089176 rel_change=6.672107e-04 | time=0.300s
+15:46:43 | INFO | tag=block10.v_proj iter=016 | J=0.061206 J_x=0.060317 J_w=0.088909 rel_change=5.729795e-04 | time=0.293s
+15:46:43 | INFO | tag=block10.v_proj iter=017 | J=0.060708 J_x=0.059820 J_w=0.088757 rel_change=4.985109e-04 | time=0.309s
+15:46:44 | INFO | tag=block10.v_proj iter=018 | J=0.060266 J_x=0.059380 J_w=0.088595 rel_change=4.414544e-04 | time=0.299s
+15:46:44 | INFO | tag=block10.v_proj iter=019 | J=0.059883 J_x=0.058999 J_w=0.088396 rel_change=3.829077e-04 | time=0.294s
+15:46:44 | INFO | tag=block10.v_proj iter=020 | J=0.059539 J_x=0.058657 J_w=0.088233 rel_change=3.445819e-04 | time=0.304s
+15:46:45 | INFO | tag=block10.v_proj iter=021 | J=0.059233 J_x=0.058352 J_w=0.088088 rel_change=3.057979e-04 | time=0.297s
+15:46:45 | INFO | tag=block10.v_proj iter=022 | J=0.058961 J_x=0.058081 J_w=0.087955 rel_change=2.720729e-04 | time=0.298s
+15:46:45 | INFO | tag=block10.v_proj iter=023 | J=0.058715 J_x=0.057837 J_w=0.087875 rel_change=2.457388e-04 | time=0.308s
+15:46:46 | INFO | tag=block10.v_proj iter=024 | J=0.058492 J_x=0.057614 J_w=0.087813 rel_change=2.228916e-04 | time=0.298s
+15:46:46 | INFO | tag=block10.v_proj iter=025 | J=0.058293 J_x=0.057416 J_w=0.087708 rel_change=1.991764e-04 | time=0.300s
+15:46:46 | INFO | tag=block10.v_proj iter=026 | J=0.058113 J_x=0.057237 J_w=0.087646 rel_change=1.802109e-04 | time=0.298s
+15:46:46 | INFO | tag=block10.v_proj iter=027 | J=0.057951 J_x=0.057075 J_w=0.087583 rel_change=1.623183e-04 | time=0.311s
+15:46:47 | INFO | tag=block10.v_proj iter=028 | J=0.057800 J_x=0.056925 J_w=0.087539 rel_change=1.504794e-04 | time=0.309s
+15:46:47 | INFO | tag=block10.v_proj iter=029 | J=0.057662 J_x=0.056788 J_w=0.087491 rel_change=1.377091e-04 | time=0.304s
+15:46:47 | INFO | tag=block10.v_proj iter=030 | J=0.057532 J_x=0.056657 J_w=0.087458 rel_change=1.307055e-04 | time=0.299s
+15:46:48 | INFO | tag=block10.v_proj iter=031 | J=0.057409 J_x=0.056534 J_w=0.087425 rel_change=1.231246e-04 | time=0.313s
+15:46:48 | INFO | tag=block10.v_proj iter=032 | J=0.057297 J_x=0.056423 J_w=0.087398 rel_change=1.112856e-04 | time=0.301s
+15:46:48 | INFO | tag=block10.v_proj iter=033 | J=0.057196 J_x=0.056322 J_w=0.087357 rel_change=1.013950e-04 | time=0.295s
+15:46:49 | INFO | tag=block10.v_proj iter=034 | J=0.057104 J_x=0.056230 J_w=0.087312 rel_change=9.243190e-05 | time=0.309s
+15:46:49 | INFO | tag=block10.v_proj iter=035 | J=0.057016 J_x=0.056143 J_w=0.087284 rel_change=8.777902e-05 | time=0.310s
+15:46:49 | INFO | tag=block10.v_proj iter=036 | J=0.056933 J_x=0.056060 J_w=0.087274 rel_change=8.314848e-05 | time=0.302s
+15:46:49 | INFO | tag=block10.v_proj iter=037 | J=0.056856 J_x=0.055983 J_w=0.087246 rel_change=7.706508e-05 | time=0.300s
+15:46:50 | INFO | tag=block10.v_proj iter=038 | J=0.056784 J_x=0.055912 J_w=0.087205 rel_change=7.161871e-05 | time=0.301s
+15:46:50 | INFO | tag=block10.v_proj iter=039 | J=0.056717 J_x=0.055845 J_w=0.087194 rel_change=6.667152e-05 | time=0.302s
+15:46:50 | INFO | tag=block10.v_proj iter=040 | J=0.056654 J_x=0.055783 J_w=0.087143 rel_change=6.299093e-05 | time=0.302s
+15:46:51 | INFO | tag=block10.v_proj iter=041 | J=0.056595 J_x=0.055724 J_w=0.087120 rel_change=5.881861e-05 | time=0.299s
+15:46:51 | INFO | tag=block10.v_proj iter=042 | J=0.056541 J_x=0.055670 J_w=0.087109 rel_change=5.393848e-05 | time=0.313s
+15:46:51 | INFO | tag=block10.v_proj iter=043 | J=0.056491 J_x=0.055620 J_w=0.087102 rel_change=5.032495e-05 | time=0.288s
+15:46:52 | INFO | tag=block10.v_proj iter=044 | J=0.056444 J_x=0.055573 J_w=0.087084 rel_change=4.703179e-05 | time=0.298s
+15:46:52 | INFO | tag=block10.v_proj iter=045 | J=0.056400 J_x=0.055529 J_w=0.087074 rel_change=4.426390e-05 | time=0.297s
+15:46:52 | INFO | tag=block10.v_proj iter=046 | J=0.056357 J_x=0.055486 J_w=0.087064 rel_change=4.300848e-05 | time=0.301s
+15:46:52 | INFO | tag=block10.v_proj iter=047 | J=0.056317 J_x=0.055446 J_w=0.087057 rel_change=4.034489e-05 | time=0.305s
+15:46:53 | INFO | tag=block10.v_proj iter=048 | J=0.056277 J_x=0.055406 J_w=0.087063 rel_change=3.965944e-05 | time=0.300s
+15:46:53 | INFO | tag=block10.v_proj iter=049 | J=0.056238 J_x=0.055367 J_w=0.087054 rel_change=3.890321e-05 | time=0.298s
+15:46:53 | INFO | tag=block10.v_proj iter=050 | J=0.056202 J_x=0.055332 J_w=0.087043 rel_change=3.568456e-05 | time=0.299s
+15:46:54 | INFO | tag=block10.v_proj iter=051 | J=0.056168 J_x=0.055297 J_w=0.087036 rel_change=3.465265e-05 | time=0.297s
+15:46:54 | INFO | tag=block10.v_proj iter=052 | J=0.056135 J_x=0.055265 J_w=0.087029 rel_change=3.268570e-05 | time=0.288s
+15:46:54 | INFO | tag=block10.v_proj iter=053 | J=0.056104 J_x=0.055234 J_w=0.087037 rel_change=3.059208e-05 | time=0.299s
+15:46:55 | INFO | tag=block10.v_proj iter=054 | J=0.056074 J_x=0.055203 J_w=0.087045 rel_change=3.068149e-05 | time=0.302s
+15:46:55 | INFO | tag=block10.v_proj iter=055 | J=0.056045 J_x=0.055174 J_w=0.087040 rel_change=2.881140e-05 | time=0.302s
+15:46:55 | INFO | tag=block10.v_proj iter=056 | J=0.056019 J_x=0.055149 J_w=0.087018 rel_change=2.555177e-05 | time=0.294s
+15:46:55 | INFO | tag=block10.v_proj iter=057 | J=0.055996 J_x=0.055125 J_w=0.087017 rel_change=2.377480e-05 | time=0.310s
+15:46:56 | INFO | tag=block10.v_proj iter=058 | J=0.055972 J_x=0.055102 J_w=0.087008 rel_change=2.375618e-05 | time=0.298s
+15:46:56 | INFO | tag=block10.v_proj iter=059 | J=0.055948 J_x=0.055078 J_w=0.087006 rel_change=2.384558e-05 | time=0.295s
+15:46:56 | INFO | tag=block10.v_proj iter=060 | J=0.055925 J_x=0.055055 J_w=0.086985 rel_change=2.318248e-05 | time=0.292s
+15:46:57 | INFO | tag=block10.v_proj iter=061 | J=0.055902 J_x=0.055032 J_w=0.086993 rel_change=2.295524e-05 | time=0.298s
+15:46:57 | INFO | tag=block10.v_proj iter=062 | J=0.055879 J_x=0.055009 J_w=0.086993 rel_change=2.257526e-05 | time=0.311s
+15:46:57 | INFO | tag=block10.v_proj iter=063 | J=0.055858 J_x=0.054988 J_w=0.086995 rel_change=2.144650e-05 | time=0.309s
+15:46:58 | INFO | tag=block10.v_proj iter=064 | J=0.055839 J_x=0.054970 J_w=0.086979 rel_change=1.845881e-05 | time=0.306s
+15:46:58 | INFO | tag=block10.v_proj iter=065 | J=0.055822 J_x=0.054952 J_w=0.086980 rel_change=1.700968e-05 | time=0.299s
+15:46:58 | INFO | tag=block10.v_proj iter=066 | J=0.055806 J_x=0.054936 J_w=0.086984 rel_change=1.666322e-05 | time=0.287s
+15:46:59 | INFO | tag=block10.v_proj iter=067 | J=0.055789 J_x=0.054920 J_w=0.086980 rel_change=1.623854e-05 | time=0.311s
+15:46:59 | INFO | tag=block10.v_proj iter=068 | J=0.055774 J_x=0.054904 J_w=0.086966 rel_change=1.572818e-05 | time=0.307s
+15:46:59 | INFO | tag=block10.v_proj iter=069 | J=0.055758 J_x=0.054888 J_w=0.086962 rel_change=1.576915e-05 | time=0.309s
+15:46:59 | INFO | tag=block10.v_proj iter=070 | J=0.055743 J_x=0.054873 J_w=0.086959 rel_change=1.503900e-05 | time=0.299s
+15:47:00 | INFO | tag=block10.v_proj iter=071 | J=0.055728 J_x=0.054858 J_w=0.086962 rel_change=1.491979e-05 | time=0.306s
+15:47:00 | INFO | tag=block10.v_proj iter=072 | J=0.055713 J_x=0.054844 J_w=0.086964 rel_change=1.459569e-05 | time=0.294s
+15:47:00 | INFO | tag=block10.v_proj iter=073 | J=0.055700 J_x=0.054830 J_w=0.086959 rel_change=1.347810e-05 | time=0.311s
+15:47:01 | INFO | tag=block10.v_proj iter=074 | J=0.055686 J_x=0.054816 J_w=0.086969 rel_change=1.421943e-05 | time=0.305s
+15:47:01 | INFO | tag=block10.v_proj iter=075 | J=0.055672 J_x=0.054803 J_w=0.086972 rel_change=1.332909e-05 | time=0.300s
+15:47:01 | INFO | tag=block10.v_proj iter=076 | J=0.055659 J_x=0.054789 J_w=0.086971 rel_change=1.318380e-05 | time=0.303s
+15:47:02 | INFO | tag=block10.v_proj iter=077 | J=0.055646 J_x=0.054776 J_w=0.086980 rel_change=1.289696e-05 | time=0.294s
+15:47:02 | INFO | tag=block10.v_proj iter=078 | J=0.055635 J_x=0.054765 J_w=0.086979 rel_change=1.165643e-05 | time=0.292s
+15:47:02 | INFO | tag=block10.v_proj iter=079 | J=0.055622 J_x=0.054753 J_w=0.086979 rel_change=1.214817e-05 | time=0.300s
+15:47:02 | INFO | tag=block10.v_proj iter=080 | J=0.055611 J_x=0.054741 J_w=0.086970 rel_change=1.156330e-05 | time=0.293s
+15:47:02 | INFO | 量化器拟合完成 | tag=block10.v_proj convergence_iter=80 total_fit_time=24.178s
+15:47:02 | INFO | 开始计算重建/近似误差 | layer=block10.v_proj error_mode=relative
+15:47:03 | INFO | 误差计算完成 | layer=block10.v_proj err_x=0.054640 err_w=0.085679 rel_linear_error=0.165325 elapsed=0.190s
+15:47:05 | INFO | block10.out_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=0.001763 std=0.100747 min=-1.370117 max=1.847656 fro=178.686371
+15:47:05 | INFO | block10.out_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000001 std=0.026491 min=-0.291260 max=0.345703 fro=20.344791
+15:47:05 | INFO | 开始拟合量化器 | tag=block10.out_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:47:05 | INFO | tag=block10.out_proj iter=001 | J=1.004114 J_x=0.994114 J_w=1.000000 rel_change=inf | time=0.272s
+15:47:05 | INFO | tag=block10.out_proj iter=002 | J=0.340832 J_x=0.333963 J_w=0.686983 rel_change=6.605638e-01 | time=0.300s
+15:47:06 | INFO | tag=block10.out_proj iter=003 | J=0.203921 J_x=0.201192 J_w=0.272959 rel_change=1.369109e-01 | time=0.291s
+15:47:06 | INFO | tag=block10.out_proj iter=004 | J=0.156757 J_x=0.155001 J_w=0.175596 rel_change=4.716472e-02 | time=0.315s
+15:47:06 | INFO | tag=block10.out_proj iter=005 | J=0.134999 J_x=0.133579 J_w=0.142048 rel_change=2.175742e-02 | time=0.308s
+15:47:06 | INFO | tag=block10.out_proj iter=006 | J=0.122717 J_x=0.121467 J_w=0.125009 rel_change=1.228197e-02 | time=0.291s
+15:47:07 | INFO | tag=block10.out_proj iter=007 | J=0.114708 J_x=0.113556 J_w=0.115251 rel_change=8.008979e-03 | time=0.320s
+15:47:07 | INFO | tag=block10.out_proj iter=008 | J=0.109027 J_x=0.107936 J_w=0.109102 rel_change=5.681738e-03 | time=0.295s
+15:47:07 | INFO | tag=block10.out_proj iter=009 | J=0.104734 J_x=0.103680 J_w=0.105460 rel_change=4.292555e-03 | time=0.291s
+15:47:08 | INFO | tag=block10.out_proj iter=010 | J=0.101340 J_x=0.100313 J_w=0.102749 rel_change=3.393956e-03 | time=0.308s
+15:47:08 | INFO | tag=block10.out_proj iter=011 | J=0.098603 J_x=0.097597 J_w=0.100551 rel_change=2.737448e-03 | time=0.291s
+15:47:08 | INFO | tag=block10.out_proj iter=012 | J=0.096347 J_x=0.095357 J_w=0.099046 rel_change=2.255373e-03 | time=0.292s
+15:47:09 | INFO | tag=block10.out_proj iter=013 | J=0.094446 J_x=0.093468 J_w=0.097847 rel_change=1.900844e-03 | time=0.314s
+15:47:09 | INFO | tag=block10.out_proj iter=014 | J=0.092849 J_x=0.091881 J_w=0.096751 rel_change=1.597643e-03 | time=0.323s
+15:47:09 | INFO | tag=block10.out_proj iter=015 | J=0.091468 J_x=0.090507 J_w=0.096057 rel_change=1.381323e-03 | time=0.297s
+15:47:09 | INFO | tag=block10.out_proj iter=016 | J=0.090259 J_x=0.089307 J_w=0.095188 rel_change=1.208723e-03 | time=0.292s
+15:47:10 | INFO | tag=block10.out_proj iter=017 | J=0.089203 J_x=0.088258 J_w=0.094574 rel_change=1.055494e-03 | time=0.298s
+15:47:10 | INFO | tag=block10.out_proj iter=018 | J=0.088261 J_x=0.087321 J_w=0.094084 rel_change=9.418875e-04 | time=0.283s
+15:47:10 | INFO | tag=block10.out_proj iter=019 | J=0.087424 J_x=0.086487 J_w=0.093631 rel_change=8.377731e-04 | time=0.294s
+15:47:11 | INFO | tag=block10.out_proj iter=020 | J=0.086664 J_x=0.085731 J_w=0.093296 rel_change=7.599890e-04 | time=0.300s
+15:47:11 | INFO | tag=block10.out_proj iter=021 | J=0.085976 J_x=0.085046 J_w=0.093045 rel_change=6.875023e-04 | time=0.304s
+15:47:11 | INFO | tag=block10.out_proj iter=022 | J=0.085357 J_x=0.084429 J_w=0.092792 rel_change=6.191507e-04 | time=0.286s
+15:47:12 | INFO | tag=block10.out_proj iter=023 | J=0.084788 J_x=0.083862 J_w=0.092607 rel_change=5.687177e-04 | time=0.284s
+15:47:12 | INFO | tag=block10.out_proj iter=024 | J=0.084259 J_x=0.083335 J_w=0.092346 rel_change=5.295873e-04 | time=0.295s
+15:47:12 | INFO | tag=block10.out_proj iter=025 | J=0.083762 J_x=0.082841 J_w=0.092108 rel_change=4.970878e-04 | time=0.291s
+15:47:12 | INFO | tag=block10.out_proj iter=026 | J=0.083301 J_x=0.082382 J_w=0.091883 rel_change=4.603043e-04 | time=0.288s
+15:47:13 | INFO | tag=block10.out_proj iter=027 | J=0.082867 J_x=0.081950 J_w=0.091769 rel_change=4.340559e-04 | time=0.290s
+15:47:13 | INFO | tag=block10.out_proj iter=028 | J=0.082470 J_x=0.081553 J_w=0.091713 rel_change=3.975406e-04 | time=0.278s
+15:47:13 | INFO | tag=block10.out_proj iter=029 | J=0.082105 J_x=0.081190 J_w=0.091520 rel_change=3.648475e-04 | time=0.285s
+15:47:14 | INFO | tag=block10.out_proj iter=030 | J=0.081769 J_x=0.080855 J_w=0.091392 rel_change=3.361106e-04 | time=0.297s
+15:47:14 | INFO | tag=block10.out_proj iter=031 | J=0.081453 J_x=0.080541 J_w=0.091249 rel_change=3.154054e-04 | time=0.295s
+15:47:14 | INFO | tag=block10.out_proj iter=032 | J=0.081161 J_x=0.080249 J_w=0.091126 rel_change=2.926141e-04 | time=0.320s
+15:47:14 | INFO | tag=block10.out_proj iter=033 | J=0.080881 J_x=0.079970 J_w=0.091058 rel_change=2.800897e-04 | time=0.305s
+15:47:15 | INFO | tag=block10.out_proj iter=034 | J=0.080597 J_x=0.079687 J_w=0.090995 rel_change=2.837703e-04 | time=0.291s
+15:47:15 | INFO | tag=block10.out_proj iter=035 | J=0.080324 J_x=0.079415 J_w=0.090924 rel_change=2.727062e-04 | time=0.298s
+15:47:15 | INFO | tag=block10.out_proj iter=036 | J=0.080069 J_x=0.079160 J_w=0.090823 rel_change=2.554655e-04 | time=0.279s
+15:47:16 | INFO | tag=block10.out_proj iter=037 | J=0.079820 J_x=0.078912 J_w=0.090776 rel_change=2.491921e-04 | time=0.289s
+15:47:16 | INFO | tag=block10.out_proj iter=038 | J=0.079585 J_x=0.078678 J_w=0.090741 rel_change=2.341345e-04 | time=0.288s
+15:47:16 | INFO | tag=block10.out_proj iter=039 | J=0.079375 J_x=0.078468 J_w=0.090668 rel_change=2.108291e-04 | time=0.293s
+15:47:17 | INFO | tag=block10.out_proj iter=040 | J=0.079180 J_x=0.078273 J_w=0.090655 rel_change=1.949742e-04 | time=0.291s
+15:47:17 | INFO | tag=block10.out_proj iter=041 | J=0.078990 J_x=0.078083 J_w=0.090667 rel_change=1.900196e-04 | time=0.282s
+15:47:17 | INFO | tag=block10.out_proj iter=042 | J=0.078814 J_x=0.077908 J_w=0.090586 rel_change=1.754463e-04 | time=0.288s
+15:47:17 | INFO | tag=block10.out_proj iter=043 | J=0.078647 J_x=0.077742 J_w=0.090510 rel_change=1.674592e-04 | time=0.290s
+15:47:18 | INFO | tag=block10.out_proj iter=044 | J=0.078487 J_x=0.077582 J_w=0.090481 rel_change=1.594275e-04 | time=0.284s
+15:47:18 | INFO | tag=block10.out_proj iter=045 | J=0.078334 J_x=0.077431 J_w=0.090362 rel_change=1.528487e-04 | time=0.293s
+15:47:18 | INFO | tag=block10.out_proj iter=046 | J=0.078184 J_x=0.077281 J_w=0.090331 rel_change=1.502112e-04 | time=0.312s
+15:47:19 | INFO | tag=block10.out_proj iter=047 | J=0.078042 J_x=0.077140 J_w=0.090239 rel_change=1.418740e-04 | time=0.301s
+15:47:19 | INFO | tag=block10.out_proj iter=048 | J=0.077903 J_x=0.077001 J_w=0.090200 rel_change=1.389459e-04 | time=0.294s
+15:47:19 | INFO | tag=block10.out_proj iter=049 | J=0.077772 J_x=0.076870 J_w=0.090214 rel_change=1.313239e-04 | time=0.302s
+15:47:19 | INFO | tag=block10.out_proj iter=050 | J=0.077643 J_x=0.076741 J_w=0.090162 rel_change=1.291111e-04 | time=0.305s
+15:47:20 | INFO | tag=block10.out_proj iter=051 | J=0.077519 J_x=0.076618 J_w=0.090134 rel_change=1.236126e-04 | time=0.291s
+15:47:20 | INFO | tag=block10.out_proj iter=052 | J=0.077399 J_x=0.076498 J_w=0.090108 rel_change=1.201555e-04 | time=0.287s
+15:47:20 | INFO | tag=block10.out_proj iter=053 | J=0.077281 J_x=0.076380 J_w=0.090139 rel_change=1.180768e-04 | time=0.295s
+15:47:21 | INFO | tag=block10.out_proj iter=054 | J=0.077161 J_x=0.076259 J_w=0.090174 rel_change=1.200587e-04 | time=0.281s
+15:47:21 | INFO | tag=block10.out_proj iter=055 | J=0.077044 J_x=0.076143 J_w=0.090171 rel_change=1.166910e-04 | time=0.299s
+15:47:21 | INFO | tag=block10.out_proj iter=056 | J=0.076937 J_x=0.076036 J_w=0.090138 rel_change=1.068860e-04 | time=0.299s
+15:47:22 | INFO | tag=block10.out_proj iter=057 | J=0.076838 J_x=0.075937 J_w=0.090075 rel_change=9.956211e-05 | time=0.289s
+15:47:22 | INFO | tag=block10.out_proj iter=058 | J=0.076747 J_x=0.075847 J_w=0.090003 rel_change=9.108335e-05 | time=0.269s
+15:47:22 | INFO | tag=block10.out_proj iter=059 | J=0.076659 J_x=0.075760 J_w=0.089929 rel_change=8.775294e-05 | time=0.161s
+15:47:22 | INFO | tag=block10.out_proj iter=060 | J=0.076575 J_x=0.075676 J_w=0.089904 rel_change=8.445978e-05 | time=0.163s
+15:47:22 | INFO | tag=block10.out_proj iter=061 | J=0.076493 J_x=0.075594 J_w=0.089876 rel_change=8.147955e-05 | time=0.174s
+15:47:23 | INFO | tag=block10.out_proj iter=062 | J=0.076412 J_x=0.075513 J_w=0.089840 rel_change=8.143485e-05 | time=0.294s
+15:47:23 | INFO | tag=block10.out_proj iter=063 | J=0.076337 J_x=0.075439 J_w=0.089806 rel_change=7.481873e-05 | time=0.287s
+15:47:23 | INFO | tag=block10.out_proj iter=064 | J=0.076269 J_x=0.075371 J_w=0.089756 rel_change=6.818771e-05 | time=0.284s
+15:47:23 | INFO | tag=block10.out_proj iter=065 | J=0.076203 J_x=0.075305 J_w=0.089770 rel_change=6.554276e-05 | time=0.294s
+15:47:24 | INFO | tag=block10.out_proj iter=066 | J=0.076140 J_x=0.075243 J_w=0.089759 rel_change=6.295741e-05 | time=0.296s
+15:47:24 | INFO | tag=block10.out_proj iter=067 | J=0.076079 J_x=0.075181 J_w=0.089753 rel_change=6.153435e-05 | time=0.285s
+15:47:24 | INFO | tag=block10.out_proj iter=068 | J=0.076016 J_x=0.075118 J_w=0.089758 rel_change=6.256253e-05 | time=0.299s
+15:47:25 | INFO | tag=block10.out_proj iter=069 | J=0.075957 J_x=0.075060 J_w=0.089734 rel_change=5.915761e-05 | time=0.292s
+15:47:25 | INFO | tag=block10.out_proj iter=070 | J=0.075899 J_x=0.075002 J_w=0.089728 rel_change=5.804002e-05 | time=0.299s
+15:47:25 | INFO | tag=block10.out_proj iter=071 | J=0.075843 J_x=0.074946 J_w=0.089744 rel_change=5.573779e-05 | time=0.323s
+15:47:26 | INFO | tag=block10.out_proj iter=072 | J=0.075794 J_x=0.074896 J_w=0.089726 rel_change=4.959852e-05 | time=0.303s
+15:47:26 | INFO | tag=block10.out_proj iter=073 | J=0.075744 J_x=0.074847 J_w=0.089752 rel_change=4.906207e-05 | time=0.291s
+15:47:26 | INFO | tag=block10.out_proj iter=074 | J=0.075697 J_x=0.074800 J_w=0.089717 rel_change=4.775077e-05 | time=0.289s
+15:47:26 | INFO | tag=block10.out_proj iter=075 | J=0.075652 J_x=0.074755 J_w=0.089721 rel_change=4.481524e-05 | time=0.285s
+15:47:27 | INFO | tag=block10.out_proj iter=076 | J=0.075608 J_x=0.074711 J_w=0.089702 rel_change=4.432350e-05 | time=0.291s
+15:47:27 | INFO | tag=block10.out_proj iter=077 | J=0.075566 J_x=0.074669 J_w=0.089713 rel_change=4.171580e-05 | time=0.297s
+15:47:27 | INFO | tag=block10.out_proj iter=078 | J=0.075524 J_x=0.074626 J_w=0.089719 rel_change=4.231185e-05 | time=0.290s
+15:47:28 | INFO | tag=block10.out_proj iter=079 | J=0.075482 J_x=0.074585 J_w=0.089731 rel_change=4.152209e-05 | time=0.291s
+15:47:28 | INFO | tag=block10.out_proj iter=080 | J=0.075441 J_x=0.074544 J_w=0.089711 rel_change=4.102290e-05 | time=0.292s
+15:47:28 | INFO | 量化器拟合完成 | tag=block10.out_proj convergence_iter=80 total_fit_time=23.238s
+15:47:28 | INFO | 开始计算重建/近似误差 | layer=block10.out_proj error_mode=relative
+15:47:28 | INFO | 误差计算完成 | layer=block10.out_proj err_x=0.064218 err_w=0.085393 rel_linear_error=0.176287 elapsed=0.208s
+15:47:30 | INFO | block11.q_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.037015 std=0.557564 min=-26.500000 max=5.378906 fro=991.028625
+15:47:30 | INFO | block11.q_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000252 std=0.055656 min=-0.487549 max=0.501465 fro=42.744507
+15:47:30 | INFO | 开始拟合量化器 | tag=block11.q_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:47:30 | INFO | tag=block11.q_proj iter=001 | J=0.197620 J_x=0.187620 J_w=1.000000 rel_change=inf | time=0.280s
+15:47:31 | INFO | tag=block11.q_proj iter=002 | J=0.129238 J_x=0.125275 J_w=0.396224 rel_change=6.838249e-02 | time=0.289s
+15:47:31 | INFO | tag=block11.q_proj iter=003 | J=0.103063 J_x=0.101232 J_w=0.183078 rel_change=2.617469e-02 | time=0.292s
+15:47:31 | INFO | tag=block11.q_proj iter=004 | J=0.089713 J_x=0.088465 J_w=0.124825 rel_change=1.334960e-02 | time=0.289s
+15:47:32 | INFO | tag=block11.q_proj iter=005 | J=0.081650 J_x=0.080604 J_w=0.104670 rel_change=8.063048e-03 | time=0.296s
+15:47:32 | INFO | tag=block11.q_proj iter=006 | J=0.076309 J_x=0.075348 J_w=0.096101 rel_change=5.341515e-03 | time=0.290s
+15:47:32 | INFO | tag=block11.q_proj iter=007 | J=0.072518 J_x=0.071601 J_w=0.091705 rel_change=3.790863e-03 | time=0.297s
+15:47:33 | INFO | tag=block11.q_proj iter=008 | J=0.069754 J_x=0.068861 J_w=0.089303 rel_change=2.763823e-03 | time=0.276s
+15:47:33 | INFO | tag=block11.q_proj iter=009 | J=0.067645 J_x=0.066768 J_w=0.087735 rel_change=2.109095e-03 | time=0.291s
+15:47:33 | INFO | tag=block11.q_proj iter=010 | J=0.065994 J_x=0.065126 J_w=0.086825 rel_change=1.650870e-03 | time=0.290s
+15:47:33 | INFO | tag=block11.q_proj iter=011 | J=0.064673 J_x=0.063812 J_w=0.086082 rel_change=1.321204e-03 | time=0.291s
+15:47:34 | INFO | tag=block11.q_proj iter=012 | J=0.063589 J_x=0.062733 J_w=0.085600 rel_change=1.084156e-03 | time=0.307s
+15:47:34 | INFO | tag=block11.q_proj iter=013 | J=0.062693 J_x=0.061842 J_w=0.085040 rel_change=8.960143e-04 | time=0.295s
+15:47:34 | INFO | tag=block11.q_proj iter=014 | J=0.061934 J_x=0.061087 J_w=0.084691 rel_change=7.586293e-04 | time=0.302s
+15:47:35 | INFO | tag=block11.q_proj iter=015 | J=0.061284 J_x=0.060441 J_w=0.084383 rel_change=6.497465e-04 | time=0.286s
+15:47:35 | INFO | tag=block11.q_proj iter=016 | J=0.060732 J_x=0.059891 J_w=0.084105 rel_change=5.519949e-04 | time=0.299s
+15:47:35 | INFO | tag=block11.q_proj iter=017 | J=0.060252 J_x=0.059413 J_w=0.083852 rel_change=4.805326e-04 | time=0.288s
+15:47:35 | INFO | tag=block11.q_proj iter=018 | J=0.059836 J_x=0.058999 J_w=0.083692 rel_change=4.158765e-04 | time=0.289s
+15:47:36 | INFO | tag=block11.q_proj iter=019 | J=0.059472 J_x=0.058636 J_w=0.083542 rel_change=3.643259e-04 | time=0.283s
+15:47:36 | INFO | tag=block11.q_proj iter=020 | J=0.059152 J_x=0.058318 J_w=0.083441 rel_change=3.192350e-04 | time=0.304s
+15:47:36 | INFO | tag=block11.q_proj iter=021 | J=0.058861 J_x=0.058028 J_w=0.083326 rel_change=2.915412e-04 | time=0.288s
+15:47:37 | INFO | tag=block11.q_proj iter=022 | J=0.058603 J_x=0.057771 J_w=0.083223 rel_change=2.575181e-04 | time=0.284s
+15:47:37 | INFO | tag=block11.q_proj iter=023 | J=0.058372 J_x=0.057540 J_w=0.083175 rel_change=2.318397e-04 | time=0.290s
+15:47:37 | INFO | tag=block11.q_proj iter=024 | J=0.058164 J_x=0.057333 J_w=0.083122 rel_change=2.076402e-04 | time=0.293s
+15:47:38 | INFO | tag=block11.q_proj iter=025 | J=0.057972 J_x=0.057141 J_w=0.083079 rel_change=1.917370e-04 | time=0.287s
+15:47:38 | INFO | tag=block11.q_proj iter=026 | J=0.057796 J_x=0.056966 J_w=0.083041 rel_change=1.760945e-04 | time=0.294s
+15:47:38 | INFO | tag=block11.q_proj iter=027 | J=0.057637 J_x=0.056807 J_w=0.082999 rel_change=1.592599e-04 | time=0.290s
+15:47:38 | INFO | tag=block11.q_proj iter=028 | J=0.057488 J_x=0.056659 J_w=0.082996 rel_change=1.483448e-04 | time=0.288s
+15:47:39 | INFO | tag=block11.q_proj iter=029 | J=0.057348 J_x=0.056519 J_w=0.082964 rel_change=1.402311e-04 | time=0.304s
+15:47:39 | INFO | tag=block11.q_proj iter=030 | J=0.057221 J_x=0.056392 J_w=0.082899 rel_change=1.274310e-04 | time=0.318s
+15:47:39 | INFO | tag=block11.q_proj iter=031 | J=0.057101 J_x=0.056272 J_w=0.082871 rel_change=1.200698e-04 | time=0.296s
+15:47:40 | INFO | tag=block11.q_proj iter=032 | J=0.056990 J_x=0.056161 J_w=0.082836 rel_change=1.110025e-04 | time=0.299s
+15:47:40 | INFO | tag=block11.q_proj iter=033 | J=0.056887 J_x=0.056059 J_w=0.082819 rel_change=1.028851e-04 | time=0.290s
+15:47:40 | INFO | tag=block11.q_proj iter=034 | J=0.056792 J_x=0.055964 J_w=0.082785 rel_change=9.465963e-05 | time=0.293s
+15:47:40 | INFO | tag=block11.q_proj iter=035 | J=0.056704 J_x=0.055877 J_w=0.082757 rel_change=8.806214e-05 | time=0.284s
+15:47:41 | INFO | tag=block11.q_proj iter=036 | J=0.056622 J_x=0.055795 J_w=0.082748 rel_change=8.207187e-05 | time=0.292s
+15:47:41 | INFO | tag=block11.q_proj iter=037 | J=0.056545 J_x=0.055718 J_w=0.082729 rel_change=7.663295e-05 | time=0.288s
+15:47:41 | INFO | tag=block11.q_proj iter=038 | J=0.056476 J_x=0.055649 J_w=0.082731 rel_change=6.941333e-05 | time=0.290s
+15:47:42 | INFO | tag=block11.q_proj iter=039 | J=0.056410 J_x=0.055583 J_w=0.082719 rel_change=6.557629e-05 | time=0.295s
+15:47:42 | INFO | tag=block11.q_proj iter=040 | J=0.056347 J_x=0.055520 J_w=0.082698 rel_change=6.363541e-05 | time=0.293s
+15:47:42 | INFO | tag=block11.q_proj iter=041 | J=0.056289 J_x=0.055462 J_w=0.082679 rel_change=5.824119e-05 | time=0.296s
+15:47:43 | INFO | tag=block11.q_proj iter=042 | J=0.056234 J_x=0.055408 J_w=0.082663 rel_change=5.418435e-05 | time=0.293s
+15:47:43 | INFO | tag=block11.q_proj iter=043 | J=0.056184 J_x=0.055358 J_w=0.082669 rel_change=5.003437e-05 | time=0.293s
+15:47:43 | INFO | tag=block11.q_proj iter=044 | J=0.056136 J_x=0.055310 J_w=0.082660 rel_change=4.788861e-05 | time=0.289s
+15:47:43 | INFO | tag=block11.q_proj iter=045 | J=0.056090 J_x=0.055264 J_w=0.082638 rel_change=4.627183e-05 | time=0.301s
+15:47:44 | INFO | tag=block11.q_proj iter=046 | J=0.056046 J_x=0.055220 J_w=0.082615 rel_change=4.401430e-05 | time=0.283s
+15:47:44 | INFO | tag=block11.q_proj iter=047 | J=0.056004 J_x=0.055177 J_w=0.082612 rel_change=4.262477e-05 | time=0.288s
+15:47:44 | INFO | tag=block11.q_proj iter=048 | J=0.055964 J_x=0.055138 J_w=0.082602 rel_change=3.938004e-05 | time=0.291s
+15:47:45 | INFO | tag=block11.q_proj iter=049 | J=0.055926 J_x=0.055100 J_w=0.082596 rel_change=3.830716e-05 | time=0.293s
+15:47:45 | INFO | tag=block11.q_proj iter=050 | J=0.055889 J_x=0.055063 J_w=0.082603 rel_change=3.708899e-05 | time=0.291s
+15:47:45 | INFO | tag=block11.q_proj iter=051 | J=0.055854 J_x=0.055028 J_w=0.082592 rel_change=3.508106e-05 | time=0.300s
+15:47:45 | INFO | tag=block11.q_proj iter=052 | J=0.055821 J_x=0.054995 J_w=0.082595 rel_change=3.320724e-05 | time=0.291s
+15:47:46 | INFO | tag=block11.q_proj iter=053 | J=0.055787 J_x=0.054961 J_w=0.082599 rel_change=3.342330e-05 | time=0.297s
+15:47:46 | INFO | tag=block11.q_proj iter=054 | J=0.055757 J_x=0.054931 J_w=0.082585 rel_change=2.994388e-05 | time=0.296s
+15:47:46 | INFO | tag=block11.q_proj iter=055 | J=0.055727 J_x=0.054901 J_w=0.082585 rel_change=2.984330e-05 | time=0.300s
+15:47:47 | INFO | tag=block11.q_proj iter=056 | J=0.055698 J_x=0.054872 J_w=0.082588 rel_change=2.896413e-05 | time=0.293s
+15:47:47 | INFO | tag=block11.q_proj iter=057 | J=0.055670 J_x=0.054844 J_w=0.082581 rel_change=2.878159e-05 | time=0.285s
+15:47:47 | INFO | tag=block11.q_proj iter=058 | J=0.055642 J_x=0.054817 J_w=0.082567 rel_change=2.720952e-05 | time=0.293s
+15:47:48 | INFO | tag=block11.q_proj iter=059 | J=0.055617 J_x=0.054792 J_w=0.082556 rel_change=2.503768e-05 | time=0.295s
+15:47:48 | INFO | tag=block11.q_proj iter=060 | J=0.055593 J_x=0.054767 J_w=0.082551 rel_change=2.450868e-05 | time=0.296s
+15:47:48 | INFO | tag=block11.q_proj iter=061 | J=0.055570 J_x=0.054745 J_w=0.082541 rel_change=2.267584e-05 | time=0.298s
+15:47:48 | INFO | tag=block11.q_proj iter=062 | J=0.055549 J_x=0.054723 J_w=0.082537 rel_change=2.141669e-05 | time=0.286s
+15:47:49 | INFO | tag=block11.q_proj iter=063 | J=0.055527 J_x=0.054702 J_w=0.082534 rel_change=2.162904e-05 | time=0.163s
+15:47:49 | INFO | tag=block11.q_proj iter=064 | J=0.055507 J_x=0.054682 J_w=0.082524 rel_change=2.016872e-05 | time=0.161s
+15:47:49 | INFO | tag=block11.q_proj iter=065 | J=0.055487 J_x=0.054662 J_w=0.082522 rel_change=1.945347e-05 | time=0.167s
+15:47:49 | INFO | tag=block11.q_proj iter=066 | J=0.055470 J_x=0.054645 J_w=0.082519 rel_change=1.751259e-05 | time=0.301s
+15:47:49 | INFO | tag=block11.q_proj iter=067 | J=0.055453 J_x=0.054628 J_w=0.082511 rel_change=1.688674e-05 | time=0.291s
+15:47:50 | INFO | tag=block11.q_proj iter=068 | J=0.055437 J_x=0.054612 J_w=0.082511 rel_change=1.635775e-05 | time=0.305s
+15:47:50 | INFO | tag=block11.q_proj iter=069 | J=0.055420 J_x=0.054595 J_w=0.082519 rel_change=1.696497e-05 | time=0.286s
+15:47:50 | INFO | tag=block11.q_proj iter=070 | J=0.055403 J_x=0.054578 J_w=0.082519 rel_change=1.661107e-05 | time=0.294s
+15:47:51 | INFO | tag=block11.q_proj iter=071 | J=0.055388 J_x=0.054563 J_w=0.082518 rel_change=1.492724e-05 | time=0.299s
+15:47:51 | INFO | tag=block11.q_proj iter=072 | J=0.055373 J_x=0.054548 J_w=0.082503 rel_change=1.474097e-05 | time=0.291s
+15:47:51 | INFO | tag=block11.q_proj iter=073 | J=0.055359 J_x=0.054534 J_w=0.082489 rel_change=1.415238e-05 | time=0.303s
+15:47:52 | INFO | tag=block11.q_proj iter=074 | J=0.055346 J_x=0.054521 J_w=0.082491 rel_change=1.359358e-05 | time=0.295s
+15:47:52 | INFO | tag=block11.q_proj iter=075 | J=0.055333 J_x=0.054508 J_w=0.082483 rel_change=1.307949e-05 | time=0.299s
+15:47:52 | INFO | tag=block11.q_proj iter=076 | J=0.055320 J_x=0.054495 J_w=0.082483 rel_change=1.304597e-05 | time=0.298s
+15:47:52 | INFO | tag=block11.q_proj iter=077 | J=0.055308 J_x=0.054483 J_w=0.082477 rel_change=1.202151e-05 | time=0.294s
+15:47:53 | INFO | tag=block11.q_proj iter=078 | J=0.055297 J_x=0.054472 J_w=0.082482 rel_change=1.065806e-05 | time=0.326s
+15:47:53 | INFO | tag=block11.q_proj iter=079 | J=0.055287 J_x=0.054462 J_w=0.082477 rel_change=9.946525e-06 | time=0.302s
+15:47:53 | INFO | tag=block11.q_proj 量化器在第 79 轮收敛。
+15:47:53 | INFO | 量化器拟合完成 | tag=block11.q_proj convergence_iter=79 total_fit_time=22.885s
+15:47:53 | INFO | 开始计算重建/近似误差 | layer=block11.q_proj error_mode=relative
+15:47:53 | INFO | 误差计算完成 | layer=block11.q_proj err_x=0.054375 err_w=0.082335 rel_linear_error=0.074389 elapsed=0.194s
+15:47:55 | INFO | block11.k_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.037015 std=0.557564 min=-26.500000 max=5.378906 fro=991.028625
+15:47:55 | INFO | block11.k_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000053 std=0.054432 min=-0.527344 max=0.527344 fro=41.803741
+15:47:55 | INFO | 开始拟合量化器 | tag=block11.k_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:47:56 | INFO | tag=block11.k_proj iter=001 | J=0.197301 J_x=0.187301 J_w=1.000000 rel_change=inf | time=0.285s
+15:47:56 | INFO | tag=block11.k_proj iter=002 | J=0.128773 J_x=0.124832 J_w=0.394106 rel_change=6.852806e-02 | time=0.291s
+15:47:56 | INFO | tag=block11.k_proj iter=003 | J=0.102830 J_x=0.101016 J_w=0.181397 rel_change=2.594249e-02 | time=0.300s
+15:47:57 | INFO | tag=block11.k_proj iter=004 | J=0.089686 J_x=0.088443 J_w=0.124369 rel_change=1.314413e-02 | time=0.286s
+15:47:57 | INFO | tag=block11.k_proj iter=005 | J=0.081650 J_x=0.080609 J_w=0.104195 rel_change=8.035794e-03 | time=0.298s
+15:47:57 | INFO | tag=block11.k_proj iter=006 | J=0.076363 J_x=0.075408 J_w=0.095517 rel_change=5.287506e-03 | time=0.296s
+15:47:57 | INFO | tag=block11.k_proj iter=007 | J=0.072659 J_x=0.071745 J_w=0.091436 rel_change=3.703989e-03 | time=0.318s
+15:47:58 | INFO | tag=block11.k_proj iter=008 | J=0.069934 J_x=0.069042 J_w=0.089188 rel_change=2.724960e-03 | time=0.301s
+15:47:58 | INFO | tag=block11.k_proj iter=009 | J=0.067830 J_x=0.066954 J_w=0.087613 rel_change=2.104200e-03 | time=0.305s
+15:47:58 | INFO | tag=block11.k_proj iter=010 | J=0.066173 J_x=0.065307 J_w=0.086585 rel_change=1.657084e-03 | time=0.291s
+15:47:59 | INFO | tag=block11.k_proj iter=011 | J=0.064825 J_x=0.063965 J_w=0.085999 rel_change=1.347646e-03 | time=0.430s
+15:47:59 | INFO | tag=block11.k_proj iter=012 | J=0.063734 J_x=0.062881 J_w=0.085356 rel_change=1.090780e-03 | time=0.290s
+15:47:59 | INFO | tag=block11.k_proj iter=013 | J=0.062824 J_x=0.061974 J_w=0.084966 rel_change=9.107143e-04 | time=0.302s
+15:48:00 | INFO | tag=block11.k_proj iter=014 | J=0.062057 J_x=0.061210 J_w=0.084665 rel_change=7.669665e-04 | time=0.303s
+15:48:00 | INFO | tag=block11.k_proj iter=015 | J=0.061401 J_x=0.060557 J_w=0.084422 rel_change=6.555393e-04 | time=0.293s
+15:48:00 | INFO | tag=block11.k_proj iter=016 | J=0.060840 J_x=0.059998 J_w=0.084213 rel_change=5.612336e-04 | time=0.297s
+15:48:01 | INFO | tag=block11.k_proj iter=017 | J=0.060358 J_x=0.059517 J_w=0.084022 rel_change=4.821457e-04 | time=0.317s
+15:48:01 | INFO | tag=block11.k_proj iter=018 | J=0.059932 J_x=0.059093 J_w=0.083903 rel_change=4.257374e-04 | time=0.316s
+15:48:01 | INFO | tag=block11.k_proj iter=019 | J=0.059562 J_x=0.058724 J_w=0.083795 rel_change=3.698654e-04 | time=0.300s
+15:48:01 | INFO | tag=block11.k_proj iter=020 | J=0.059224 J_x=0.058387 J_w=0.083714 rel_change=3.376007e-04 | time=0.288s
+15:48:02 | INFO | tag=block11.k_proj iter=021 | J=0.058929 J_x=0.058093 J_w=0.083591 rel_change=2.958141e-04 | time=0.299s
+15:48:02 | INFO | tag=block11.k_proj iter=022 | J=0.058663 J_x=0.057828 J_w=0.083516 rel_change=2.652779e-04 | time=0.278s
+15:48:02 | INFO | tag=block11.k_proj iter=023 | J=0.058429 J_x=0.057595 J_w=0.083450 rel_change=2.340749e-04 | time=0.302s
+15:48:03 | INFO | tag=block11.k_proj iter=024 | J=0.058214 J_x=0.057380 J_w=0.083367 rel_change=2.151802e-04 | time=0.286s
+15:48:03 | INFO | tag=block11.k_proj iter=025 | J=0.058019 J_x=0.057186 J_w=0.083303 rel_change=1.947768e-04 | time=0.297s
+15:48:03 | INFO | tag=block11.k_proj iter=026 | J=0.057843 J_x=0.057010 J_w=0.083268 rel_change=1.765192e-04 | time=0.285s
+15:48:04 | INFO | tag=block11.k_proj iter=027 | J=0.057679 J_x=0.056846 J_w=0.083265 rel_change=1.640730e-04 | time=0.299s
+15:48:04 | INFO | tag=block11.k_proj iter=028 | J=0.057527 J_x=0.056694 J_w=0.083237 rel_change=1.521632e-04 | time=0.298s
+15:48:04 | INFO | tag=block11.k_proj iter=029 | J=0.057392 J_x=0.056560 J_w=0.083200 rel_change=1.348816e-04 | time=0.294s
+15:48:04 | INFO | tag=block11.k_proj iter=030 | J=0.057265 J_x=0.056433 J_w=0.083193 rel_change=1.267195e-04 | time=0.299s
+15:48:05 | INFO | tag=block11.k_proj iter=031 | J=0.057147 J_x=0.056316 J_w=0.083191 rel_change=1.175851e-04 | time=0.307s
+15:48:05 | INFO | tag=block11.k_proj iter=032 | J=0.057036 J_x=0.056204 J_w=0.083203 rel_change=1.113452e-04 | time=0.298s
+15:48:05 | INFO | tag=block11.k_proj iter=033 | J=0.056932 J_x=0.056100 J_w=0.083192 rel_change=1.043007e-04 | time=0.295s
+15:48:06 | INFO | tag=block11.k_proj iter=034 | J=0.056835 J_x=0.056004 J_w=0.083168 rel_change=9.653717e-05 | time=0.284s
+15:48:06 | INFO | tag=block11.k_proj iter=035 | J=0.056745 J_x=0.055914 J_w=0.083176 rel_change=8.993596e-05 | time=0.293s
+15:48:06 | INFO | tag=block11.k_proj iter=036 | J=0.056662 J_x=0.055831 J_w=0.083162 rel_change=8.283183e-05 | time=0.279s
+15:48:06 | INFO | tag=block11.k_proj iter=037 | J=0.056584 J_x=0.055752 J_w=0.083135 rel_change=7.887185e-05 | time=0.298s
+15:48:07 | INFO | tag=block11.k_proj iter=038 | J=0.056509 J_x=0.055678 J_w=0.083114 rel_change=7.442012e-05 | time=0.291s
+15:48:07 | INFO | tag=block11.k_proj iter=039 | J=0.056439 J_x=0.055608 J_w=0.083094 rel_change=6.991625e-05 | time=0.301s
+15:48:07 | INFO | tag=block11.k_proj iter=040 | J=0.056375 J_x=0.055544 J_w=0.083083 rel_change=6.434694e-05 | time=0.279s
+15:48:08 | INFO | tag=block11.k_proj iter=041 | J=0.056313 J_x=0.055483 J_w=0.083072 rel_change=6.141886e-05 | time=0.286s
+15:48:08 | INFO | tag=block11.k_proj iter=042 | J=0.056255 J_x=0.055425 J_w=0.083045 rel_change=5.836412e-05 | time=0.291s
+15:48:08 | INFO | tag=block11.k_proj iter=043 | J=0.056199 J_x=0.055369 J_w=0.083033 rel_change=5.563721e-05 | time=0.302s
+15:48:09 | INFO | tag=block11.k_proj iter=044 | J=0.056148 J_x=0.055318 J_w=0.083004 rel_change=5.161390e-05 | time=0.296s
+15:48:09 | INFO | tag=block11.k_proj iter=045 | J=0.056099 J_x=0.055269 J_w=0.082995 rel_change=4.866719e-05 | time=0.294s
+15:48:09 | INFO | tag=block11.k_proj iter=046 | J=0.056055 J_x=0.055225 J_w=0.082978 rel_change=4.451722e-05 | time=0.299s
+15:48:09 | INFO | tag=block11.k_proj iter=047 | J=0.056012 J_x=0.055183 J_w=0.082963 rel_change=4.239753e-05 | time=0.315s
+15:48:10 | INFO | tag=block11.k_proj iter=048 | J=0.055972 J_x=0.055143 J_w=0.082944 rel_change=3.981963e-05 | time=0.170s
+15:48:10 | INFO | tag=block11.k_proj iter=049 | J=0.055934 J_x=0.055105 J_w=0.082938 rel_change=3.835559e-05 | time=0.177s
+15:48:10 | INFO | tag=block11.k_proj iter=050 | J=0.055895 J_x=0.055066 J_w=0.082920 rel_change=3.867596e-05 | time=0.159s
+15:48:10 | INFO | tag=block11.k_proj iter=051 | J=0.055859 J_x=0.055029 J_w=0.082929 rel_change=3.668666e-05 | time=0.271s
+15:48:11 | INFO | tag=block11.k_proj iter=052 | J=0.055824 J_x=0.054994 J_w=0.082932 rel_change=3.505126e-05 | time=0.308s
+15:48:11 | INFO | tag=block11.k_proj iter=053 | J=0.055791 J_x=0.054961 J_w=0.082918 rel_change=3.313646e-05 | time=0.306s
+15:48:11 | INFO | tag=block11.k_proj iter=054 | J=0.055759 J_x=0.054930 J_w=0.082927 rel_change=3.135949e-05 | time=0.312s
+15:48:11 | INFO | tag=block11.k_proj iter=055 | J=0.055729 J_x=0.054900 J_w=0.082913 rel_change=2.976507e-05 | time=0.313s
+15:48:12 | INFO | tag=block11.k_proj iter=056 | J=0.055702 J_x=0.054873 J_w=0.082883 rel_change=2.721325e-05 | time=0.313s
+15:48:12 | INFO | tag=block11.k_proj iter=057 | J=0.055676 J_x=0.054847 J_w=0.082871 rel_change=2.606958e-05 | time=0.306s
+15:48:12 | INFO | tag=block11.k_proj iter=058 | J=0.055653 J_x=0.054824 J_w=0.082866 rel_change=2.362952e-05 | time=0.290s
+15:48:13 | INFO | tag=block11.k_proj iter=059 | J=0.055630 J_x=0.054802 J_w=0.082859 rel_change=2.243370e-05 | time=0.306s
+15:48:13 | INFO | tag=block11.k_proj iter=060 | J=0.055609 J_x=0.054780 J_w=0.082856 rel_change=2.123415e-05 | time=0.298s
+15:48:13 | INFO | tag=block11.k_proj iter=061 | J=0.055589 J_x=0.054761 J_w=0.082867 rel_change=1.941994e-05 | time=0.309s
+15:48:14 | INFO | tag=block11.k_proj iter=062 | J=0.055572 J_x=0.054743 J_w=0.082860 rel_change=1.758710e-05 | time=0.298s
+15:48:14 | INFO | tag=block11.k_proj iter=063 | J=0.055554 J_x=0.054726 J_w=0.082853 rel_change=1.769140e-05 | time=0.294s
+15:48:14 | INFO | tag=block11.k_proj iter=064 | J=0.055537 J_x=0.054709 J_w=0.082846 rel_change=1.674891e-05 | time=0.294s
+15:48:14 | INFO | tag=block11.k_proj iter=065 | J=0.055520 J_x=0.054691 J_w=0.082848 rel_change=1.782551e-05 | time=0.303s
+15:48:15 | INFO | tag=block11.k_proj iter=066 | J=0.055501 J_x=0.054672 J_w=0.082853 rel_change=1.861528e-05 | time=0.294s
+15:48:15 | INFO | tag=block11.k_proj iter=067 | J=0.055484 J_x=0.054656 J_w=0.082852 rel_change=1.679733e-05 | time=0.301s
+15:48:15 | INFO | tag=block11.k_proj iter=068 | J=0.055468 J_x=0.054639 J_w=0.082852 rel_change=1.631305e-05 | time=0.293s
+15:48:16 | INFO | tag=block11.k_proj iter=069 | J=0.055452 J_x=0.054624 J_w=0.082853 rel_change=1.557544e-05 | time=0.303s
+15:48:16 | INFO | tag=block11.k_proj iter=070 | J=0.055438 J_x=0.054609 J_w=0.082849 rel_change=1.468509e-05 | time=0.297s
+15:48:16 | INFO | tag=block11.k_proj iter=071 | J=0.055422 J_x=0.054594 J_w=0.082853 rel_change=1.556054e-05 | time=0.313s
+15:48:17 | INFO | tag=block11.k_proj iter=072 | J=0.055407 J_x=0.054579 J_w=0.082852 rel_change=1.497939e-05 | time=0.285s
+15:48:17 | INFO | tag=block11.k_proj iter=073 | J=0.055393 J_x=0.054564 J_w=0.082854 rel_change=1.440570e-05 | time=0.289s
+15:48:17 | INFO | tag=block11.k_proj iter=074 | J=0.055379 J_x=0.054550 J_w=0.082864 rel_change=1.364574e-05 | time=0.295s
+15:48:17 | INFO | tag=block11.k_proj iter=075 | J=0.055365 J_x=0.054536 J_w=0.082866 rel_change=1.412630e-05 | time=0.298s
+15:48:18 | INFO | tag=block11.k_proj iter=076 | J=0.055352 J_x=0.054523 J_w=0.082860 rel_change=1.307949e-05 | time=0.292s
+15:48:18 | INFO | tag=block11.k_proj iter=077 | J=0.055338 J_x=0.054509 J_w=0.082860 rel_change=1.401454e-05 | time=0.303s
+15:48:18 | INFO | tag=block11.k_proj iter=078 | J=0.055323 J_x=0.054495 J_w=0.082856 rel_change=1.430511e-05 | time=0.291s
+15:48:19 | INFO | tag=block11.k_proj iter=079 | J=0.055310 J_x=0.054481 J_w=0.082847 rel_change=1.394749e-05 | time=0.296s
+15:48:19 | INFO | tag=block11.k_proj iter=080 | J=0.055296 J_x=0.054468 J_w=0.082834 rel_change=1.353398e-05 | time=0.311s
+15:48:19 | INFO | 量化器拟合完成 | tag=block11.k_proj convergence_iter=80 total_fit_time=23.609s
+15:48:19 | INFO | 开始计算重建/近似误差 | layer=block11.k_proj error_mode=relative
+15:48:19 | INFO | 误差计算完成 | layer=block11.k_proj err_x=0.054386 err_w=0.082829 rel_linear_error=0.068540 elapsed=0.191s
+15:48:21 | INFO | block11.v_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.037015 std=0.557564 min=-26.500000 max=5.378906 fro=991.028625
+15:48:21 | INFO | block11.v_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=0.000046 std=0.029483 min=-0.499756 max=0.195679 fro=22.642700
+15:48:21 | INFO | 开始拟合量化器 | tag=block11.v_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:48:21 | INFO | tag=block11.v_proj iter=001 | J=0.197044 J_x=0.187044 J_w=1.000000 rel_change=inf | time=0.299s
+15:48:22 | INFO | tag=block11.v_proj iter=002 | J=0.129239 J_x=0.125083 J_w=0.415635 rel_change=6.780472e-02 | time=0.317s
+15:48:22 | INFO | tag=block11.v_proj iter=003 | J=0.103153 J_x=0.101149 J_w=0.200434 rel_change=2.608591e-02 | time=0.308s
+15:48:22 | INFO | tag=block11.v_proj iter=004 | J=0.089808 J_x=0.088426 J_w=0.138199 rel_change=1.334531e-02 | time=0.314s
+15:48:23 | INFO | tag=block11.v_proj iter=005 | J=0.081776 J_x=0.080623 J_w=0.115232 rel_change=8.032173e-03 | time=0.316s
+15:48:23 | INFO | tag=block11.v_proj iter=006 | J=0.076494 J_x=0.075440 J_w=0.105362 rel_change=5.281761e-03 | time=0.317s
+15:48:23 | INFO | tag=block11.v_proj iter=007 | J=0.072777 J_x=0.071773 J_w=0.100377 rel_change=3.716901e-03 | time=0.316s
+15:48:24 | INFO | tag=block11.v_proj iter=008 | J=0.070022 J_x=0.069046 J_w=0.097547 rel_change=2.755307e-03 | time=0.298s
+15:48:24 | INFO | tag=block11.v_proj iter=009 | J=0.067913 J_x=0.066954 J_w=0.095873 rel_change=2.109058e-03 | time=0.296s
+15:48:24 | INFO | tag=block11.v_proj iter=010 | J=0.066265 J_x=0.065319 J_w=0.094662 rel_change=1.647152e-03 | time=0.305s
+15:48:25 | INFO | tag=block11.v_proj iter=011 | J=0.064951 J_x=0.064012 J_w=0.093908 rel_change=1.314349e-03 | time=0.301s
+15:48:25 | INFO | tag=block11.v_proj iter=012 | J=0.063863 J_x=0.062930 J_w=0.093326 rel_change=1.087680e-03 | time=0.315s
+15:48:25 | INFO | tag=block11.v_proj iter=013 | J=0.062956 J_x=0.062027 J_w=0.092853 rel_change=9.077564e-04 | time=0.314s
+15:48:25 | INFO | tag=block11.v_proj iter=014 | J=0.062202 J_x=0.061277 J_w=0.092468 rel_change=7.538237e-04 | time=0.304s
+15:48:26 | INFO | tag=block11.v_proj iter=015 | J=0.061564 J_x=0.060643 J_w=0.092103 rel_change=6.382987e-04 | time=0.290s
+15:48:26 | INFO | tag=block11.v_proj iter=016 | J=0.061013 J_x=0.060094 J_w=0.091860 rel_change=5.508997e-04 | time=0.299s
+15:48:26 | INFO | tag=block11.v_proj iter=017 | J=0.060522 J_x=0.059605 J_w=0.091708 rel_change=4.906990e-04 | time=0.302s
+15:48:27 | INFO | tag=block11.v_proj iter=018 | J=0.060097 J_x=0.059182 J_w=0.091534 rel_change=4.249476e-04 | time=0.306s
+15:48:27 | INFO | tag=block11.v_proj iter=019 | J=0.059721 J_x=0.058807 J_w=0.091382 rel_change=3.757887e-04 | time=0.279s
+15:48:27 | INFO | tag=block11.v_proj iter=020 | J=0.059388 J_x=0.058476 J_w=0.091223 rel_change=3.329627e-04 | time=0.169s
+15:48:27 | INFO | tag=block11.v_proj iter=021 | J=0.059090 J_x=0.058178 J_w=0.091136 rel_change=2.986826e-04 | time=0.168s
+15:48:27 | INFO | tag=block11.v_proj iter=022 | J=0.058822 J_x=0.057913 J_w=0.090976 rel_change=2.670996e-04 | time=0.181s
+15:48:28 | INFO | tag=block11.v_proj iter=023 | J=0.058588 J_x=0.057679 J_w=0.090885 rel_change=2.346635e-04 | time=0.306s
+15:48:28 | INFO | tag=block11.v_proj iter=024 | J=0.058376 J_x=0.057467 J_w=0.090818 rel_change=2.121553e-04 | time=0.296s
+15:48:28 | INFO | tag=block11.v_proj iter=025 | J=0.058184 J_x=0.057277 J_w=0.090726 rel_change=1.915023e-04 | time=0.315s
+15:48:29 | INFO | tag=block11.v_proj iter=026 | J=0.058010 J_x=0.057104 J_w=0.090657 rel_change=1.736768e-04 | time=0.312s
+15:48:29 | INFO | tag=block11.v_proj iter=027 | J=0.057851 J_x=0.056945 J_w=0.090577 rel_change=1.599714e-04 | time=0.295s
+15:48:29 | INFO | tag=block11.v_proj iter=028 | J=0.057701 J_x=0.056796 J_w=0.090520 rel_change=1.498014e-04 | time=0.303s
+15:48:30 | INFO | tag=block11.v_proj iter=029 | J=0.057558 J_x=0.056654 J_w=0.090463 rel_change=1.422949e-04 | time=0.301s
+15:48:30 | INFO | tag=block11.v_proj iter=030 | J=0.057424 J_x=0.056519 J_w=0.090453 rel_change=1.346394e-04 | time=0.301s
+15:48:30 | INFO | tag=block11.v_proj iter=031 | J=0.057300 J_x=0.056396 J_w=0.090440 rel_change=1.234189e-04 | time=0.307s
+15:48:30 | INFO | tag=block11.v_proj iter=032 | J=0.057189 J_x=0.056285 J_w=0.090405 rel_change=1.109131e-04 | time=0.302s
+15:48:31 | INFO | tag=block11.v_proj iter=033 | J=0.057087 J_x=0.056183 J_w=0.090380 rel_change=1.027249e-04 | time=0.301s
+15:48:31 | INFO | tag=block11.v_proj iter=034 | J=0.056989 J_x=0.056085 J_w=0.090377 rel_change=9.761378e-05 | time=0.301s
+15:48:31 | INFO | tag=block11.v_proj iter=035 | J=0.056899 J_x=0.055995 J_w=0.090370 rel_change=9.002164e-05 | time=0.317s
+15:48:32 | INFO | tag=block11.v_proj iter=036 | J=0.056815 J_x=0.055912 J_w=0.090342 rel_change=8.386001e-05 | time=0.302s
+15:48:32 | INFO | tag=block11.v_proj iter=037 | J=0.056738 J_x=0.055834 J_w=0.090332 rel_change=7.744506e-05 | time=0.308s
+15:48:32 | INFO | tag=block11.v_proj iter=038 | J=0.056662 J_x=0.055759 J_w=0.090334 rel_change=7.536262e-05 | time=0.321s
+15:48:33 | INFO | tag=block11.v_proj iter=039 | J=0.056592 J_x=0.055689 J_w=0.090318 rel_change=7.067248e-05 | time=0.294s
+15:48:33 | INFO | tag=block11.v_proj iter=040 | J=0.056527 J_x=0.055624 J_w=0.090312 rel_change=6.468594e-05 | time=0.302s
+15:48:33 | INFO | tag=block11.v_proj iter=041 | J=0.056464 J_x=0.055561 J_w=0.090305 rel_change=6.263703e-05 | time=0.302s
+15:48:34 | INFO | tag=block11.v_proj iter=042 | J=0.056405 J_x=0.055502 J_w=0.090272 rel_change=5.971640e-05 | time=0.306s
+15:48:34 | INFO | tag=block11.v_proj iter=043 | J=0.056349 J_x=0.055447 J_w=0.090282 rel_change=5.522743e-05 | time=0.313s
+15:48:34 | INFO | tag=block11.v_proj iter=044 | J=0.056300 J_x=0.055397 J_w=0.090273 rel_change=4.998222e-05 | time=0.313s
+15:48:34 | INFO | tag=block11.v_proj iter=045 | J=0.056251 J_x=0.055349 J_w=0.090256 rel_change=4.805252e-05 | time=0.301s
+15:48:35 | INFO | tag=block11.v_proj iter=046 | J=0.056204 J_x=0.055302 J_w=0.090250 rel_change=4.714727e-05 | time=0.301s
+15:48:35 | INFO | tag=block11.v_proj iter=047 | J=0.056158 J_x=0.055256 J_w=0.090257 rel_change=4.617125e-05 | time=0.306s
+15:48:35 | INFO | tag=block11.v_proj iter=048 | J=0.056113 J_x=0.055210 J_w=0.090250 rel_change=4.534051e-05 | time=0.314s
+15:48:36 | INFO | tag=block11.v_proj iter=049 | J=0.056070 J_x=0.055168 J_w=0.090249 rel_change=4.254282e-05 | time=0.306s
+15:48:36 | INFO | tag=block11.v_proj iter=050 | J=0.056030 J_x=0.055127 J_w=0.090249 rel_change=4.033372e-05 | time=0.301s
+15:48:36 | INFO | tag=block11.v_proj iter=051 | J=0.055990 J_x=0.055087 J_w=0.090260 rel_change=4.027039e-05 | time=0.296s
+15:48:37 | INFO | tag=block11.v_proj iter=052 | J=0.055951 J_x=0.055049 J_w=0.090243 rel_change=3.842264e-05 | time=0.306s
+15:48:37 | INFO | tag=block11.v_proj iter=053 | J=0.055916 J_x=0.055013 J_w=0.090235 rel_change=3.560260e-05 | time=0.297s
+15:48:37 | INFO | tag=block11.v_proj iter=054 | J=0.055882 J_x=0.054980 J_w=0.090207 rel_change=3.361329e-05 | time=0.300s
+15:48:38 | INFO | tag=block11.v_proj iter=055 | J=0.055849 J_x=0.054947 J_w=0.090214 rel_change=3.255159e-05 | time=0.292s
+15:48:38 | INFO | tag=block11.v_proj iter=056 | J=0.055819 J_x=0.054917 J_w=0.090207 rel_change=3.054366e-05 | time=0.298s
+15:48:38 | INFO | tag=block11.v_proj iter=057 | J=0.055788 J_x=0.054886 J_w=0.090212 rel_change=3.046915e-05 | time=0.304s
+15:48:38 | INFO | tag=block11.v_proj iter=058 | J=0.055760 J_x=0.054858 J_w=0.090196 rel_change=2.825260e-05 | time=0.315s
+15:48:39 | INFO | tag=block11.v_proj iter=059 | J=0.055733 J_x=0.054831 J_w=0.090199 rel_change=2.753362e-05 | time=0.298s
+15:48:39 | INFO | tag=block11.v_proj iter=060 | J=0.055706 J_x=0.054804 J_w=0.090202 rel_change=2.672523e-05 | time=0.303s
+15:48:39 | INFO | tag=block11.v_proj iter=061 | J=0.055680 J_x=0.054778 J_w=0.090183 rel_change=2.573803e-05 | time=0.294s
+15:48:40 | INFO | tag=block11.v_proj iter=062 | J=0.055655 J_x=0.054753 J_w=0.090179 rel_change=2.533570e-05 | time=0.309s
+15:48:40 | INFO | tag=block11.v_proj iter=063 | J=0.055632 J_x=0.054730 J_w=0.090169 rel_change=2.326071e-05 | time=0.297s
+15:48:40 | INFO | tag=block11.v_proj iter=064 | J=0.055608 J_x=0.054707 J_w=0.090167 rel_change=2.321228e-05 | time=0.313s
+15:48:41 | INFO | tag=block11.v_proj iter=065 | J=0.055585 J_x=0.054683 J_w=0.090181 rel_change=2.383441e-05 | time=0.298s
+15:48:41 | INFO | tag=block11.v_proj iter=066 | J=0.055562 J_x=0.054661 J_w=0.090172 rel_change=2.215803e-05 | time=0.303s
+15:48:41 | INFO | tag=block11.v_proj iter=067 | J=0.055541 J_x=0.054639 J_w=0.090160 rel_change=2.145395e-05 | time=0.297s
+15:48:41 | INFO | tag=block11.v_proj iter=068 | J=0.055521 J_x=0.054620 J_w=0.090154 rel_change=1.968816e-05 | time=0.313s
+15:48:42 | INFO | tag=block11.v_proj iter=069 | J=0.055503 J_x=0.054601 J_w=0.090162 rel_change=1.851842e-05 | time=0.298s
+15:48:42 | INFO | tag=block11.v_proj iter=070 | J=0.055484 J_x=0.054583 J_w=0.090156 rel_change=1.828372e-05 | time=0.302s
+15:48:42 | INFO | tag=block11.v_proj iter=071 | J=0.055468 J_x=0.054567 J_w=0.090149 rel_change=1.604110e-05 | time=0.303s
+15:48:43 | INFO | tag=block11.v_proj iter=072 | J=0.055453 J_x=0.054551 J_w=0.090143 rel_change=1.591071e-05 | time=0.298s
+15:48:43 | INFO | tag=block11.v_proj iter=073 | J=0.055438 J_x=0.054536 J_w=0.090138 rel_change=1.499057e-05 | time=0.308s
+15:48:43 | INFO | tag=block11.v_proj iter=074 | J=0.055422 J_x=0.054520 J_w=0.090139 rel_change=1.590699e-05 | time=0.301s
+15:48:44 | INFO | tag=block11.v_proj iter=075 | J=0.055406 J_x=0.054505 J_w=0.090141 rel_change=1.546368e-05 | time=0.292s
+15:48:44 | INFO | tag=block11.v_proj iter=076 | J=0.055391 J_x=0.054490 J_w=0.090134 rel_change=1.527369e-05 | time=0.294s
+15:48:44 | INFO | tag=block11.v_proj iter=077 | J=0.055374 J_x=0.054473 J_w=0.090139 rel_change=1.649186e-05 | time=0.295s
+15:48:44 | INFO | tag=block11.v_proj iter=078 | J=0.055359 J_x=0.054457 J_w=0.090133 rel_change=1.583621e-05 | time=0.306s
+15:48:45 | INFO | tag=block11.v_proj iter=079 | J=0.055343 J_x=0.054442 J_w=0.090125 rel_change=1.519918e-05 | time=0.305s
+15:48:45 | INFO | tag=block11.v_proj iter=080 | J=0.055328 J_x=0.054427 J_w=0.090122 rel_change=1.497567e-05 | time=0.296s
+15:48:45 | INFO | 量化器拟合完成 | tag=block11.v_proj convergence_iter=80 total_fit_time=23.967s
+15:48:45 | INFO | 开始计算重建/近似误差 | layer=block11.v_proj error_mode=relative
+15:48:45 | INFO | 误差计算完成 | layer=block11.v_proj err_x=0.054338 err_w=0.088371 rel_linear_error=0.180273 elapsed=0.194s
+15:48:47 | INFO | block11.out_proj.X_calib stats | shape=[768, 4096] dtype=torch.float16 device=cpu mean=-0.000149 std=0.126649 min=-1.580078 max=1.531250 fro=224.591049
+15:48:47 | INFO | block11.out_proj.W stats | shape=[768, 768] dtype=torch.float32 device=cpu mean=-0.000020 std=0.031479 min=-0.875977 max=0.894043 fro=24.176212
+15:48:47 | INFO | 开始拟合量化器 | tag=block11.out_proj d=768 N=4096 M=768 beta=0.0100 max_iters=80 tol=1.00e-05 init_mode=random error_mode=relative
+15:48:48 | INFO | tag=block11.out_proj iter=001 | J=0.954620 J_x=0.944620 J_w=1.000000 rel_change=inf | time=0.258s
+15:48:48 | INFO | tag=block11.out_proj iter=002 | J=0.250326 J_x=0.243372 J_w=0.695386 rel_change=7.042942e-01 | time=0.284s
+15:48:48 | INFO | tag=block11.out_proj iter=003 | J=0.173218 J_x=0.170257 J_w=0.296098 rel_change=7.710803e-02 | time=0.292s
+15:48:48 | INFO | tag=block11.out_proj iter=004 | J=0.141479 J_x=0.139617 J_w=0.186143 rel_change=3.173913e-02 | time=0.288s
+15:48:49 | INFO | tag=block11.out_proj iter=005 | J=0.125585 J_x=0.124110 J_w=0.147474 rel_change=1.589401e-02 | time=0.313s
+15:48:49 | INFO | tag=block11.out_proj iter=006 | J=0.116069 J_x=0.114791 J_w=0.127868 rel_change=9.515226e-03 | time=0.305s
+15:48:49 | INFO | tag=block11.out_proj iter=007 | J=0.109741 J_x=0.108584 J_w=0.115712 rel_change=6.327935e-03 | time=0.304s
+15:48:50 | INFO | tag=block11.out_proj iter=008 | J=0.105109 J_x=0.104016 J_w=0.109315 rel_change=4.632130e-03 | time=0.306s
+15:48:50 | INFO | tag=block11.out_proj iter=009 | J=0.101578 J_x=0.100527 J_w=0.105033 rel_change=3.531717e-03 | time=0.306s
+15:48:50 | INFO | tag=block11.out_proj iter=010 | J=0.098749 J_x=0.097728 J_w=0.102112 rel_change=2.828747e-03 | time=0.290s
+15:48:51 | INFO | tag=block11.out_proj iter=011 | J=0.096421 J_x=0.095427 J_w=0.099468 rel_change=2.327532e-03 | time=0.308s
+15:48:51 | INFO | tag=block11.out_proj iter=012 | J=0.094490 J_x=0.093518 J_w=0.097287 rel_change=1.930840e-03 | time=0.292s
+15:48:51 | INFO | tag=block11.out_proj iter=013 | J=0.092866 J_x=0.091911 J_w=0.095579 rel_change=1.624011e-03 | time=0.292s
+15:48:51 | INFO | tag=block11.out_proj iter=014 | J=0.091477 J_x=0.090536 J_w=0.094140 rel_change=1.389392e-03 | time=0.293s
+15:48:52 | INFO | tag=block11.out_proj iter=015 | J=0.090268 J_x=0.089333 J_w=0.093418 rel_change=1.209408e-03 | time=0.286s
+15:48:52 | INFO | tag=block11.out_proj iter=016 | J=0.089177 J_x=0.088250 J_w=0.092701 rel_change=1.090869e-03 | time=0.286s
+15:48:52 | INFO | tag=block11.out_proj iter=017 | J=0.088186 J_x=0.087266 J_w=0.091974 rel_change=9.904727e-04 | time=0.309s
+15:48:53 | INFO | tag=block11.out_proj iter=018 | J=0.087294 J_x=0.086380 J_w=0.091430 rel_change=8.919463e-04 | time=0.312s
+15:48:53 | INFO | tag=block11.out_proj iter=019 | J=0.086462 J_x=0.085554 J_w=0.090830 rel_change=8.319989e-04 | time=0.311s
+15:48:53 | INFO | tag=block11.out_proj iter=020 | J=0.085692 J_x=0.084787 J_w=0.090423 rel_change=7.706657e-04 | time=0.302s
+15:48:53 | INFO | tag=block11.out_proj iter=021 | J=0.085005 J_x=0.084107 J_w=0.089786 rel_change=6.868988e-04 | time=0.285s
+15:48:54 | INFO | tag=block11.out_proj iter=022 | J=0.084383 J_x=0.083490 J_w=0.089319 rel_change=6.219968e-04 | time=0.288s
+15:48:54 | INFO | tag=block11.out_proj iter=023 | J=0.083814 J_x=0.082925 J_w=0.088929 rel_change=5.688220e-04 | time=0.283s
+15:48:54 | INFO | tag=block11.out_proj iter=024 | J=0.083294 J_x=0.082407 J_w=0.088696 rel_change=5.203038e-04 | time=0.287s
+15:48:55 | INFO | tag=block11.out_proj iter=025 | J=0.082816 J_x=0.081933 J_w=0.088294 rel_change=4.779845e-04 | time=0.281s
+15:48:55 | INFO | tag=block11.out_proj iter=026 | J=0.082361 J_x=0.081482 J_w=0.087953 rel_change=4.541874e-04 | time=0.285s
+15:48:55 | INFO | tag=block11.out_proj iter=027 | J=0.081939 J_x=0.081061 J_w=0.087806 rel_change=4.224405e-04 | time=0.291s
+15:48:55 | INFO | tag=block11.out_proj iter=028 | J=0.081537 J_x=0.080662 J_w=0.087563 rel_change=4.018322e-04 | time=0.289s
+15:48:56 | INFO | tag=block11.out_proj iter=029 | J=0.081153 J_x=0.080281 J_w=0.087243 rel_change=3.837049e-04 | time=0.296s
+15:48:56 | INFO | tag=block11.out_proj iter=030 | J=0.080797 J_x=0.079926 J_w=0.087064 rel_change=3.564954e-04 | time=0.290s
+15:48:56 | INFO | tag=block11.out_proj iter=031 | J=0.080463 J_x=0.079593 J_w=0.086976 rel_change=3.337041e-04 | time=0.287s
+15:48:57 | INFO | tag=block11.out_proj iter=032 | J=0.080149 J_x=0.079281 J_w=0.086835 rel_change=3.140420e-04 | time=0.284s
+15:48:57 | INFO | tag=block11.out_proj iter=033 | J=0.079854 J_x=0.078987 J_w=0.086668 rel_change=2.956316e-04 | time=0.287s
+15:48:57 | INFO | tag=block11.out_proj iter=034 | J=0.079567 J_x=0.078702 J_w=0.086457 rel_change=2.865121e-04 | time=0.289s
+15:48:58 | INFO | tag=block11.out_proj iter=035 | J=0.079301 J_x=0.078438 J_w=0.086253 rel_change=2.660900e-04 | time=0.283s
+15:48:58 | INFO | tag=block11.out_proj iter=036 | J=0.079048 J_x=0.078187 J_w=0.086099 rel_change=2.524853e-04 | time=0.285s
+15:48:58 | INFO | tag=block11.out_proj iter=037 | J=0.078807 J_x=0.077947 J_w=0.085988 rel_change=2.419725e-04 | time=0.297s
+15:48:58 | INFO | tag=block11.out_proj iter=038 | J=0.078570 J_x=0.077711 J_w=0.085939 rel_change=2.360418e-04 | time=0.290s
+15:48:59 | INFO | tag=block11.out_proj iter=039 | J=0.078351 J_x=0.077493 J_w=0.085861 rel_change=2.193004e-04 | time=0.297s
+15:48:59 | INFO | tag=block11.out_proj iter=040 | J=0.078138 J_x=0.077279 J_w=0.085864 rel_change=2.133623e-04 | time=0.297s
+15:48:59 | INFO | tag=block11.out_proj iter=041 | J=0.077924 J_x=0.077066 J_w=0.085832 rel_change=2.135187e-04 | time=0.289s
+15:49:00 | INFO | tag=block11.out_proj iter=042 | J=0.077722 J_x=0.076865 J_w=0.085712 rel_change=2.024695e-04 | time=0.311s
+15:49:00 | INFO | tag=block11.out_proj iter=043 | J=0.077530 J_x=0.076675 J_w=0.085498 rel_change=1.922771e-04 | time=0.291s
+15:49:00 | INFO | tag=block11.out_proj iter=044 | J=0.077338 J_x=0.076484 J_w=0.085410 rel_change=1.913160e-04 | time=0.289s
+15:49:00 | INFO | tag=block11.out_proj iter=045 | J=0.077153 J_x=0.076300 J_w=0.085354 rel_change=1.851693e-04 | time=0.290s
+15:49:01 | INFO | tag=block11.out_proj iter=046 | J=0.076974 J_x=0.076121 J_w=0.085276 rel_change=1.788363e-04 | time=0.284s
+15:49:01 | INFO | tag=block11.out_proj iter=047 | J=0.076801 J_x=0.075949 J_w=0.085208 rel_change=1.732558e-04 | time=0.297s
+15:49:01 | INFO | tag=block11.out_proj iter=048 | J=0.076633 J_x=0.075783 J_w=0.085057 rel_change=1.675785e-04 | time=0.293s
+15:49:02 | INFO | tag=block11.out_proj iter=049 | J=0.076471 J_x=0.075621 J_w=0.085046 rel_change=1.619086e-04 | time=0.304s
+15:49:02 | INFO | tag=block11.out_proj iter=050 | J=0.076311 J_x=0.075461 J_w=0.084995 rel_change=1.603365e-04 | time=0.279s
+15:49:02 | INFO | tag=block11.out_proj iter=051 | J=0.076162 J_x=0.075312 J_w=0.084994 rel_change=1.493096e-04 | time=0.284s
+15:49:02 | INFO | tag=block11.out_proj iter=052 | J=0.076019 J_x=0.075169 J_w=0.084977 rel_change=1.431629e-04 | time=0.289s
+15:49:03 | INFO | tag=block11.out_proj iter=053 | J=0.075878 J_x=0.075030 J_w=0.084820 rel_change=1.407936e-04 | time=0.294s
+15:49:03 | INFO | tag=block11.out_proj iter=054 | J=0.075745 J_x=0.074898 J_w=0.084706 rel_change=1.330152e-04 | time=0.293s
+15:49:03 | INFO | tag=block11.out_proj iter=055 | J=0.075616 J_x=0.074769 J_w=0.084631 rel_change=1.290739e-04 | time=0.288s
+15:49:04 | INFO | tag=block11.out_proj iter=056 | J=0.075493 J_x=0.074647 J_w=0.084599 rel_change=1.227260e-04 | time=0.291s
+15:49:04 | INFO | tag=block11.out_proj iter=057 | J=0.075376 J_x=0.074531 J_w=0.084491 rel_change=1.169145e-04 | time=0.290s
+15:49:04 | INFO | tag=block11.out_proj iter=058 | J=0.075263 J_x=0.074418 J_w=0.084500 rel_change=1.129210e-04 | time=0.318s
+15:49:05 | INFO | tag=block11.out_proj iter=059 | J=0.075153 J_x=0.074308 J_w=0.084468 rel_change=1.103058e-04 | time=0.300s
+15:49:05 | INFO | tag=block11.out_proj iter=060 | J=0.075049 J_x=0.074204 J_w=0.084422 rel_change=1.042634e-04 | time=0.291s
+15:49:05 | INFO | tag=block11.out_proj iter=061 | J=0.074946 J_x=0.074102 J_w=0.084488 rel_change=1.022220e-04 | time=0.289s
+15:49:05 | INFO | tag=block11.out_proj iter=062 | J=0.074851 J_x=0.074006 J_w=0.084442 rel_change=9.593368e-05 | time=0.299s
+15:49:06 | INFO | tag=block11.out_proj iter=063 | J=0.074759 J_x=0.073915 J_w=0.084363 rel_change=9.188801e-05 | time=0.299s
+15:49:06 | INFO | tag=block11.out_proj iter=064 | J=0.074668 J_x=0.073825 J_w=0.084385 rel_change=9.026378e-05 | time=0.334s
+15:49:06 | INFO | tag=block11.out_proj iter=065 | J=0.074576 J_x=0.073732 J_w=0.084348 rel_change=9.243935e-05 | time=0.291s
+15:49:07 | INFO | tag=block11.out_proj iter=066 | J=0.074491 J_x=0.073649 J_w=0.084289 rel_change=8.451194e-05 | time=0.287s
+15:49:07 | INFO | tag=block11.out_proj iter=067 | J=0.074409 J_x=0.073567 J_w=0.084279 rel_change=8.205324e-05 | time=0.291s
+15:49:07 | INFO | tag=block11.out_proj iter=068 | J=0.074327 J_x=0.073485 J_w=0.084240 rel_change=8.191913e-05 | time=0.298s
+15:49:08 | INFO | tag=block11.out_proj iter=069 | J=0.074246 J_x=0.073404 J_w=0.084245 rel_change=8.109212e-05 | time=0.300s
+15:49:08 | INFO | tag=block11.out_proj iter=070 | J=0.074171 J_x=0.073329 J_w=0.084194 rel_change=7.538497e-05 | time=0.288s
+15:49:08 | INFO | tag=block11.out_proj iter=071 | J=0.074098 J_x=0.073257 J_w=0.084154 rel_change=7.269531e-05 | time=0.285s
+15:49:08 | INFO | tag=block11.out_proj iter=072 | J=0.074024 J_x=0.073183 J_w=0.084125 rel_change=7.417053e-05 | time=0.288s
+15:49:09 | INFO | tag=block11.out_proj iter=073 | J=0.073951 J_x=0.073110 J_w=0.084097 rel_change=7.262081e-05 | time=0.294s
+15:49:09 | INFO | tag=block11.out_proj iter=074 | J=0.073881 J_x=0.073040 J_w=0.084066 rel_change=7.087737e-05 | time=0.284s
+15:49:09 | INFO | tag=block11.out_proj iter=075 | J=0.073813 J_x=0.072972 J_w=0.084044 rel_change=6.779283e-05 | time=0.299s
+15:49:10 | INFO | tag=block11.out_proj iter=076 | J=0.073747 J_x=0.072907 J_w=0.084001 rel_change=6.611645e-05 | time=0.295s
+15:49:10 | INFO | tag=block11.out_proj iter=077 | J=0.073683 J_x=0.072843 J_w=0.083997 rel_change=6.403774e-05 | time=0.297s
+15:49:10 | INFO | tag=block11.out_proj iter=078 | J=0.073623 J_x=0.072784 J_w=0.083937 rel_change=5.935878e-05 | time=0.294s
+15:49:10 | INFO | tag=block11.out_proj iter=079 | J=0.073562 J_x=0.072722 J_w=0.083978 rel_change=6.134808e-05 | time=0.295s
+15:49:11 | INFO | tag=block11.out_proj iter=080 | J=0.073503 J_x=0.072664 J_w=0.083915 rel_change=5.853176e-05 | time=0.291s
+15:49:11 | INFO | 量化器拟合完成 | tag=block11.out_proj convergence_iter=80 total_fit_time=23.550s
+15:49:11 | INFO | 开始计算重建/近似误差 | layer=block11.out_proj error_mode=relative
+15:49:11 | INFO | 误差计算完成 | layer=block11.out_proj err_x=0.055789 err_w=0.147867 rel_linear_error=0.256617 elapsed=0.190s
+15:49:13 | INFO | 扩展量化模块构建完成。
+15:49:13 | INFO | 开始 PPL 评测 | tag=ours_all_blocks_qkvo stride=512 max_eval_tokens=None
+15:49:45 | INFO | PPL 评测完成 | tag=ours_all_blocks_qkvo ppl=39.172913 eval_tokens=286178 target_tokens=286178 windows=556 elapsed=31.885s
+15:49:53 | INFO | ========== Sweep 单次实验结束 ==========
