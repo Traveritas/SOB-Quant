@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2024-2025 ModelCloud.ai
+# SPDX-FileCopyrightText: 2024-2025 qubitium@modelcloud.ai
+# SPDX-License-Identifier: Apache-2.0
+# Contact: qubitium@modelcloud.ai, x.com/qubitium
+
+import importlib.util
+import os
+
+
+# TODO: find how intel_extension_for_pytorch registers its TorchScript interpreter.
+# If intel_extension_for_pytorch is installed, @torch.jit.script in transformers/models/gpt_bigcode/modeling_gpt_bigcode.py
+# will try to use that interpreter.
+# However, in quantization, tensor were on gpu, which will throw RuntimeError: itensor_view_from_dense expects CPU tensor input
+if importlib.util.find_spec("intel_extension_for_pytorch"):
+    os.environ["PYTORCH_JIT"] = "False"
+
+import torch  # noqa: E402
+from model_test import ModelTest  # noqa: E402
+
+
+class TestGptBigCode(ModelTest):
+    NATIVE_MODEL_ID = "/monster/data/model/gpt_bigcode-santacoder"  # "bigcode/gpt_bigcode-santacoder"
+    NATIVE_ARC_CHALLENGE_ACC = 0.1689
+    NATIVE_ARC_CHALLENGE_ACC_NORM = 0.2056
+    NATIVE_ARC_CHALLENGE_ACC_SLOW = NATIVE_ARC_CHALLENGE_ACC
+    NATIVE_ARC_CHALLENGE_ACC_NORM_SLOW = NATIVE_ARC_CHALLENGE_ACC_NORM
+    NATIVE_ARC_CHALLENGE_ACC_FAST = 0.1697952218430034
+    NATIVE_ARC_CHALLENGE_ACC_NORM_FAST = 0.20563139931740615
+    TORCH_DTYPE = torch.float16
+    TRUST_REMOTE_CODE = True
+
+    def test_gptbigcode(self):
+        self.quant_lm_eval()

@@ -1,0 +1,86 @@
+[build-system]
+requires = [
+    "setuptools>=78.1.1",
+    "ninja>=1.13.0", # required for faster compilataion
+    "pypcre>=0.2.14",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GPTQModel"
+dynamic = ["version", "dependencies"]
+description = "Production ready LLM model compression/quantization toolkit with hw accelerated inference support for both cpu/gpu via HF, vLLM, and SGLang."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    { name = "ModelCloud", email = "qubitium@modelcloud.ai" },
+]
+keywords = ["gptq", "awq", "qqq", "autogptq", "autoawq", "eora", "gar", "quantization", "large-language-models", "transformers", "llm", "moe", "compression"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: C++",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+[project.urls]
+Homepage = "https://github.com/ModelCloud/GPTQModel"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.5",
+    "pytest-timeout>=2.3.1",
+    "parameterized",
+]
+quality = [
+    "ruff==0.13.0",
+    # "isort==6.0.1",
+]
+vllm = [
+    "vllm>=0.10.2",
+    "flashinfer-python>=0.3.1",
+]
+sglang = [
+    "sglang[srt]>=0.4.6",
+    "flashinfer-python>=0.3.1",
+]
+bitblas = [
+    "bitblas==0.1.0.post1",
+]
+bitsandbytes = [
+    "bitsandbytes>=0.49.3",
+]
+hf = [
+    "optimum>=1.21.2",
+]
+eval = [
+    "Evalution",
+]
+triton = [
+    "triton>=3.4.0",
+]
+openai = [
+    "uvicorn",
+    "fastapi",
+    "pydantic",
+]
+mlx = [
+    "mlx_lm>=0.24.0",
+]
+
+[tool.uv]
+torch-backend = "auto"
