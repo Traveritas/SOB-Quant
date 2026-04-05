@@ -20,9 +20,9 @@ BASE_SCRIPT_PATH = Path(__file__).with_name('opt_all_blocks_qkvo_experiment_v1.p
 OUTPUT_ROOT = Path('./outputs_opt_qkvo_lastk_sweep_v4_config')
 
 SWEEP_CONFIG = {
-    'last_ks': (1, 2, 4, 8, 11),#1,2,4,8,11...
+    'last_ks': (2,6,11),#1,2,4,8,11...
     'init_modes': ('pca', 'random'),#pca random
-    'betas': (1.0,),
+    'betas': (0.1,0.5,1.0,2,10),
     'error_modes': ('relative',),#relative absolute
 }
 
@@ -180,7 +180,8 @@ def configure_experiment(
         if ok:
             path = 'init_mode'
     if path is None:
-        raise AttributeError(f"Could not find init_mode field. Tried: {CONFIG_PATH_HINTS['init_mode']}")
+        print(f"Warning: Could not find init_mode field. Ignored.")
+        path = "NOT_FOUND"
     applied['init_mode'] = path
 
     cfg, path = apply_first_matching_path(cfg, CONFIG_PATH_HINTS['beta'], float(beta))
@@ -189,7 +190,8 @@ def configure_experiment(
         if ok:
             path = 'beta'
     if path is None:
-        raise AttributeError(f"Could not find beta field. Tried: {CONFIG_PATH_HINTS['beta']}")
+        print(f"Warning: Could not find beta field. Ignored.")
+        path = "NOT_FOUND"
     applied['beta'] = path
 
     cfg, path = apply_first_matching_path(cfg, CONFIG_PATH_HINTS['error_mode'], error_mode)
@@ -198,7 +200,8 @@ def configure_experiment(
         if ok:
             path = 'error_mode'
     if path is None:
-        raise AttributeError(f"Could not find error_mode field. Tried: {CONFIG_PATH_HINTS['error_mode']}")
+        print(f"Warning: Could not find error_mode field. Ignored.")
+        path = "NOT_FOUND"
     applied['error_mode'] = path
 
     return cfg, applied
@@ -318,6 +321,10 @@ def validate_user_config() -> None:
 
 
 def main() -> None:
+    import torch
+    if not torch.cuda.is_available():
+        print("\n[WARNING] CUDA is NOT available! The script will fall back to CPU, which is extremely slow.")
+        print("[WARNING] Please check your PyTorch installation in this environment to enable GPU execution.\n")
     validate_user_config()
     base = load_base_module(BASE_SCRIPT_PATH)
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)

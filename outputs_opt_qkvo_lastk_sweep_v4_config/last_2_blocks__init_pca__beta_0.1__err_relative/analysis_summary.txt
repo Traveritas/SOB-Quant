@@ -1,0 +1,108 @@
+实验结果分析
+- 量化是否完成: True
+- baseline PPL: 23.500643
+- SQ-AllBlocks-QKVO baseline PPL: 33.120560
+- Ours-AllBlocks-QKVO quantized PPL: 27.239222
+- Ours 相对 FP 的 PPL 增量: 3.738579
+- SQ 相对 FP 的 PPL 增量: 9.619917
+
+SQ 对照组各层误差
+- block10.q_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.242187
+  - rel_linear_error: 0.449564
+- block10.k_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.224691
+  - rel_linear_error: 0.384122
+- block10.v_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.266271
+  - rel_linear_error: 1.038680
+- block10.out_proj
+  - rel_recon_error_x: 0.299572
+  - rel_recon_error_w: 0.280512
+  - rel_linear_error: 0.693751
+- block11.q_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.137037
+  - rel_linear_error: 0.841778
+- block11.k_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.159061
+  - rel_linear_error: 0.758373
+- block11.v_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.440576
+  - rel_linear_error: 1.034687
+- block11.out_proj
+  - rel_recon_error_x: 0.192631
+  - rel_recon_error_w: 0.744155
+  - rel_linear_error: 0.829729
+- 平均
+  - rel_linear_error: 0.753835
+  - rel_recon_error_w: 0.311811
+  - rel_recon_error_x: 0.714340
+
+Ours 各层误差
+- block10.q_proj
+  - rel_recon_error_x: 0.048602
+  - rel_recon_error_w: 0.069742
+  - rel_linear_error: 0.103930
+- block10.k_proj
+  - rel_recon_error_x: 0.048792
+  - rel_recon_error_w: 0.073760
+  - rel_linear_error: 0.118648
+- block10.v_proj
+  - rel_recon_error_x: 0.048688
+  - rel_recon_error_w: 0.069111
+  - rel_linear_error: 0.146664
+- block10.out_proj
+  - rel_recon_error_x: 0.060718
+  - rel_recon_error_w: 0.063197
+  - rel_linear_error: 0.157314
+- block11.q_proj
+  - rel_recon_error_x: 0.050038
+  - rel_recon_error_w: 0.068180
+  - rel_linear_error: 0.113863
+- block11.k_proj
+  - rel_recon_error_x: 0.050059
+  - rel_recon_error_w: 0.070283
+  - rel_linear_error: 0.116389
+- block11.v_proj
+  - rel_recon_error_x: 0.050056
+  - rel_recon_error_w: 0.069956
+  - rel_linear_error: 0.153301
+- block11.out_proj
+  - rel_recon_error_x: 0.051830
+  - rel_recon_error_w: 0.119804
+  - rel_linear_error: 0.234704
+- 平均
+  - rel_linear_error: 0.143102
+  - rel_recon_error_w: 0.075504
+  - rel_recon_error_x: 0.051098
+
+各层收敛轮数
+- block10.q_proj: 131
+- block10.k_proj: 126
+- block10.v_proj: 126
+- block10.out_proj: 165
+- block11.q_proj: 125
+- block11.k_proj: 134
+- block11.v_proj: 138
+- block11.out_proj: 300
+
+耗时（秒）
+- model_load_sec: 6.9604
+- tokenize_calib_sec: 19.4721
+- collect_target_inputs_sec: 0.4459
+- build_sq_baseline_sec: 0.5821
+- fit_quantizer_and_metrics_sec: 299.7118
+- fit_quantizer_sec_total: 297.9228
+
+目标层
+- block_indices: [10, 11]
+- num_blocks: 2
+- target_linear_names: ['q_proj', 'k_proj', 'v_proj', 'out_proj']
+- collected_token_counts: {'block10.q_proj': 4096, 'block10.k_proj': 4096, 'block10.v_proj': 4096, 'block10.out_proj': 4096, 'block11.q_proj': 4096, 'block11.k_proj': 4096, 'block11.v_proj': 4096, 'block11.out_proj': 4096}
+- model_name: facebook/opt-125m
