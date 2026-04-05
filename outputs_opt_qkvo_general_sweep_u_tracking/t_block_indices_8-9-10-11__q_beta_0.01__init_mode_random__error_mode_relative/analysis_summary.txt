@@ -1,0 +1,198 @@
+实验结果分析
+- 量化是否完成: True
+- baseline PPL: 23.500643
+- SQ-AllBlocks-QKVO baseline PPL: 197.938278
+- Ours-AllBlocks-QKVO quantized PPL: 39.172913
+- Ours 相对 FP 的 PPL 增量: 15.672270
+- SQ 相对 FP 的 PPL 增量: 174.437635
+
+SQ 对照组各层误差
+- block8.q_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.140136
+  - rel_linear_error: 0.497125
+- block8.k_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.301824
+  - rel_linear_error: 0.368565
+- block8.v_proj
+  - rel_recon_error_x: 0.669210
+  - rel_recon_error_w: 0.237513
+  - rel_linear_error: 0.943759
+- block8.out_proj
+  - rel_recon_error_x: 0.213817
+  - rel_recon_error_w: 0.348258
+  - rel_linear_error: 0.717631
+- block9.q_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.157180
+  - rel_linear_error: 0.615857
+- block9.k_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.284215
+  - rel_linear_error: 0.461449
+- block9.v_proj
+  - rel_recon_error_x: 0.769513
+  - rel_recon_error_w: 0.224909
+  - rel_linear_error: 0.941919
+- block9.out_proj
+  - rel_recon_error_x: 0.232639
+  - rel_recon_error_w: 0.362596
+  - rel_linear_error: 0.665637
+- block10.q_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.242187
+  - rel_linear_error: 0.449564
+- block10.k_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.224691
+  - rel_linear_error: 0.384122
+- block10.v_proj
+  - rel_recon_error_x: 0.805865
+  - rel_recon_error_w: 0.266271
+  - rel_linear_error: 1.038680
+- block10.out_proj
+  - rel_recon_error_x: 0.299572
+  - rel_recon_error_w: 0.280512
+  - rel_linear_error: 0.693751
+- block11.q_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.137037
+  - rel_linear_error: 0.841778
+- block11.k_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.159061
+  - rel_linear_error: 0.758373
+- block11.v_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.440576
+  - rel_linear_error: 1.034687
+- block11.out_proj
+  - rel_recon_error_x: 0.192631
+  - rel_recon_error_w: 0.744155
+  - rel_linear_error: 0.829729
+- 平均
+  - rel_linear_error: 0.702664
+  - rel_recon_error_w: 0.284445
+  - rel_recon_error_x: 0.654834
+
+Ours 各层误差
+- block8.q_proj
+  - relative_recon_error_x: 0.052847
+  - relative_recon_error_w: 0.096752
+  - rel_linear_error: 0.071798
+- block8.k_proj
+  - relative_recon_error_x: 0.052307
+  - relative_recon_error_w: 0.087449
+  - rel_linear_error: 0.048502
+- block8.v_proj
+  - relative_recon_error_x: 0.052371
+  - relative_recon_error_w: 0.082731
+  - rel_linear_error: 0.173683
+- block8.out_proj
+  - relative_recon_error_x: 0.059419
+  - relative_recon_error_w: 0.084491
+  - rel_linear_error: 0.160218
+- block9.q_proj
+  - relative_recon_error_x: 0.053918
+  - relative_recon_error_w: 0.085286
+  - rel_linear_error: 0.073630
+- block9.k_proj
+  - relative_recon_error_x: 0.053948
+  - relative_recon_error_w: 0.084201
+  - rel_linear_error: 0.054730
+- block9.v_proj
+  - relative_recon_error_x: 0.053972
+  - relative_recon_error_w: 0.085302
+  - rel_linear_error: 0.163762
+- block9.out_proj
+  - relative_recon_error_x: 0.063501
+  - relative_recon_error_w: 0.081407
+  - rel_linear_error: 0.161179
+- block10.q_proj
+  - relative_recon_error_x: 0.054930
+  - relative_recon_error_w: 0.083073
+  - rel_linear_error: 0.060713
+- block10.k_proj
+  - relative_recon_error_x: 0.054771
+  - relative_recon_error_w: 0.082752
+  - rel_linear_error: 0.051385
+- block10.v_proj
+  - relative_recon_error_x: 0.054640
+  - relative_recon_error_w: 0.085679
+  - rel_linear_error: 0.165325
+- block10.out_proj
+  - relative_recon_error_x: 0.064218
+  - relative_recon_error_w: 0.085393
+  - rel_linear_error: 0.176287
+- block11.q_proj
+  - relative_recon_error_x: 0.054375
+  - relative_recon_error_w: 0.082335
+  - rel_linear_error: 0.074389
+- block11.k_proj
+  - relative_recon_error_x: 0.054386
+  - relative_recon_error_w: 0.082829
+  - rel_linear_error: 0.068540
+- block11.v_proj
+  - relative_recon_error_x: 0.054338
+  - relative_recon_error_w: 0.088371
+  - rel_linear_error: 0.180273
+- block11.out_proj
+  - relative_recon_error_x: 0.055789
+  - relative_recon_error_w: 0.147867
+  - rel_linear_error: 0.256617
+- 平均
+  - rel_linear_error: 0.121314
+  - relative_recon_error_w: 0.089120
+  - relative_recon_error_x: 0.055608
+
+各层收敛轮数
+- block8.q_proj: 79
+- block8.k_proj: 80
+- block8.v_proj: 80
+- block8.out_proj: 80
+- block9.q_proj: 80
+- block9.k_proj: 80
+- block9.v_proj: 80
+- block9.out_proj: 80
+- block10.q_proj: 80
+- block10.k_proj: 80
+- block10.v_proj: 80
+- block10.out_proj: 80
+- block11.q_proj: 79
+- block11.k_proj: 80
+- block11.v_proj: 80
+- block11.out_proj: 80
+
+耗时（秒）
+- model_load_sec: 44.7980
+- tokenize_calib_sec: 11.2199
+- collect_target_inputs_sec: 0.2576
+- build_sq_baseline_sec: 0.6863
+- fit_quantizer_and_metrics_sec: 381.2958
+- fit_quantizer_sec_total: 348.3598
+
+目标层
+- block_indices: [8, 9, 10, 11]
+- num_blocks: 4
+- target_linear_names: ['q_proj', 'k_proj', 'v_proj', 'out_proj']
+- collected_token_counts: {'block8.q_proj': 4096, 'block8.k_proj': 4096, 'block8.v_proj': 4096, 'block8.out_proj': 4096, 'block9.q_proj': 4096, 'block9.k_proj': 4096, 'block9.v_proj': 4096, 'block9.out_proj': 4096, 'block10.q_proj': 4096, 'block10.k_proj': 4096, 'block10.v_proj': 4096, 'block10.out_proj': 4096, 'block11.q_proj': 4096, 'block11.k_proj': 4096, 'block11.v_proj': 4096, 'block11.out_proj': 4096}
+- model_name: facebook/opt-125m
+
+U 变化摘要
+- block8.q_proj: len=79 delta_init=20.338879 cos_init=0.730688 orth_err=0.000072
+- block8.k_proj: len=80 delta_init=20.383955 cos_init=0.729493 orth_err=0.000073
+- block8.v_proj: len=80 delta_init=20.356165 cos_init=0.730230 orth_err=0.000073
+- block8.out_proj: len=80 delta_init=39.137074 cos_init=0.002782 orth_err=0.000071
+- block9.q_proj: len=80 delta_init=20.001949 cos_init=0.739538 orth_err=0.000074
+- block9.k_proj: len=80 delta_init=19.940189 cos_init=0.741143 orth_err=0.000072
+- block9.v_proj: len=80 delta_init=19.902010 cos_init=0.742134 orth_err=0.000073
+- block9.out_proj: len=80 delta_init=38.979580 cos_init=0.010792 orth_err=0.000065
+- block10.q_proj: len=80 delta_init=20.310638 cos_init=0.731436 orth_err=0.000073
+- block10.k_proj: len=80 delta_init=20.324606 cos_init=0.731066 orth_err=0.000071
+- block10.v_proj: len=80 delta_init=20.312717 cos_init=0.731382 orth_err=0.000072
+- block10.out_proj: len=80 delta_init=39.120144 cos_init=0.003645 orth_err=0.000069
+- block11.q_proj: len=79 delta_init=20.449665 cos_init=0.727747 orth_err=0.000073
+- block11.k_proj: len=80 delta_init=20.496035 cos_init=0.726510 orth_err=0.000072
+- block11.v_proj: len=80 delta_init=20.471218 cos_init=0.727172 orth_err=0.000072
+- block11.out_proj: len=80 delta_init=39.016415 cos_init=0.008919 orth_err=0.000062

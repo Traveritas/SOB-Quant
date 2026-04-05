@@ -1,0 +1,78 @@
+实验结果分析
+- 量化是否完成: True
+- baseline PPL: 23.500643
+- SQ-AllBlocks-QKVO baseline PPL: 27.267649
+- Ours-AllBlocks-QKVO quantized PPL: 24.778036
+- Ours 相对 FP 的 PPL 增量: 1.277393
+- SQ 相对 FP 的 PPL 增量: 3.767006
+
+SQ 对照组各层误差
+- block11.q_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.137037
+  - rel_linear_error: 0.841778
+- block11.k_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.159061
+  - rel_linear_error: 0.758373
+- block11.v_proj
+  - rel_recon_error_x: 0.934975
+  - rel_recon_error_w: 0.440576
+  - rel_linear_error: 1.034687
+- block11.out_proj
+  - rel_recon_error_x: 0.192631
+  - rel_recon_error_w: 0.744155
+  - rel_linear_error: 0.829729
+- 平均
+  - rel_linear_error: 0.866142
+  - rel_recon_error_w: 0.370207
+  - rel_recon_error_x: 0.749389
+
+Ours 各层误差
+- block11.q_proj
+  - relative_recon_error_x: 0.068529
+  - relative_recon_error_w: 0.027481
+  - rel_linear_error: 0.079206
+- block11.k_proj
+  - relative_recon_error_x: 0.068485
+  - relative_recon_error_w: 0.026007
+  - rel_linear_error: 0.068216
+- block11.v_proj
+  - relative_recon_error_x: 0.067221
+  - relative_recon_error_w: 0.033488
+  - rel_linear_error: 0.120527
+- block11.out_proj
+  - relative_recon_error_x: 0.081977
+  - relative_recon_error_w: 0.034430
+  - rel_linear_error: 0.150778
+- 平均
+  - rel_linear_error: 0.104681
+  - relative_recon_error_w: 0.030352
+  - relative_recon_error_x: 0.071553
+
+各层收敛轮数
+- block11.q_proj: 80
+- block11.k_proj: 80
+- block11.v_proj: 80
+- block11.out_proj: 80
+
+耗时（秒）
+- model_load_sec: 58.9006
+- tokenize_calib_sec: 14.3269
+- collect_target_inputs_sec: 0.4376
+- build_sq_baseline_sec: 0.2593
+- fit_quantizer_and_metrics_sec: 101.6868
+- fit_quantizer_sec_total: 93.0179
+
+目标层
+- block_indices: [11]
+- num_blocks: 1
+- target_linear_names: ['q_proj', 'k_proj', 'v_proj', 'out_proj']
+- collected_token_counts: {'block11.q_proj': 4096, 'block11.k_proj': 4096, 'block11.v_proj': 4096, 'block11.out_proj': 4096}
+- model_name: facebook/opt-125m
+
+U 变化摘要
+- block11.q_proj: len=80 delta_init=28.657665 cos_init=0.465324 orth_err=0.000070
+- block11.k_proj: len=80 delta_init=28.982504 cos_init=0.453134 orth_err=0.000071
+- block11.v_proj: len=80 delta_init=26.601007 cos_init=0.539314 orth_err=0.000072
+- block11.out_proj: len=80 delta_init=38.307114 cos_init=0.044628 orth_err=0.000077
