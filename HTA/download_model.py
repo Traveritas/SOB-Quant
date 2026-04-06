@@ -1,6 +1,5 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from huggingface_hub import snapshot_download
 
-model_name = "facebook/opt-125m"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
-print(model.name_or_path) #
+model_id = "facebook/opt-125m"
+local_dir = "./opt-125m"
+snapshot_download(repo_id=model_id, local_dir=local_dir)
