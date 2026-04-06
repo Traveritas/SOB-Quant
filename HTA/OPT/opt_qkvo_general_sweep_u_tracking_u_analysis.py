@@ -8,7 +8,8 @@ import time
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import torch
 
@@ -49,14 +50,19 @@ SWEEP_GRID: Dict[str, Iterable[Any]] = {
     "target.block_indices": (
         (11,),
         (8, 9, 10, 11),
+        (0,1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
     ),
     "quant.beta": (1,),
     "quant_ext.init_mode": ("pca", "random"),
-    "quant_ext.error_mode": ("relative","absolute"),
+    "quant_ext.error_mode": ("relative",),
 }
 
-TRACK_U_FULL_MATRIX = True          # True: save full U snapshot every tracked step
+TRACK_U_FULL_MATRIX = False         # False by default: avoid storing every U snapshot
 TRACK_U_EVERY = 1                    # record every n iterations
+TRACK_U_SAVE_INTERVAL = 10           # when saving full U, keep every n tracked steps
+TRACK_U_SAVE_FIRST = 5               # always keep early iterations up to this index
+TRACK_U_SAVE_LAST = True             # always save the final U
+TRACK_Z_FLIP_STATS = True            # record code flip statistics induced by U updates
 RANDOM_INIT_ORTHOGONAL = True        # random init as orthogonal basis
 RANDOM_INIT_SCALE = 1.0              # used only if RANDOM_INIT_ORTHOGONAL=False
 SAVE_PER_RUN_JSON = True
@@ -96,6 +102,9 @@ class ExtendedQuantizerConfig(base.QuantizerConfig):
     track_u: bool = True
     track_u_every: int = 1
     track_u_full_matrix: bool = False
+    track_u_save_interval: int = 10
+    track_u_save_first: int = 5
+    track_z_flip_stats: bool = True
     random_init_orthogonal: bool = True
     random_init_scale: float = 1.0
 
@@ -117,6 +126,20 @@ class UTracePoint:
     singular_max: float
     diag_mean_abs: float
     offdiag_fro: float
+    principal_angle_mean_prev_deg: float
+    principal_angle_max_prev_deg: float
+    principal_angle_mean_init_deg: float
+    principal_angle_max_init_deg: float
+    subspace_geodesic_prev: float
+    subspace_geodesic_init: float
+    column_cosine_mean_prev: float
+    column_cosine_min_prev: float
+    lambda_x_delta_from_prev: float = 0.0
+    lambda_w_delta_from_prev: float = 0.0
+    z_x_flip_rate: float = 0.0
+    z_w_flip_rate: float = 0.0
+    z_x_flip_ratio_per_dim_mean: float = 0.0
+    z_w_flip_ratio_per_dim_mean: float = 0.0
     full_matrix_path: Optional[str] = None
 
 
@@ -212,11 +235,75 @@ def objective_reconstruction_error(
 
 
 
+def _safe_cosine_flat(a: torch.Tensor, b: torch.Tensor) -> float:
+    aa = a.reshape(-1)
+    bb = b.reshape(-1)
+    denom = torch.linalg.norm(aa) * torch.linalg.norm(bb)
+    if float(denom.item()) <= 1e-12:
+        return 0.0
+    return float(torch.dot(aa, bb).item() / denom.item())
+
+
+def _principal_angle_stats(A: torch.Tensor, B: torch.Tensor) -> Dict[str, float]:
+    A64 = A.to(dtype=torch.float64)
+    B64 = B.to(dtype=torch.float64)
+    M = A64.T @ B64
+    svals = torch.linalg.svdvals(M).clamp(-1.0, 1.0)
+    angles = torch.arccos(svals)
+    angles_deg = angles * (180.0 / math.pi)
+    return {
+        "mean_deg": float(torch.mean(angles_deg).item()),
+        "max_deg": float(torch.max(angles_deg).item()),
+        "geodesic": float(torch.linalg.norm(angles).item()),
+    }
+
+
+def _column_cosine_stats(A: torch.Tensor, B: torch.Tensor) -> Dict[str, float]:
+    cos = torch.sum(A * B, dim=0)
+    denom = torch.linalg.norm(A, dim=0) * torch.linalg.norm(B, dim=0)
+    denom = torch.clamp(denom, min=1e-12)
+    cos = torch.abs(cos / denom)
+    return {
+        "mean": float(torch.mean(cos).item()),
+        "min": float(torch.min(cos).item()),
+    }
+
+
+def _flip_rate(prev_codes: Optional[torch.Tensor], new_codes: Optional[torch.Tensor]) -> Tuple[float, float]:
+    if prev_codes is None or new_codes is None:
+        return 0.0, 0.0
+    changed = (prev_codes != new_codes)
+    if changed.numel() == 0:
+        return 0.0, 0.0
+    overall = float(changed.to(torch.float32).mean().item())
+    per_dim = changed.to(torch.float32).mean(dim=1)
+    return overall, float(per_dim.mean().item())
+
+
+def _should_save_u_matrix(iter_idx: int, max_iters: int, cfg: ExtendedQuantizerConfig) -> bool:
+    if not cfg.track_u_full_matrix:
+        return False
+    if iter_idx <= max(0, cfg.track_u_save_first):
+        return True
+    if iter_idx == max_iters:
+        return True
+    interval = max(1, cfg.track_u_save_interval)
+    return (iter_idx % interval) == 0
+
+
 def compute_u_trace_point(
     U: torch.Tensor,
     U_prev: torch.Tensor,
     U_init: torch.Tensor,
     iter_idx: int,
+    lambda_x: Optional[torch.Tensor] = None,
+    lambda_x_prev: Optional[torch.Tensor] = None,
+    lambda_w: Optional[torch.Tensor] = None,
+    lambda_w_prev: Optional[torch.Tensor] = None,
+    Z_x: Optional[torch.Tensor] = None,
+    Z_x_prev: Optional[torch.Tensor] = None,
+    Z_w: Optional[torch.Tensor] = None,
+    Z_w_prev: Optional[torch.Tensor] = None,
 ) -> Dict[str, Any]:
     eye = torch.eye(U.shape[1], device=U.device, dtype=U.dtype)
     gram = U.T @ U
@@ -224,27 +311,46 @@ def compute_u_trace_point(
     offdiag = gram - torch.diag(diag)
     svals = torch.linalg.svdvals(U)
 
-    def _cos(a: torch.Tensor, b: torch.Tensor) -> float:
-        aa = a.reshape(-1)
-        bb = b.reshape(-1)
-        denom = torch.linalg.norm(aa) * torch.linalg.norm(bb)
-        if float(denom.item()) <= 1e-12:
-            return 0.0
-        return float(torch.dot(aa, bb).item() / denom.item())
+    angle_prev = _principal_angle_stats(U, U_prev)
+    angle_init = _principal_angle_stats(U, U_init)
+    col_prev = _column_cosine_stats(U, U_prev)
+    z_x_flip, z_x_flip_per_dim = _flip_rate(Z_x_prev, Z_x)
+    z_w_flip, z_w_flip_per_dim = _flip_rate(Z_w_prev, Z_w)
 
-    return {
-        "iter_idx": int(iter_idx),
-        "delta_fro_from_prev": float(torch.linalg.norm(U - U_prev).item()),
-        "delta_fro_from_init": float(torch.linalg.norm(U - U_init).item()),
-        "cosine_to_prev": _cos(U, U_prev),
-        "cosine_to_init": _cos(U, U_init),
-        "orthogonality_error": float(torch.linalg.norm(gram - eye).item()),
-        "singular_min": float(svals.min().item()),
-        "singular_max": float(svals.max().item()),
-        "diag_mean_abs": float(torch.mean(torch.abs(diag)).item()),
-        "offdiag_fro": float(torch.linalg.norm(offdiag).item()),
-        "full_matrix_path": None,
-    }
+    lambda_x_delta = 0.0
+    if lambda_x is not None and lambda_x_prev is not None:
+        lambda_x_delta = float(torch.linalg.norm(lambda_x - lambda_x_prev).item())
+    lambda_w_delta = 0.0
+    if lambda_w is not None and lambda_w_prev is not None:
+        lambda_w_delta = float(torch.linalg.norm(lambda_w - lambda_w_prev).item())
+
+    point = UTracePoint(
+        iter_idx=int(iter_idx),
+        delta_fro_from_prev=float(torch.linalg.norm(U - U_prev).item()),
+        delta_fro_from_init=float(torch.linalg.norm(U - U_init).item()),
+        cosine_to_prev=_safe_cosine_flat(U, U_prev),
+        cosine_to_init=_safe_cosine_flat(U, U_init),
+        orthogonality_error=float(torch.linalg.norm(gram - eye).item()),
+        singular_min=float(svals.min().item()),
+        singular_max=float(svals.max().item()),
+        diag_mean_abs=float(torch.mean(torch.abs(diag)).item()),
+        offdiag_fro=float(torch.linalg.norm(offdiag).item()),
+        principal_angle_mean_prev_deg=angle_prev["mean_deg"],
+        principal_angle_max_prev_deg=angle_prev["max_deg"],
+        principal_angle_mean_init_deg=angle_init["mean_deg"],
+        principal_angle_max_init_deg=angle_init["max_deg"],
+        subspace_geodesic_prev=angle_prev["geodesic"],
+        subspace_geodesic_init=angle_init["geodesic"],
+        column_cosine_mean_prev=col_prev["mean"],
+        column_cosine_min_prev=col_prev["min"],
+        lambda_x_delta_from_prev=lambda_x_delta,
+        lambda_w_delta_from_prev=lambda_w_delta,
+        z_x_flip_rate=z_x_flip,
+        z_w_flip_rate=z_w_flip,
+        z_x_flip_ratio_per_dim_mean=z_x_flip_per_dim,
+        z_w_flip_ratio_per_dim_mean=z_w_flip_per_dim,
+    )
+    return asdict(point)
 
 
 
@@ -268,11 +374,27 @@ def save_u_trace_plots(output_dir: Path, prefix: str, u_trace: List[Dict[str, An
         plt.close()
         paths[y_key] = str(path)
 
-    _plot("delta_fro_from_prev", "Frobenius delta", f"{prefix} U change vs previous", f"{prefix}_u_delta_prev.png")
-    _plot("delta_fro_from_init", "Frobenius delta", f"{prefix} U change vs init", f"{prefix}_u_delta_init.png")
-    _plot("cosine_to_prev", "Cosine similarity", f"{prefix} U cosine vs previous", f"{prefix}_u_cos_prev.png")
-    _plot("cosine_to_init", "Cosine similarity", f"{prefix} U cosine vs init", f"{prefix}_u_cos_init.png")
-    _plot("orthogonality_error", "Orthogonality error", f"{prefix} U orthogonality error", f"{prefix}_u_orth_error.png")
+    plot_specs = [
+        ("delta_fro_from_prev", "Frobenius delta", f"{prefix} U change vs previous", f"{prefix}_u_delta_prev.png"),
+        ("delta_fro_from_init", "Frobenius delta", f"{prefix} U change vs init", f"{prefix}_u_delta_init.png"),
+        ("cosine_to_prev", "Cosine similarity", f"{prefix} U cosine vs previous", f"{prefix}_u_cos_prev.png"),
+        ("cosine_to_init", "Cosine similarity", f"{prefix} U cosine vs init", f"{prefix}_u_cos_init.png"),
+        ("orthogonality_error", "Orthogonality error", f"{prefix} U orthogonality error", f"{prefix}_u_orth_error.png"),
+        ("principal_angle_mean_prev_deg", "Degrees", f"{prefix} mean principal angle vs previous", f"{prefix}_u_angle_prev_mean.png"),
+        ("principal_angle_max_prev_deg", "Degrees", f"{prefix} max principal angle vs previous", f"{prefix}_u_angle_prev_max.png"),
+        ("principal_angle_mean_init_deg", "Degrees", f"{prefix} mean principal angle vs init", f"{prefix}_u_angle_init_mean.png"),
+        ("principal_angle_max_init_deg", "Degrees", f"{prefix} max principal angle vs init", f"{prefix}_u_angle_init_max.png"),
+        ("subspace_geodesic_prev", "Geodesic distance", f"{prefix} subspace geodesic vs previous", f"{prefix}_u_geodesic_prev.png"),
+        ("subspace_geodesic_init", "Geodesic distance", f"{prefix} subspace geodesic vs init", f"{prefix}_u_geodesic_init.png"),
+        ("column_cosine_mean_prev", "Abs cosine", f"{prefix} column cosine mean vs previous", f"{prefix}_u_col_cos_mean_prev.png"),
+        ("column_cosine_min_prev", "Abs cosine", f"{prefix} column cosine min vs previous", f"{prefix}_u_col_cos_min_prev.png"),
+        ("lambda_x_delta_from_prev", "L2 delta", f"{prefix} lambda_x change vs previous", f"{prefix}_lambda_x_delta.png"),
+        ("lambda_w_delta_from_prev", "L2 delta", f"{prefix} lambda_w change vs previous", f"{prefix}_lambda_w_delta.png"),
+        ("z_x_flip_rate", "Flip rate", f"{prefix} Z_x flip rate", f"{prefix}_zx_flip_rate.png"),
+        ("z_w_flip_rate", "Flip rate", f"{prefix} Z_w flip rate", f"{prefix}_zw_flip_rate.png"),
+    ]
+    for args in plot_specs:
+        _plot(*args)
     return paths
 
 
@@ -330,6 +452,8 @@ class TrackingLatticeLinearQuantizer(base.LatticeLinearQuantizer):
         U_prev = U.detach().clone()
         lambda_x = torch.ones(d, dtype=X.dtype, device=device)
         lambda_w = torch.ones(d, dtype=W.dtype, device=device)
+        lambda_x_prev = lambda_x.detach().clone()
+        lambda_w_prev = lambda_w.detach().clone()
 
         J_old = float("inf")
         hist_J: List[float] = []
@@ -339,6 +463,8 @@ class TrackingLatticeLinearQuantizer(base.LatticeLinearQuantizer):
         convergence_iter = self.config.max_iters
         Z_x = None
         Z_w = None
+        Z_x_prev = None
+        Z_w_prev = None
 
         for t in range(1, self.config.max_iters + 1):
             iter_start = time.perf_counter()
@@ -352,8 +478,21 @@ class TrackingLatticeLinearQuantizer(base.LatticeLinearQuantizer):
             U_new = self._update_U(lambda_x, lambda_w, SXZx, SWZw)
 
             if self.config.track_u and (t % max(1, self.config.track_u_every) == 0):
-                point = compute_u_trace_point(U_new, U_prev, U_init, iter_idx=t)
-                if self.config.track_u_full_matrix and self.trace_dir is not None:
+                point = compute_u_trace_point(
+                    U_new,
+                    U_prev,
+                    U_init,
+                    iter_idx=t,
+                    lambda_x=lambda_x,
+                    lambda_x_prev=lambda_x_prev,
+                    lambda_w=lambda_w,
+                    lambda_w_prev=lambda_w_prev,
+                    Z_x=Z_x if self.config.track_z_flip_stats else None,
+                    Z_x_prev=Z_x_prev if self.config.track_z_flip_stats else None,
+                    Z_w=Z_w if self.config.track_z_flip_stats else None,
+                    Z_w_prev=Z_w_prev if self.config.track_z_flip_stats else None,
+                )
+                if self.trace_dir is not None and _should_save_u_matrix(t, self.config.max_iters, self.config):
                     self.trace_dir.mkdir(parents=True, exist_ok=True)
                     full_path = self.trace_dir / f"{tag}_U_iter_{t:04d}.pt"
                     torch.save(U_new.detach().cpu(), full_path)
@@ -362,6 +501,10 @@ class TrackingLatticeLinearQuantizer(base.LatticeLinearQuantizer):
 
             U = U_new
             U_prev = U.detach().clone()
+            lambda_x_prev = lambda_x.detach().clone()
+            lambda_w_prev = lambda_w.detach().clone()
+            Z_x_prev = Z_x.detach().clone()
+            Z_w_prev = Z_w.detach().clone()
 
             X_hat = U @ (lambda_x.unsqueeze(1) * Z_x)
             W_hat = U @ (lambda_w.unsqueeze(1) * Z_w)
@@ -549,6 +692,9 @@ def make_config_for_combo(combo: Dict[str, Any]) -> SweepExperimentConfig:
     cfg.quant.track_u = True
     cfg.quant.track_u_every = TRACK_U_EVERY
     cfg.quant.track_u_full_matrix = TRACK_U_FULL_MATRIX
+    cfg.quant.track_u_save_interval = TRACK_U_SAVE_INTERVAL
+    cfg.quant.track_u_save_first = TRACK_U_SAVE_FIRST
+    cfg.quant.track_z_flip_stats = TRACK_Z_FLIP_STATS
     cfg.quant.random_init_orthogonal = RANDOM_INIT_ORTHOGONAL
     cfg.quant.random_init_scale = RANDOM_INIT_SCALE
 
@@ -758,7 +904,9 @@ def run_single_combo(combo: Dict[str, Any], run_dir: Path) -> Dict[str, Any]:
             last = trace[-1]
             extra_lines.append(
                 f"- {layer_name}: len={len(trace)} delta_init={last['delta_fro_from_init']:.6f} "
-                f"cos_init={last['cosine_to_init']:.6f} orth_err={last['orthogonality_error']:.6f}"
+                f"angle_init_mean={last['principal_angle_mean_init_deg']:.4f} "
+                f"zx_flip={last['z_x_flip_rate']:.6f} zw_flip={last['z_w_flip_rate']:.6f} "
+                f"orth_err={last['orthogonality_error']:.6f}"
             )
         else:
             extra_lines.append(f"- {layer_name}: len=0")
