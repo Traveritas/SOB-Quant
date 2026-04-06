@@ -8,6 +8,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -41,7 +43,7 @@ class QuantizerConfig:
     codebook: Tuple[float, ...] = (-2.0, -1.0, 0.0, 1.0, 2.0)
     dtype: str = "float32"
     eps: float = 1e-8
-    log_every: int = 1
+    log_every: int = 10
     init_mode: str = "pca"
     error_mode: str = "relative"
 

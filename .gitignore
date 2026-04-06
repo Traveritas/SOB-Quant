@@ -1,2 +1,5 @@
 .vscode/settings.json
-./outputs_opt_qkvo_general_sweep_u_tracking
+outputs_opt_qkvo_general_sweep_u_tracking/
+outputs_opt_qkvo_lastk_sweep_v4_config/
+outputs_opt_qkvo_lastk_sweep_v4_config.zip
+outputs_opt_qkvo_general_sweep_u_tracking.zip
