@@ -5,3 +5,5 @@ outputs_opt_qkvo_lastk_sweep_v4_config.zip
 outputs_opt_qkvo_general_sweep_u_tracking.zip
 opt-125m/
 opt-125m.tar.gz
+out_qkvo_ref/
+.cache/
