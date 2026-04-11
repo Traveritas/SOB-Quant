@@ -1,0 +1,575 @@
+from __future__ import annotations
+
+import logging
+import math
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import torch
+
+from .common import get_torch_dtype, quantize_nearest, reconstruction_objective, weighted_cross, weighted_gram
+from .config import QuantizerConfig
+
+
+@dataclass
+class QuantizationState:
+    U: torch.Tensor
+    lambda_x: torch.Tensor
+    lambda_w: torch.Tensor
+    Z_x: torch.Tensor
+    Z_w: torch.Tensor
+    codebook: torch.Tensor
+    objective_history: List[float]
+    objective_x_history: List[float]
+    objective_w_history: List[float]
+    convergence_iter: int
+    fit_time_sec: float
+    latent_mode: str
+    tracking: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def coeff(self) -> torch.Tensor:
+        return self.lambda_x * self.lambda_w
+
+
+@dataclass
+class QuantizerTrackingOptions:
+    track_u: bool = False
+    track_u_every: int = 1
+    track_u_full_matrix: bool = False
+    track_u_save_interval: int = 10
+    track_u_save_first: int = 5
+    track_z_flip_stats: bool = True
+
+
+def _safe_cosine_flat(a: torch.Tensor, b: torch.Tensor) -> float:
+    a_flat = a.reshape(-1)
+    b_flat = b.reshape(-1)
+    denominator = torch.linalg.norm(a_flat) * torch.linalg.norm(b_flat)
+    if float(denominator.item()) <= 1e-12:
+        return 0.0
+    return float(torch.dot(a_flat, b_flat).item() / denominator.item())
+
+
+def _principal_angle_stats(A: torch.Tensor, B: torch.Tensor) -> Dict[str, float]:
+    A64 = A.to(dtype=torch.float64)
+    B64 = B.to(dtype=torch.float64)
+    singular_values = torch.linalg.svdvals(A64.T @ B64).clamp(-1.0, 1.0)
+    angles = torch.arccos(singular_values)
+    angles_deg = angles * (180.0 / math.pi)
+    return {
+        "mean_deg": float(torch.mean(angles_deg).item()),
+        "max_deg": float(torch.max(angles_deg).item()),
+        "geodesic": float(torch.linalg.norm(angles).item()),
+    }
+
+
+def _column_cosine_stats(A: torch.Tensor, B: torch.Tensor) -> Dict[str, float]:
+    cosine = torch.sum(A * B, dim=0)
+    denominator = torch.linalg.norm(A, dim=0) * torch.linalg.norm(B, dim=0)
+    denominator = torch.clamp(denominator, min=1e-12)
+    cosine = torch.abs(cosine / denominator)
+    return {
+        "mean": float(torch.mean(cosine).item()),
+        "min": float(torch.min(cosine).item()),
+    }
+
+
+def _flip_rate(prev_codes: Optional[torch.Tensor], new_codes: Optional[torch.Tensor]) -> Tuple[float, float]:
+    if prev_codes is None or new_codes is None:
+        return 0.0, 0.0
+    changed = prev_codes != new_codes
+    if changed.numel() == 0:
+        return 0.0, 0.0
+    overall = float(changed.to(torch.float32).mean().item())
+    per_dim = changed.to(torch.float32).mean(dim=1)
+    return overall, float(per_dim.mean().item())
+
+
+def _should_save_u_matrix(iteration: int, max_iters: int, options: QuantizerTrackingOptions) -> bool:
+    if not options.track_u_full_matrix:
+        return False
+    if iteration <= max(0, options.track_u_save_first):
+        return True
+    if iteration == max_iters:
+        return True
+    interval = max(1, options.track_u_save_interval)
+    return iteration % interval == 0
+
+
+def compute_u_trace_point(
+    U: torch.Tensor,
+    U_prev: torch.Tensor,
+    U_init: torch.Tensor,
+    iteration: int,
+    lambda_x: Optional[torch.Tensor] = None,
+    lambda_x_prev: Optional[torch.Tensor] = None,
+    lambda_w: Optional[torch.Tensor] = None,
+    lambda_w_prev: Optional[torch.Tensor] = None,
+    Z_x: Optional[torch.Tensor] = None,
+    Z_x_prev: Optional[torch.Tensor] = None,
+    Z_w: Optional[torch.Tensor] = None,
+    Z_w_prev: Optional[torch.Tensor] = None,
+) -> Dict[str, Any]:
+    identity = torch.eye(U.shape[1], device=U.device, dtype=U.dtype)
+    gram = U.T @ U
+    diagonal = torch.diag(gram)
+    off_diagonal = gram - torch.diag(diagonal)
+    singular_values = torch.linalg.svdvals(U)
+
+    angle_prev = _principal_angle_stats(U, U_prev)
+    angle_init = _principal_angle_stats(U, U_init)
+    column_prev = _column_cosine_stats(U, U_prev)
+    z_x_flip, z_x_flip_per_dim = _flip_rate(Z_x_prev, Z_x)
+    z_w_flip, z_w_flip_per_dim = _flip_rate(Z_w_prev, Z_w)
+
+    lambda_x_delta = 0.0 if lambda_x is None or lambda_x_prev is None else float(torch.linalg.norm(lambda_x - lambda_x_prev).item())
+    lambda_w_delta = 0.0 if lambda_w is None or lambda_w_prev is None else float(torch.linalg.norm(lambda_w - lambda_w_prev).item())
+
+    return {
+        "iteration": int(iteration),
+        "delta_fro_from_prev": float(torch.linalg.norm(U - U_prev).item()),
+        "delta_fro_from_init": float(torch.linalg.norm(U - U_init).item()),
+        "cosine_to_prev": _safe_cosine_flat(U, U_prev),
+        "cosine_to_init": _safe_cosine_flat(U, U_init),
+        "orthogonality_error": float(torch.linalg.norm(gram - identity).item()),
+        "singular_min": float(singular_values.min().item()),
+        "singular_max": float(singular_values.max().item()),
+        "diag_mean_abs": float(torch.mean(torch.abs(diagonal)).item()),
+        "offdiag_fro": float(torch.linalg.norm(off_diagonal).item()),
+        "principal_angle_mean_prev_deg": angle_prev["mean_deg"],
+        "principal_angle_max_prev_deg": angle_prev["max_deg"],
+        "principal_angle_mean_init_deg": angle_init["mean_deg"],
+        "principal_angle_max_init_deg": angle_init["max_deg"],
+        "subspace_geodesic_prev": angle_prev["geodesic"],
+        "subspace_geodesic_init": angle_init["geodesic"],
+        "column_cosine_mean_prev": column_prev["mean"],
+        "column_cosine_min_prev": column_prev["min"],
+        "lambda_x_delta_from_prev": lambda_x_delta,
+        "lambda_w_delta_from_prev": lambda_w_delta,
+        "z_x_flip_rate": z_x_flip,
+        "z_w_flip_rate": z_w_flip,
+        "z_x_flip_ratio_per_dim_mean": z_x_flip_per_dim,
+        "z_w_flip_ratio_per_dim_mean": z_w_flip_per_dim,
+    }
+
+
+class QuantizerObserver:
+    def on_fit_start(self, *, tag: str, U_init: torch.Tensor, options: QuantizerTrackingOptions) -> None:
+        return None
+
+    def on_iteration_end(
+        self,
+        *,
+        tag: str,
+        iteration: int,
+        max_iters: int,
+        U_new: torch.Tensor,
+        U_prev: torch.Tensor,
+        U_init: torch.Tensor,
+        lambda_x: torch.Tensor,
+        lambda_x_prev: torch.Tensor,
+        lambda_w: torch.Tensor,
+        lambda_w_prev: torch.Tensor,
+        Z_x: Optional[torch.Tensor],
+        Z_x_prev: Optional[torch.Tensor],
+        Z_w: Optional[torch.Tensor],
+        Z_w_prev: Optional[torch.Tensor],
+        options: QuantizerTrackingOptions,
+    ) -> None:
+        return None
+
+    def build_state_fields(self) -> Dict[str, Any]:
+        return {}
+
+
+class UTraceObserver(QuantizerObserver):
+    def __init__(self, options: QuantizerTrackingOptions, trace_dir: Optional[Path] = None):
+        self.options = options
+        self.trace_dir = trace_dir
+        self.trace: List[Dict[str, Any]] = []
+
+    def _layer_prefix(self, layer_name: str) -> str:
+        return layer_name.replace(".", "_")
+
+    def on_fit_start(self, *, tag: str, U_init: torch.Tensor, options: QuantizerTrackingOptions) -> None:
+        self.trace = []
+
+    def on_iteration_end(
+        self,
+        *,
+        tag: str,
+        iteration: int,
+        max_iters: int,
+        U_new: torch.Tensor,
+        U_prev: torch.Tensor,
+        U_init: torch.Tensor,
+        lambda_x: torch.Tensor,
+        lambda_x_prev: torch.Tensor,
+        lambda_w: torch.Tensor,
+        lambda_w_prev: torch.Tensor,
+        Z_x: Optional[torch.Tensor],
+        Z_x_prev: Optional[torch.Tensor],
+        Z_w: Optional[torch.Tensor],
+        Z_w_prev: Optional[torch.Tensor],
+        options: QuantizerTrackingOptions,
+    ) -> None:
+        if not options.track_u or iteration % max(1, options.track_u_every) != 0:
+            return
+
+        point = compute_u_trace_point(
+            U=U_new,
+            U_prev=U_prev,
+            U_init=U_init,
+            iteration=iteration,
+            lambda_x=lambda_x,
+            lambda_x_prev=lambda_x_prev,
+            lambda_w=lambda_w,
+            lambda_w_prev=lambda_w_prev,
+            Z_x=Z_x if options.track_z_flip_stats else None,
+            Z_x_prev=Z_x_prev if options.track_z_flip_stats else None,
+            Z_w=Z_w if options.track_z_flip_stats else None,
+            Z_w_prev=Z_w_prev if options.track_z_flip_stats else None,
+        )
+
+        if self.trace_dir is not None and _should_save_u_matrix(iteration, max_iters, options):
+            self.trace_dir.mkdir(parents=True, exist_ok=True)
+            matrix_path = self.trace_dir / f"{self._layer_prefix(tag)}_iter{iteration:04d}.pt"
+            torch.save(U_new.detach().cpu(), matrix_path)
+            point["u_matrix_path"] = str(matrix_path)
+
+        self.trace.append(point)
+
+    def build_state_fields(self) -> Dict[str, Any]:
+        return {"u_trace": self.trace}
+
+
+class LatticeLinearQuantizer:
+    def __init__(
+        self,
+        config: QuantizerConfig,
+        logger: Optional[logging.Logger] = None,
+        observers: Optional[Sequence[QuantizerObserver]] = None,
+        tracking_options: Optional[QuantizerTrackingOptions] = None,
+    ):
+        self.config = config
+        self.dtype = get_torch_dtype(config.dtype)
+        self.codebook = torch.tensor(config.codebook, dtype=self.dtype)
+        self.logger = logger
+        self.observers = list(observers or [])
+        self.tracking_options = tracking_options or QuantizerTrackingOptions()
+
+    def _pca_init(self, X: torch.Tensor) -> torch.Tensor:
+        mean = X.mean(dim=1, keepdim=True)
+        centered = X - mean
+        covariance = (centered @ centered.T) / max(X.shape[1], 1)
+        eigenvalues, eigenvectors = torch.linalg.eigh(covariance)
+        order = torch.argsort(eigenvalues, descending=True)
+        return eigenvectors[:, order]
+
+    def _random_init(self, X: torch.Tensor) -> torch.Tensor:
+        random_matrix = torch.randn((X.shape[0], X.shape[0]), dtype=X.dtype, device=X.device)
+        Q, _ = torch.linalg.qr(random_matrix)
+        return Q
+
+    def _latent_step(self, data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
+        projection = U.T @ data
+        safe_lambda = torch.where(
+            lambda_diag.abs() < self.config.eps,
+            torch.full_like(lambda_diag, self.config.eps),
+            lambda_diag,
+        )
+        return projection / safe_lambda.unsqueeze(1)
+
+    def _e_step(self, data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
+        latent = self._latent_step(data, U, lambda_diag)
+        if self.config.latent_mode == "continuous":
+            return latent
+        return quantize_nearest(latent, self.codebook.to(data.device))
+
+    def _update_lambda(
+        self,
+        data: torch.Tensor,
+        U: torch.Tensor,
+        Z: torch.Tensor,
+        weights: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        SXZ = weighted_cross(data, weights, Z)
+        SZZ = weighted_gram(Z, weights)
+        numerator = torch.diag(U.T @ SXZ)
+        denominator = torch.diag(SZZ)
+        lambda_diag = numerator / (denominator + self.config.eps)
+        return lambda_diag, SXZ, SZZ
+
+    def _solve_linear_system(self, A: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        eye = torch.eye(A.shape[0], dtype=A.dtype, device=A.device)
+        A_regularized = A + self.config.eps * eye
+        try:
+            return torch.linalg.solve(A_regularized, b)
+        except RuntimeError:
+            return torch.linalg.lstsq(A_regularized, b.unsqueeze(1)).solution.squeeze(1)
+
+    def _lambda_ip_reg_terms_for_x(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        Z_x: torch.Tensor,
+        Z_w: torch.Tensor,
+        lambda_w: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        A = Z_x
+        B = lambda_w.unsqueeze(1) * Z_w
+        H = (A @ A.T) * (B @ B.T)
+        XA = X @ A.T
+        WB = W @ B.T
+        g = torch.sum(XA * WB, dim=0)
+        return H, g
+
+    def _lambda_ip_reg_terms_for_w(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        Z_x: torch.Tensor,
+        Z_w: torch.Tensor,
+        lambda_x: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        A = lambda_x.unsqueeze(1) * Z_x
+        B = Z_w
+        H = (A @ A.T) * (B @ B.T)
+        XA = X @ A.T
+        WB = W @ B.T
+        g = torch.sum(XA * WB, dim=0)
+        return H, g
+
+    def _update_lambdas(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        U: torch.Tensor,
+        Z_x: torch.Tensor,
+        Z_w: torch.Tensor,
+        weights_x: torch.Tensor,
+        weights_w: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        lambda_x, SXZx, SZZx = self._update_lambda(X, U, Z_x, weights_x)
+        lambda_w, SWZw, SZZw = self._update_lambda(W, U, Z_w, weights_w)
+
+        gamma = float(self.config.ip_reg_gamma)
+        inner_iters = int(self.config.ip_reg_inner_iters)
+        if gamma <= 0.0 or inner_iters <= 0:
+            return lambda_x, lambda_w, SXZx, SWZw
+
+        G_x = torch.diag(torch.diag(SZZx))
+        h_x = torch.diag(U.T @ SXZx)
+        G_w = torch.diag(torch.diag(SZZw))
+        h_w = torch.diag(U.T @ SWZw)
+        beta_w = float(max(self.config.beta, self.config.eps))
+        ip_scale = 1.0 / max(Z_x.shape[1] * Z_w.shape[1], 1)
+
+        for _ in range(inner_iters):
+            H_x, g_x = self._lambda_ip_reg_terms_for_x(X, W, Z_x, Z_w, lambda_w)
+            lambda_x = self._solve_linear_system(G_x + (gamma * ip_scale) * H_x, h_x + (gamma * ip_scale) * g_x)
+
+            H_w, g_w = self._lambda_ip_reg_terms_for_w(X, W, Z_x, Z_w, lambda_x)
+            lambda_w = self._solve_linear_system(
+                beta_w * G_w + (gamma * ip_scale) * H_w,
+                beta_w * h_w + (gamma * ip_scale) * g_w,
+            )
+
+        return lambda_x, lambda_w, SXZx, SWZw
+
+    def _compute_ip_regularizer(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        Z_x: torch.Tensor,
+        Z_w: torch.Tensor,
+        lambda_x: torch.Tensor,
+        lambda_w: torch.Tensor,
+    ) -> torch.Tensor:
+        gamma = float(self.config.ip_reg_gamma)
+        if gamma <= 0.0:
+            return torch.zeros((), dtype=X.dtype, device=X.device)
+
+        target_inner = X.T @ W
+        approx_inner = Z_x.T @ ((lambda_x * lambda_w).unsqueeze(1) * Z_w)
+        diff = target_inner - approx_inner
+        return gamma * torch.sum(diff * diff) / max(diff.numel(), 1)
+
+    def _update_U(
+        self,
+        lambda_x: torch.Tensor,
+        lambda_w: torch.Tensor,
+        SXZx: torch.Tensor,
+        SWZw: torch.Tensor,
+    ) -> torch.Tensor:
+        M = SXZx @ torch.diag(lambda_x) + self.config.beta * SWZw @ torch.diag(lambda_w)
+        P, _, Qt = torch.linalg.svd(M, full_matrices=False)
+        return P @ Qt
+
+    def fit(self, X: torch.Tensor, W: torch.Tensor, tag: str = "") -> QuantizationState:
+        fit_start = time.perf_counter()
+        X = X.to(dtype=self.dtype)
+        W = W.to(dtype=self.dtype)
+        self.codebook = self.codebook.to(X.device)
+
+        if X.ndim != 2 or W.ndim != 2:
+            raise ValueError("X and W must both be 2D matrices.")
+        if X.shape[0] != W.shape[0]:
+            raise ValueError("X and W must share the same feature dimension.")
+
+        feature_dim, num_tokens = X.shape
+        _, out_features = W.shape
+
+        weights_x = 1.0 / (torch.sum(X * X, dim=0) + self.config.eps)
+        weights_w = 1.0 / (torch.sum(W * W, dim=0) + self.config.eps)
+        if self.config.error_mode == "absolute":
+            weights_x = torch.ones_like(weights_x)
+            weights_w = torch.ones_like(weights_w)
+
+        if self.logger is not None:
+            self.logger.info(
+                "Fit quantizer | tag=%s d=%d tokens=%d out_features=%d beta=%.4f ip_reg_gamma=%.4f max_iters=%d tol=%.2e",
+                tag,
+                feature_dim,
+                num_tokens,
+                out_features,
+                self.config.beta,
+                self.config.ip_reg_gamma,
+                self.config.max_iters,
+                self.config.tol,
+            )
+
+        if self.config.init_mode == "pca":
+            U = self._pca_init(X)
+        elif self.config.init_mode == "random":
+            U = self._random_init(X)
+        else:
+            raise ValueError(f"Unsupported init_mode: {self.config.init_mode}")
+
+        U_init = U.detach().clone()
+        U_prev = U.detach().clone()
+        lambda_x = torch.ones(feature_dim, dtype=X.dtype, device=X.device)
+        lambda_w = torch.ones(feature_dim, dtype=W.dtype, device=W.device)
+        lambda_x_prev = lambda_x.detach().clone()
+        lambda_w_prev = lambda_w.detach().clone()
+        Z_x_prev = None
+        Z_w_prev = None
+        best_iter = self.config.max_iters
+
+        objective_history: List[float] = []
+        objective_x_history: List[float] = []
+        objective_w_history: List[float] = []
+        previous_objective = float("inf")
+
+        for observer in self.observers:
+            observer.on_fit_start(tag=tag, U_init=U_init, options=self.tracking_options)
+
+        for iteration in range(1, self.config.max_iters + 1):
+            iter_start = time.perf_counter()
+
+            Z_x = self._e_step(X, U, lambda_x)
+            Z_w = self._e_step(W, U, lambda_w)
+
+            lambda_x, lambda_w, SXZx, SWZw = self._update_lambdas(
+                X=X,
+                W=W,
+                U=U,
+                Z_x=Z_x,
+                Z_w=Z_w,
+                weights_x=weights_x,
+                weights_w=weights_w,
+            )
+
+            U_new = self._update_U(lambda_x, lambda_w, SXZx, SWZw)
+
+            for observer in self.observers:
+                observer.on_iteration_end(
+                    tag=tag,
+                    iteration=iteration,
+                    max_iters=self.config.max_iters,
+                    U_new=U_new,
+                    U_prev=U_prev,
+                    U_init=U_init,
+                    lambda_x=lambda_x,
+                    lambda_x_prev=lambda_x_prev,
+                    lambda_w=lambda_w,
+                    lambda_w_prev=lambda_w_prev,
+                    Z_x=Z_x,
+                    Z_x_prev=Z_x_prev,
+                    Z_w=Z_w,
+                    Z_w_prev=Z_w_prev,
+                    options=self.tracking_options,
+                )
+
+            U = U_new
+            U_prev = U.detach().clone()
+            lambda_x_prev = lambda_x.detach().clone()
+            lambda_w_prev = lambda_w.detach().clone()
+            Z_x_prev = Z_x.detach().clone()
+            Z_w_prev = Z_w.detach().clone()
+
+            X_hat = U @ (lambda_x.unsqueeze(1) * Z_x)
+            W_hat = U @ (lambda_w.unsqueeze(1) * Z_w)
+            objective_x = reconstruction_objective(X, X_hat, weights_x, self.config.error_mode, average=True)
+            objective_w = reconstruction_objective(W, W_hat, weights_w, self.config.error_mode, average=True)
+            objective_ip = self._compute_ip_regularizer(X, W, Z_x, Z_w, lambda_x, lambda_w)
+            objective = objective_x + self.config.beta * objective_w + objective_ip
+
+            objective_history.append(float(objective.item()))
+            objective_x_history.append(float(objective_x.item()))
+            objective_w_history.append(float(objective_w.item()))
+
+            if math.isfinite(previous_objective):
+                relative_change = abs(float(objective.item()) - previous_objective) / max(1.0, abs(previous_objective))
+            else:
+                relative_change = float("inf")
+
+            if self.logger is not None and (iteration == 1 or iteration % self.config.log_every == 0):
+                self.logger.info(
+                    "tag=%s iter=%03d | J=%.6f J_x=%.6f J_w=%.6f J_ip=%.6f rel_change=%.6e time=%.3fs",
+                    tag,
+                    iteration,
+                    float(objective.item()),
+                    float(objective_x.item()),
+                    float(objective_w.item()),
+                    float(objective_ip.item()),
+                    relative_change,
+                    time.perf_counter() - iter_start,
+                )
+
+            if iteration % self.config.convergence_check_every == 0:
+                if relative_change < self.config.tol:
+                    best_iter = iteration
+                    break
+                previous_objective = float(objective.item())
+
+        fit_time = time.perf_counter() - fit_start
+        tracking: Dict[str, Any] = {}
+        for observer in self.observers:
+            tracking.update(observer.build_state_fields())
+
+        return QuantizationState(
+            U=U,
+            lambda_x=lambda_x,
+            lambda_w=lambda_w,
+            Z_x=Z_x,
+            Z_w=Z_w,
+            codebook=self.codebook.detach().clone(),
+            objective_history=objective_history,
+            objective_x_history=objective_x_history,
+            objective_w_history=objective_w_history,
+            convergence_iter=best_iter,
+            fit_time_sec=fit_time,
+            latent_mode=self.config.latent_mode,
+            tracking=tracking,
+        )
+
+    def reconstruct_X(self, X: torch.Tensor, state: QuantizationState) -> torch.Tensor:
+        latent = self._e_step(X.to(device=state.U.device, dtype=state.U.dtype), state.U, state.lambda_x)
+        return state.U @ (state.lambda_x.unsqueeze(1) * latent)
+
+    def reconstruct_W(self, state: QuantizationState) -> torch.Tensor:
+        return state.U @ (state.lambda_w.unsqueeze(1) * state.Z_w)
