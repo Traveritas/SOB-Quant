@@ -7,6 +7,7 @@ import itertools
 import json
 import logging
 import math
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -67,6 +68,11 @@ def write_json(path: Path, payload: Any) -> None:
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def read_json(path: Path) -> Any:
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def load_python_config_module(path: Path):
@@ -296,6 +302,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-index", type=int, default=None, help="Run only one combo index from the sweep.")
     parser.add_argument("--max-runs", type=int, default=None, help="Execute only the first N selected runs.")
     parser.add_argument("--list-runs", action="store_true", help="List the resolved run names without executing them.")
+    parser.add_argument("--print-num-combos", action="store_true", help="Print the number of resolved sweep combinations and exit.")
+    parser.add_argument("--array-task-id", type=int, default=None, help="Run exactly one combo using the given array task id.")
+    parser.add_argument("--rebuild-summary", action="store_true", help="Rebuild summary files from existing run outputs and exit.")
 
     parser.add_argument("--track-u", action="store_true", help="Record U trajectory during quantizer fitting.")
     parser.add_argument("--track-u-every", type=int, default=1)
@@ -603,6 +612,87 @@ def build_base_config(args: argparse.Namespace, file_config: SweepFileConfig) ->
     return config
 
 
+def find_array_task_id(args: argparse.Namespace) -> Optional[int]:
+    if args.array_task_id is not None:
+        return args.array_task_id
+    env_value = os.environ.get("SLURM_ARRAY_TASK_ID")
+    if env_value is None or env_value == "":
+        return None
+    return int(env_value)
+
+
+def build_row_from_saved_run(run_dir: Path) -> SweepSummaryRow:
+    results = read_json(run_dir / "results.json")
+
+    combo_payload: Dict[str, Any] = {}
+    combo_path = run_dir / "sweep_combo.json"
+    if combo_path.exists():
+        combo_payload = read_json(combo_path)
+
+    tracking_payload: Dict[str, Any] = {}
+    tracking_path = run_dir / "tracking_summary.json"
+    if tracking_path.exists():
+        tracking_payload = read_json(tracking_path)
+
+    combo_index = int(combo_payload.get("combo_index", -1))
+    run_name = str(combo_payload.get("run_name", run_dir.name))
+    combo = combo_payload.get("combo", {})
+    sq_baseline_ppl = float(results.get("sq_baseline_ppl", float("nan")))
+    baseline_ppl = float(results["baseline_ppl"])
+    quantized_ppl = float(results["quantized_ppl"])
+    sq_delta = float("nan") if math.isnan(sq_baseline_ppl) else sq_baseline_ppl - baseline_ppl
+
+    objective_last = {
+        layer_name: (history[-1] if history else None)
+        for layer_name, history in results.get("objective_histories", {}).items()
+    }
+    tracking_last = tracking_payload.get("tracking_last", {})
+    tracking_length = tracking_payload.get("tracking_length", {})
+    if not tracking_last or not tracking_length:
+        tracking_info = results.get("tracking_info", {})
+        tracking_last, tracking_length = extract_tracking_summary(tracking_info)
+
+    return SweepSummaryRow(
+        combo_index=combo_index,
+        run_name=run_name,
+        run_dir=str(run_dir),
+        combo=combo,
+        baseline_ppl=baseline_ppl,
+        sq_baseline_ppl=sq_baseline_ppl,
+        quantized_ppl=quantized_ppl,
+        quantized_delta=quantized_ppl - baseline_ppl,
+        sq_delta=sq_delta,
+        quant_metrics_avg=results.get("quant_metrics_avg", {}),
+        sq_metrics_avg=results.get("sq_metrics_avg", {}),
+        convergence_iters=results.get("convergence_iters", {}),
+        fit_quantizer_sec_total=float(results.get("timing_info", {}).get("fit_quantizer_sec_total", 0.0)),
+        objective_last=objective_last,
+        tracking_last=tracking_last,
+        tracking_length=tracking_length,
+    )
+
+
+def rebuild_summary_from_disk(output_dir: Path, logger: Optional[logging.Logger] = None) -> List[SweepSummaryRow]:
+    rows: List[SweepSummaryRow] = []
+    for child in sorted(output_dir.iterdir()):
+        if not child.is_dir():
+            continue
+        results_path = child / "results.json"
+        if not results_path.exists():
+            continue
+        try:
+            rows.append(build_row_from_saved_run(child))
+        except Exception as error:
+            if logger is not None:
+                logger.warning("Skip run dir %s while rebuilding summary: %s", child, error)
+
+    rows = sorted(rows, key=lambda row: (row.combo_index, row.run_name))
+    write_json(output_dir / "summary.json", [asdict(row) for row in rows])
+    write_text(output_dir / "summary.txt", build_summary_text(rows))
+    write_text(output_dir / "ranking.txt", build_ranking_text(rows))
+    return rows
+
+
 def run_sweep(args: argparse.Namespace) -> List[SweepSummaryRow]:
     file_config = load_sweep_file_config(args.config)
     base_config = build_base_config(args, file_config)
@@ -611,8 +701,22 @@ def run_sweep(args: argparse.Namespace) -> List[SweepSummaryRow]:
 
     grid_items = load_grid(args, file_config)
     all_runs = enumerate_runs(grid_items)
+    array_task_id = find_array_task_id(args)
+    if args.print_num_combos:
+        print(len(all_runs))
+        return []
+
+    if args.rebuild_summary:
+        rows = rebuild_summary_from_disk(output_dir, logger=logger)
+        logger.info("Rebuilt summary from disk | completed_runs=%d", len(rows))
+        return rows
+
     run_index = args.run_index if args.run_index is not None else file_config.run_control.get("run_index")
+    if array_task_id is not None:
+        run_index = array_task_id
     max_runs = args.max_runs if args.max_runs is not None else file_config.run_control.get("max_runs")
+    if array_task_id is not None:
+        max_runs = None
     selected_runs = select_runs(all_runs, run_index, max_runs)
 
     if args.list_runs:
