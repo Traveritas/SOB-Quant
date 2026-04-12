@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import time
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -684,11 +685,15 @@ def load_model_and_tokenizer(config: ExperimentConfig, logger: logging.Logger):
     tokenizer = AutoTokenizer.from_pretrained(
         config.data.model_name,
         use_fast=config.data.tokenizer_use_fast,
+        local_files_only=True,
     )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(config.data.model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        config.data.model_name,
+        local_files_only=True,
+        )
     model.eval()
     model.to(config.eval.device)
     elapsed = time.perf_counter() - t0
@@ -706,7 +711,7 @@ def load_model_and_tokenizer(config: ExperimentConfig, logger: logging.Logger):
 def load_text_split(config: ExperimentConfig, split: str, logger: logging.Logger) -> str:
     logger.info("加载数据集 split=%s", split)
     t0 = time.perf_counter()
-    ds = load_dataset(config.data.dataset_name, config.data.dataset_config, split=split)
+    ds = load_dataset(config.data.dataset_name, config.data.dataset_config, split=split, cache_dir=os.environ.get("HF_DATASETS_CACHE"))
     if "text" not in ds.column_names:
         raise ValueError(f"Dataset split {split} has no 'text' column.")
     texts = [t for t in ds["text"] if isinstance(t, str) and t.strip()]

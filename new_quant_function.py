@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import sys
 import time
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
@@ -13,6 +14,14 @@ import torch
 import torch.nn as nn
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from SQ_function import (
+    infer_sq_bitwidth_from_codebook,
+    quantize_nearest,
+    scalar_quant_scale_maxabs,
+    scalar_quantize_maxabs,
+    uniform_quantize_maxabs,
+    uniform_quantize_maxabs_codes,
+)
 
 
 # ============================================================
@@ -39,6 +48,7 @@ class QuantizerConfig:
     tol: float = 1e-5
     convergence_check_every: int = 1
     codebook: Tuple[float, ...] = (-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0)
+    latent_bits: int = 5
     dtype: str = "float32"
     eps: float = 1e-8
     log_every: int = 1
@@ -67,7 +77,7 @@ class ExperimentConfig:
     quant: QuantizerConfig = field(default_factory=QuantizerConfig)
     eval: EvalConfig = field(default_factory=EvalConfig)
     target: TargetConfig = field(default_factory=TargetConfig)
-    output_dir: str = "./Camparison/RPTQnew"
+    output_dir: str = "./.new_quant_function"
     seed: int = 42
     run_mode: str = "both"
     continuous_subdir: str = "continuous"
@@ -79,6 +89,22 @@ config = ExperimentConfig(
         target_linear_names=("q_proj", "k_proj", "v_proj", "out_proj"),
     )
 )
+
+
+def make_block10_qproj_latent_distribution_config(latent_bits: int) -> ExperimentConfig:
+    return ExperimentConfig(
+        data=DataConfig(calib_num_tokens=2048, eval_num_tokens=1024),
+        quant=QuantizerConfig(
+            latent_mode="discrete",
+            latent_bits=latent_bits,
+            codebook=(-6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0),
+        ),
+        eval=EvalConfig(),
+        target=TargetConfig(block_indices=(10,), target_linear_names=("q_proj",)),
+        output_dir=f"./.new_quant_function/latent_bits_{latent_bits}",
+        seed=42,
+        run_mode="discrete",
+    )
 
 # ============================================================
 # 工具函数
@@ -131,42 +157,6 @@ def setup_logger(output_dir: Path) -> logging.Logger:
 
 
 
-def quantize_nearest(z_continuous: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
-    diff = torch.abs(z_continuous.unsqueeze(-1) - codebook)
-    idx = torch.argmin(diff, dim=-1)
-    return codebook[idx]
-
-
-
-def infer_sq_bitwidth_from_codebook(codebook: Tuple[float, ...]) -> int:
-    return int(math.ceil(math.log2(max(len(codebook), 2))))
-
-
-
-def scalar_quant_scale_maxabs(x: torch.Tensor, bits: int, eps: float = 1e-8) -> torch.Tensor:
-    qmax = float((2 ** bits) - 1)
-    maxabs = torch.max(torch.abs(x))
-    scale = maxabs / qmax
-    return torch.clamp(scale, min=eps)
-
-
-
-def scalar_quantize_maxabs(
-    x: torch.Tensor,
-    bits: int,
-    scale: Optional[torch.Tensor] = None,
-    eps: float = 1e-8,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    if scale is None:
-        scale = scalar_quant_scale_maxabs(x, bits=bits, eps=eps)
-    qmin = -(2 ** bits)
-    qmax = (2 ** bits) - 1
-    q = torch.clamp(torch.round(x / scale), qmin, qmax)
-    x_q = q * scale
-    return x_q, scale
-
-
-
 def weighted_cross(X: torch.Tensor, weights: torch.Tensor, Z: torch.Tensor) -> torch.Tensor:
     return (X * weights.unsqueeze(0)) @ Z.T
 
@@ -203,6 +193,25 @@ def tensor_stats(t: torch.Tensor) -> Dict[str, object]:
         "min": float(t_cpu.min().item()),
         "max": float(t_cpu.max().item()),
         "fro_norm": float(torch.linalg.norm(t_cpu).item()),
+    }
+
+
+def distribution_stats(t: torch.Tensor) -> Dict[str, object]:
+    t_cpu = t.detach().float().reshape(-1).cpu()
+    abs_t = torch.abs(t_cpu)
+    quantiles = torch.tensor([0.001, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 0.999], dtype=torch.float32)
+    q_vals = torch.quantile(t_cpu, quantiles)
+    abs_q_vals = torch.quantile(abs_t, quantiles)
+    return {
+        "numel": int(t_cpu.numel()),
+        "mean": float(t_cpu.mean().item()),
+        "std": float(t_cpu.std(unbiased=False).item()),
+        "min": float(t_cpu.min().item()),
+        "max": float(t_cpu.max().item()),
+        "mean_abs": float(abs_t.mean().item()),
+        "max_abs": float(abs_t.max().item()),
+        "quantiles": {f"{float(q):.3f}": float(v.item()) for q, v in zip(quantiles, q_vals)},
+        "abs_quantiles": {f"{float(q):.3f}": float(v.item()) for q, v in zip(quantiles, abs_q_vals)},
     }
 
 
@@ -263,6 +272,176 @@ def save_loss_plots(
     plt.close()
     paths["objective_components"] = str(comp_path)
     return paths
+
+
+def save_distribution_histogram(
+    output_dir: Path,
+    prefix: str,
+    values: torch.Tensor,
+    title: str,
+    bins: int = 120,
+) -> str:
+    path = output_dir / f"{prefix}_hist.png"
+    flat = values.detach().float().reshape(-1).cpu().numpy()
+    plt.figure(figsize=(8, 5))
+    plt.hist(flat, bins=bins, color="#2a6f97", alpha=0.85)
+    plt.title(title)
+    plt.xlabel("value")
+    plt.ylabel("count")
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+    return str(path)
+
+
+def discrete_value_counts(values: torch.Tensor) -> Dict[str, int]:
+    flat = values.detach().float().reshape(-1).cpu()
+    uniq, counts = torch.unique(flat, sorted=True, return_counts=True)
+    return {f"{float(v):g}": int(c) for v, c in zip(uniq.tolist(), counts.tolist())}
+
+
+def save_discrete_histogram(
+    output_dir: Path,
+    prefix: str,
+    values: torch.Tensor,
+    title: str,
+) -> str:
+    path = output_dir / f"{prefix}_discrete_hist.png"
+    flat = values.detach().float().reshape(-1).cpu()
+    uniq, counts = torch.unique(flat, sorted=True, return_counts=True)
+    uniq_np = uniq.numpy()
+    counts_np = counts.numpy()
+    plt.figure(figsize=(8, 5))
+    plt.bar(uniq_np, counts_np, width=0.8, color="#c95d63", alpha=0.9)
+    plt.title(title)
+    plt.xlabel("quantized value")
+    plt.ylabel("count")
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+    return str(path)
+
+
+def save_quantized_overlay_histogram(
+    output_dir: Path,
+    prefix: str,
+    z_continuous: torch.Tensor,
+    z_codes: torch.Tensor,
+    title: str,
+    bins: int = 120,
+) -> str:
+    path = output_dir / f"{prefix}_quantized_overlay.png"
+    z_cont_np = z_continuous.detach().float().reshape(-1).cpu().numpy()
+    z_code_flat = z_codes.detach().float().reshape(-1).cpu()
+    level_values = torch.unique(z_code_flat, sorted=True)
+
+    plt.figure(figsize=(9, 5.5))
+    plt.hist(z_cont_np, bins=bins, color="#d9d9d9", alpha=0.8, label="continuous z_tilde")
+
+    cmap = plt.cm.get_cmap("tab10", max(int(level_values.numel()), 1))
+    z_cont_flat = z_continuous.detach().float().reshape(-1).cpu()
+    for idx, level in enumerate(level_values.tolist()):
+        mask = torch.isclose(z_code_flat, torch.tensor(level, dtype=z_code_flat.dtype))
+        if not torch.any(mask):
+            continue
+        vals = z_cont_flat[mask].numpy()
+        plt.hist(
+            vals,
+            bins=bins,
+            alpha=0.55,
+            color=cmap(idx),
+            label=f"code -> {level:g}",
+        )
+
+    plt.title(title)
+    plt.xlabel("continuous z_tilde value")
+    plt.ylabel("count")
+    plt.legend(fontsize=8, ncol=2)
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
+    return str(path)
+
+
+def collect_latent_distribution_info(
+    layer_name: str,
+    X_calib: torch.Tensor,
+    state: "QuantizationState",
+    output_dir: Path,
+    logger: logging.Logger,
+    eps: float,
+) -> Dict[str, object]:
+    U = state.U.to(dtype=X_calib.dtype, device=X_calib.device)
+    lambda_x = state.lambda_x.to(dtype=X_calib.dtype, device=X_calib.device)
+    u_tx = U.T @ X_calib
+    safe_lambda_x = torch.where(
+        lambda_x.abs() < eps,
+        torch.full_like(lambda_x, eps),
+        lambda_x,
+    )
+    z_tilde_cont = u_tx / safe_lambda_x.unsqueeze(1)
+    lambda_u_tx = lambda_x.unsqueeze(1) * u_tx
+    z_tilde_quantized, z_tilde_scale = uniform_quantize_maxabs(
+        z_tilde_cont,
+        bits=state.latent_bits,
+        eps=eps,
+    )
+    z_tilde_codes, _ = uniform_quantize_maxabs_codes(
+        z_tilde_cont,
+        bits=state.latent_bits,
+        eps=eps,
+    )
+
+    plots = {
+        "u_tx_hist": save_distribution_histogram(output_dir, f"{layer_name}_u_tx", u_tx, f"{layer_name} U^T X"),
+        "z_tilde_cont_hist": save_distribution_histogram(
+            output_dir,
+            f"{layer_name}_z_tilde_cont",
+            z_tilde_cont,
+            f"{layer_name} z_tilde = (U^T X) / lambda_x",
+        ),
+        "z_tilde_quantized_hist": save_discrete_histogram(
+            output_dir,
+            f"{layer_name}_z_tilde_codes",
+            z_tilde_codes,
+            f"{layer_name} quantized codes clip(round(z/s))",
+        ),
+        "lambda_u_tx_hist": save_distribution_histogram(
+            output_dir,
+            f"{layer_name}_lambda_u_tx",
+            lambda_u_tx,
+            f"{layer_name} lambda_x * (U^T X)",
+        ),
+        "z_tilde_quantized_overlay": save_quantized_overlay_histogram(
+            output_dir,
+            f"{layer_name}_z_tilde",
+            z_tilde_cont,
+            z_tilde_codes,
+            f"{layer_name} z_tilde with quantized code assignments",
+        ),
+    }
+
+    info = {
+        "u_tx": distribution_stats(u_tx),
+        "z_tilde_cont": distribution_stats(z_tilde_cont),
+        "z_tilde_codes": distribution_stats(z_tilde_codes),
+        "z_tilde_code_value_counts": discrete_value_counts(z_tilde_codes),
+        "z_tilde_quantized": distribution_stats(z_tilde_quantized),
+        "z_tilde_quantized_value_counts": discrete_value_counts(z_tilde_quantized),
+        "z_tilde_quant_scale": float(z_tilde_scale.item()),
+        "latent_bits": int(state.latent_bits),
+        "lambda_u_tx": distribution_stats(lambda_u_tx),
+        "plots": plots,
+    }
+    logger.info(
+        "连续 latent 分布统计完成 | layer=%s z_tilde_mean=%.6f z_tilde_std=%.6f z_tilde_min=%.6f z_tilde_max=%.6f",
+        layer_name,
+        info["z_tilde_cont"]["mean"],
+        info["z_tilde_cont"]["std"],
+        info["z_tilde_cont"]["min"],
+        info["z_tilde_cont"]["max"],
+    )
+    return info
 
 
 
@@ -347,6 +526,7 @@ class QuantizationState:
     convergence_iter: int
     fit_time_sec: float
     latent_mode: str
+    latent_bits: int
 
     @property
     def coeff(self) -> torch.Tensor:
@@ -376,7 +556,7 @@ class LatticeLinearQuantizer:
     def __init__(self, config: QuantizerConfig, logger: Optional[logging.Logger] = None):
         self.config = config
         self.dtype = get_torch_dtype(config.dtype)
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda")
         self.codebook = torch.tensor(config.codebook, dtype=self.dtype)
         self.logger = logger
 
@@ -408,7 +588,12 @@ class LatticeLinearQuantizer:
         z_tilde = self._latent_step(Data, U, lambda_diag)
         if getattr(self.config, "latent_mode", "discrete") == "continuous":
             return z_tilde
-        return quantize_nearest(z_tilde, self.codebook.to(Data.device))
+        z_q, _ = uniform_quantize_maxabs(
+            z_tilde,
+            bits=int(getattr(self.config, "latent_bits", 2)),
+            eps=self.config.eps,
+        )
+        return z_q
 
     def _update_lambda(
         self,
@@ -658,6 +843,7 @@ class LatticeLinearQuantizer:
             convergence_iter=convergence_iter,
             fit_time_sec=fit_time_sec,
             latent_mode=getattr(self.config, "latent_mode", "discrete"),
+            latent_bits=int(getattr(self.config, "latent_bits", 2)),
         )
 
     def reconstruct_X(self, X: torch.Tensor, state: QuantizationState) -> torch.Tensor:
@@ -683,6 +869,7 @@ class QuantizedLinear(nn.Module):
         self.register_buffer("Z_w", state.Z_w.detach().clone())
         self.register_buffer("codebook", state.codebook.detach().clone())
         self.latent_mode = state.latent_mode
+        self.latent_bits = state.latent_bits
         if bias is None:
             self.bias = None
         else:
@@ -699,7 +886,8 @@ class QuantizedLinear(nn.Module):
         z_cont = s / safe_lambda_x.unsqueeze(0)
         if self.latent_mode == "continuous":
             return z_cont
-        return quantize_nearest(z_cont, self.codebook)
+        z_q, _ = uniform_quantize_maxabs(z_cont, bits=self.latent_bits, eps=1e-8)
+        return z_q
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         orig_shape = hidden_states.shape[:-1]
@@ -952,7 +1140,7 @@ def compute_linear_relative_error(
             state.lambda_x,
         )
         z_cont = s / safe_lambda.unsqueeze(1)
-        Z_x = quantize_nearest(z_cont, state.codebook)
+        Z_x, _ = uniform_quantize_maxabs(z_cont, bits=state.latent_bits, eps=1e-8)
         Y_hat = (Z_x.T * coeff.unsqueeze(0)) @ state.Z_w
 
         diff = Y_true - Y_hat
@@ -1174,6 +1362,7 @@ class ExperimentArtifacts:
     objective_x_histories: Dict[str, List[float]]
     objective_w_histories: Dict[str, List[float]]
     tensor_info: Dict[str, Dict[str, object]]
+    latent_distribution_info: Dict[str, Dict[str, object]]
     timing_info: Dict[str, float]
     ppl_eval_info: Dict[str, Dict[str, float]]
     plot_paths: Dict[str, Dict[str, str]]
@@ -1186,11 +1375,13 @@ def build_quantized_target_modules(
     X_calib_by_layer: Dict[str, torch.Tensor],
     quantizer: LatticeLinearQuantizer,
     logger: logging.Logger,
+    output_dir: Path,
     device: str,
 ) -> Tuple[
     Dict[str, nn.Module],
     Dict[str, QuantizationState],
     Dict[str, Dict[str, float]],
+    Dict[str, Dict[str, object]],
     Dict[str, Dict[str, object]],
 ]:
     logger.info("开始为所有目标 transformer blocks 的 Q/K/V/O 线性层构建 Ours 量化器。")
@@ -1198,11 +1389,13 @@ def build_quantized_target_modules(
     states: Dict[str, QuantizationState] = {}
     metrics_by_layer: Dict[str, Dict[str, float]] = {}
     tensor_info: Dict[str, Dict[str, object]] = {}
+    latent_distribution_info: Dict[str, Dict[str, object]] = {}
 
     for layer_name, spec in target_specs.items():
         module = spec.module
-        X_calib = X_calib_by_layer[layer_name]
-        W = module.weight.detach().T.cpu().to(dtype=get_torch_dtype(quantizer.config.dtype))
+        dtype = get_torch_dtype(quantizer.config.dtype)
+        X_calib = X_calib_by_layer[layer_name].to(device=device, dtype=dtype)
+        W = module.weight.detach().T.to(device=device, dtype=dtype)
         bias = None if module.bias is None else module.bias.detach().to(device=device, dtype=get_torch_dtype(quantizer.config.dtype))
 
         log_tensor_stats(logger, f"{layer_name}.X_calib", X_calib)
@@ -1223,11 +1416,19 @@ def build_quantized_target_modules(
         tensor_info[f"{layer_name}.lambda_x"] = tensor_stats(state.lambda_x)
         tensor_info[f"{layer_name}.lambda_w"] = tensor_stats(state.lambda_w)
         tensor_info[f"{layer_name}.Z_w"] = tensor_stats(state.Z_w)
+        latent_distribution_info[layer_name] = collect_latent_distribution_info(
+            layer_name=layer_name,
+            X_calib=X_calib,
+            state=state,
+            output_dir=output_dir,
+            logger=logger,
+            eps=quantizer.config.eps,
+        )
         if bias is not None:
             tensor_info[f"{layer_name}.bias"] = tensor_stats(bias)
 
     logger.info("Ours 量化模块构建完成。")
-    return quantized_modules, states, metrics_by_layer, tensor_info
+    return quantized_modules, states, metrics_by_layer, tensor_info, latent_distribution_info
 
 
 
@@ -1384,11 +1585,12 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
     # ---------- 构建 Ours（与 v8 同口径） ----------
     quantizer = LatticeLinearQuantizer(config.quant, logger=logger)
     t0 = time.perf_counter()
-    quantized_modules, states, quant_metrics_by_layer, tensor_info = build_quantized_target_modules(
+    quantized_modules, states, quant_metrics_by_layer, tensor_info, latent_distribution_info = build_quantized_target_modules(
         target_specs=target_specs,
         X_calib_by_layer=X_calib_by_layer,
         quantizer=quantizer,
         logger=logger,
+        output_dir=output_dir,
         device=config.eval.device,
     )
     timing_info["fit_quantizer_and_metrics_sec"] = time.perf_counter() - t0
@@ -1457,6 +1659,7 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
         objective_x_histories=objective_x_histories,
         objective_w_histories=objective_w_histories,
         tensor_info=merged_tensor_info,
+        latent_distribution_info=latent_distribution_info,
         timing_info=timing_info,
         ppl_eval_info=ppl_eval_info,
         plot_paths=plot_paths,
@@ -1473,6 +1676,29 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
     return artifacts
 
 
+def run_block10_qproj_latent_distribution_experiment(latent_bits: int) -> ExperimentArtifacts:
+    config = make_block10_qproj_latent_distribution_config(latent_bits)
+    artifacts = run_all_blocks_qkvo_experiment(config)
+    layer_name = "block10.q_proj"
+    latent_info = artifacts.latent_distribution_info.get(layer_name, {})
+    summary = {
+        "output_dir": config.output_dir,
+        "latent_bits": latent_bits,
+        "layer_name": layer_name,
+        "target_info": artifacts.target_info,
+        "latent_distribution_info": latent_info,
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return artifacts
+
+
+def run_latent_bits_sweep() -> Dict[int, ExperimentArtifacts]:
+    results: Dict[int, ExperimentArtifacts] = {}
+    for latent_bits in (2, 3, 4):
+        results[latent_bits] = run_block10_qproj_latent_distribution_experiment(latent_bits)
+    return results
+
+
 # ============================================================
 # 入口
 # ============================================================
@@ -1480,31 +1706,10 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
 
 
 def main() -> None:
-    config = ExperimentConfig()
-    run_mode = config.run_mode.lower()
-    if run_mode not in {"discrete", "continuous", "both"}:
-        raise ValueError(f"Unsupported run_mode: {config.run_mode}")
-
-    if run_mode in {"discrete", "both"}:
-        discrete_artifacts = run_all_blocks_qkvo_experiment(config)
-        print(json.dumps(asdict(discrete_artifacts), ensure_ascii=False, indent=2))
-        print("\n===== Discrete Summary =====\n")
-        print(build_analysis_summary(discrete_artifacts))
-
-    if run_mode in {"continuous", "both"}:
-        continuous_config = replace(
-            config,
-            quant=replace(config.quant, latent_mode="continuous"),
-            output_dir=(
-                config.output_dir
-                if run_mode == "continuous"
-                else str(Path(config.output_dir) / config.continuous_subdir)
-            ),
-            run_mode="continuous",
-        )
-        continuous_artifacts = run_all_blocks_qkvo_experiment(continuous_config)
-        print("\n===== Continuous Summary =====\n")
-        print(build_analysis_summary(continuous_artifacts))
+    if len(sys.argv) > 1 and sys.argv[1].lower() in {"latent-dist", "block10-qproj-latent-dist", "sweep"}:
+        run_latent_bits_sweep()
+        return
+    run_latent_bits_sweep()
 
 
 if __name__ == "__main__":

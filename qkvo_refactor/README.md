@@ -31,6 +31,7 @@
 - `cli.py`: 命令行入口
 - `sweep.py`: 独立扫参与追踪入口
 - `sweep_config.py`: 推荐修改的 sweep 配置文件
+- `SWEEP_PARAMETERS.md`: 所有可 sweep 参数的完整参考
 
 ## 运行方式
 
@@ -58,6 +59,7 @@ python -m qkvo_refactor \
 如果你不喜欢长命令行，推荐直接修改：
 
 - [sweep_config.py](</d:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_refactor/sweep_config.py>)
+- [SWEEP_PARAMETERS.md](</d:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_refactor/SWEEP_PARAMETERS.md>)
 
 改完后直接运行：
 
@@ -122,6 +124,31 @@ Sweep 模式还会额外生成：
 - 每个 run 目录下的 `sweep_combo.json`
 - 每个 run 目录下的 `tracking_summary.json`
 - 如果启用了矩阵追踪，还会有 `tracking/u_matrices/`
+
+## Slurm / Sbatch
+
+如果你在超算平台上用 array job 跑 sweep，可以直接参考：
+
+- [qkvo_refactor_sweep_array.slurm](</d:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_refactor_sweep_array.slurm>)
+
+新的 `sweep.py` 已经支持这些更适合 sbatch 的入口：
+
+- `--print-num-combos`
+- `--array-task-id`
+- `--rebuild-summary`
+
+典型流程：
+
+```bash
+NUM=$(python -m qkvo_refactor.sweep --config ./qkvo_refactor/sweep_config.py --print-num-combos)
+sbatch --array=0-$((NUM-1))%4 qkvo_refactor_sweep_array.slurm
+```
+
+当所有 array task 跑完后，如果你想单独重建总汇总：
+
+```bash
+sbatch --dependency=afterok:<ARRAY_JOB_ID> --export=ALL,REBUILD_SUMMARY_ONLY=1 qkvo_refactor_sweep_array.slurm
+```
 
 ## 和原脚本相比保留了什么
 

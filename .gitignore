@@ -8,3 +8,5 @@ opt-125m/
 out_qkvo_ref/
 .cache/
 *.zip
+Camparison/
+.new_quant_function/
