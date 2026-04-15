@@ -7,7 +7,9 @@ from dataclasses import asdict
 from .config import (
     ExperimentConfig,
     INIT_MODES,
+    REORTH_METHODS,
     normalize_ip_reg_gamma_overrides,
+    normalize_reorth_method,
     parse_block_indices,
     parse_codebook,
     parse_target_linear_names,
@@ -63,6 +65,13 @@ def add_experiment_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
     parser.add_argument("--lambda-min-value", type=float, default=1e-4)
     parser.add_argument("--lambda-max-value", type=float, default=1e4)
     parser.add_argument("--fit-device", default="cpu")
+    parser.add_argument("--log-orth-error", action="store_true", help="Log U orthogonality diagnostics after each U update.")
+    parser.add_argument(
+        "--reorth-after-u-update",
+        action="store_true",
+        help="Re-orthogonalize U immediately after every U update.",
+    )
+    parser.add_argument("--reorth-method", choices=REORTH_METHODS, default=REORTH_METHODS[0])
     parser.add_argument("--device", default=None, help="Runtime device for model eval. Defaults to torch auto detection.")
     parser.add_argument("--stride", type=int, default=512)
     parser.add_argument("--seed", type=int, default=42)
@@ -114,6 +123,9 @@ def args_to_config(args: argparse.Namespace) -> ExperimentConfig:
     config.quant.lambda_min_value = args.lambda_min_value
     config.quant.lambda_max_value = args.lambda_max_value
     config.quant.fit_device = args.fit_device
+    config.quant_ext.log_orth_error = args.log_orth_error
+    config.quant_ext.reorth_after_u_update = args.reorth_after_u_update
+    config.quant_ext.reorth_method = normalize_reorth_method(args.reorth_method)
 
     if args.device is not None:
         config.eval.device = args.device

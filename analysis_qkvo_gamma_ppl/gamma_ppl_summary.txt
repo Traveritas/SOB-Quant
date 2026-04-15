@@ -1,0 +1,18 @@
+QKVO Gamma Sweep PPL Analysis
+- input_sweep_dirs: qkvo_sweep_abs_gamma, qkvo_sweep_abs_gamma_again, qkvo_sweep_abs_gamma_again2
+- num_runs: 27
+- num_unique_gammas: 9
+- best_gamma_by_mean_ppl: 0.0
+- best_mean_ppl: 41.160702
+- overall_baseline_ppl_mean: 23.500710
+
+Per-gamma summary
+- gamma=0: mean=41.160702, std=0.348093, min=40.794319, max=41.487041, baseline_mean=23.500710, delta_mean=17.659992, seeds=[42, 4242, 424242]
+- gamma=100: mean=42.885672, std=0.487975, min=42.517090, max=43.439056, baseline_mean=23.500710, delta_mean=19.384963, seeds=[42, 4242, 424242]
+- gamma=500: mean=41.829505, std=0.537036, min=41.473434, max=42.447220, baseline_mean=23.500710, delta_mean=18.328795, seeds=[42, 4242, 424242]
+- gamma=750: mean=42.587569, std=1.959387, min=41.397957, max=44.849052, baseline_mean=23.500710, delta_mean=19.086859, seeds=[42, 4242, 424242]
+- gamma=1000: mean=44.252824, std=2.177902, min=42.439770, max=46.668617, baseline_mean=23.500710, delta_mean=20.752115, seeds=[42, 4242, 424242]
+- gamma=1500: mean=42.030619, std=1.184574, min=40.862743, max=43.231213, baseline_mean=23.500710, delta_mean=18.529910, seeds=[42, 4242, 424242]
+- gamma=2000: mean=43.591064, std=1.836957, min=41.515045, max=45.005928, baseline_mean=23.500710, delta_mean=20.090355, seeds=[42, 4242, 424242]
+- gamma=5000: mean=42.630688, std=0.296934, min=42.287895, max=42.808399, baseline_mean=23.500710, delta_mean=19.129978, seeds=[42, 4242, 424242]
+- gamma=10000: mean=41.335049, std=0.757359, min=40.575245, max=42.089939, baseline_mean=23.500710, delta_mean=17.834339, seeds=[42, 4242, 424242]
