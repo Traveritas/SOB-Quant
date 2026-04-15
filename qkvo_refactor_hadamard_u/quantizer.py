@@ -261,18 +261,147 @@ class LatticeLinearQuantizer:
         self.observers = list(observers or [])
         self.tracking_options = tracking_options or QuantizerTrackingOptions()
 
-    def _pca_init(self, X: torch.Tensor) -> torch.Tensor:
-        mean = X.mean(dim=1, keepdim=True)
-        centered = X - mean
-        covariance = (centered @ centered.T) / max(X.shape[1], 1)
-        eigenvalues, eigenvectors = torch.linalg.eigh(covariance)
+    def _resolve_ip_reg_gamma(self, tag: str) -> float:
+        overrides = getattr(self.config, "ip_reg_gamma_overrides", {}) or {}
+        if not tag:
+            return float(self.config.ip_reg_gamma)
+
+        if tag in overrides:
+            return float(overrides[tag])
+
+        block_tag, _, linear_name = tag.partition(".")
+        if block_tag and block_tag in overrides:
+            return float(overrides[block_tag])
+        if linear_name and linear_name in overrides:
+            return float(overrides[linear_name])
+        return float(self.config.ip_reg_gamma)
+
+    def _scatter_matrix(
+        self,
+        data: torch.Tensor,
+        *,
+        centered: bool,
+        weights: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        if centered:
+            if weights is None:
+                mean = data.mean(dim=1, keepdim=True)
+            else:
+                safe_weight_sum = torch.clamp(weights.sum(), min=self.config.eps)
+                mean = (data * weights.unsqueeze(0)).sum(dim=1, keepdim=True) / safe_weight_sum
+            basis = data - mean
+        else:
+            basis = data
+        if weights is None:
+            scatter = basis @ basis.T
+        else:
+            scatter = (basis * weights.unsqueeze(0)) @ basis.T
+        return 0.5 * (scatter + scatter.T)
+
+    def _eigenvector_init(self, scatter: torch.Tensor) -> torch.Tensor:
+        eigenvalues, eigenvectors = torch.linalg.eigh(scatter)
         order = torch.argsort(eigenvalues, descending=True)
         return eigenvectors[:, order]
+
+    def _pca_init(self, X: torch.Tensor, *, centered: bool) -> torch.Tensor:
+        return self._eigenvector_init(self._scatter_matrix(X, centered=centered))
+
+    def _joint_weighted_pca_init(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        weights_x: torch.Tensor,
+        weights_w: torch.Tensor,
+        *,
+        centered: bool,
+    ) -> torch.Tensor:
+        scatter_x = self._scatter_matrix(X, centered=centered, weights=weights_x)
+        scatter_w = self._scatter_matrix(W, centered=centered, weights=weights_w)
+        scatter = scatter_x + float(self.config.beta_pca) * scatter_w
+        return self._eigenvector_init(scatter)
 
     def _random_init(self, X: torch.Tensor) -> torch.Tensor:
         random_matrix = torch.randn((X.shape[0], X.shape[0]), dtype=X.dtype, device=X.device)
         Q, _ = torch.linalg.qr(random_matrix)
         return Q
+
+    def _hadamard_block(self, size: int, *, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+        H = torch.ones((1, 1), dtype=dtype, device=device)
+        current_size = 1
+        while current_size < size:
+            top = torch.cat((H, H), dim=1)
+            bottom = torch.cat((H, -H), dim=1)
+            H = torch.cat((top, bottom), dim=0)
+            current_size *= 2
+        return H / math.sqrt(size)
+
+    def _random_signs(self, size: int, *, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+        return torch.where(
+            torch.rand(size, device=device) < 0.5,
+            -torch.ones(size, dtype=dtype, device=device),
+            torch.ones(size, dtype=dtype, device=device),
+        )
+
+    def _randomized_hadamard_block(self, size: int, *, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+        block = self._hadamard_block(size, dtype=dtype, device=device)
+        row_perm = torch.randperm(size, device=device)
+        col_perm = torch.randperm(size, device=device)
+        row_signs = self._random_signs(size, dtype=dtype, device=device)
+        col_signs = self._random_signs(size, dtype=dtype, device=device)
+        block = block[row_perm][:, col_perm]
+        return row_signs.unsqueeze(1) * block * col_signs.unsqueeze(0)
+
+    def _random_hadamard_init(self, X: torch.Tensor) -> torch.Tensor:
+        dim = X.shape[0]
+        remaining = dim
+        block_sizes: List[int] = []
+        next_block = 1 << (max(dim, 1).bit_length() - 1)
+        while remaining > 0 and next_block > 0:
+            if remaining >= next_block:
+                block_sizes.append(next_block)
+                remaining -= next_block
+            next_block >>= 1
+
+        blocks = [self._randomized_hadamard_block(size, dtype=X.dtype, device=X.device) for size in block_sizes]
+        U = torch.block_diag(*blocks) if len(blocks) > 1 else blocks[0]
+
+        row_perm = torch.randperm(dim, device=X.device)
+        col_perm = torch.randperm(dim, device=X.device)
+        row_signs = self._random_signs(dim, dtype=X.dtype, device=X.device)
+        col_signs = self._random_signs(dim, dtype=X.dtype, device=X.device)
+        U = U[row_perm][:, col_perm]
+        return row_signs.unsqueeze(1) * U * col_signs.unsqueeze(0)
+
+    def _init_bases(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        weights_x: torch.Tensor,
+        weights_w: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if self.config.init_mode == "random":
+            U = self._random_init(X)
+            return U, U, U
+        if self.config.init_mode == "random_hadamard":
+            U = self._random_hadamard_init(X)
+            return U, U, U
+        if self.config.init_mode == "pca":
+            U = self._pca_init(X, centered=True)
+            return U, U, U
+        if self.config.init_mode == "pca_uncentered":
+            U = self._pca_init(X, centered=False)
+            return U, U, U
+        if self.config.init_mode == "split_pca_z_init":
+            U_x = self._pca_init(X, centered=True)
+            U_w = self._pca_init(W, centered=True)
+            return U_x, U_x, U_w
+        if self.config.init_mode == "joint_weighted_pca":
+            U = self._joint_weighted_pca_init(X, W, weights_x, weights_w, centered=True)
+            return U, U, U
+        if self.config.init_mode == "joint_weighted_pca_uncentered":
+            U = self._joint_weighted_pca_init(X, W, weights_x, weights_w, centered=False)
+            return U, U, U
+        raise ValueError(f"Unsupported init_mode: {self.config.init_mode}")
 
     def _latent_step(self, data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
         projection = U.T @ data
@@ -350,13 +479,13 @@ class LatticeLinearQuantizer:
         U: torch.Tensor,
         Z_x: torch.Tensor,
         Z_w: torch.Tensor,
+        gamma: float,
         weights_x: torch.Tensor,
         weights_w: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         lambda_x, SXZx, SZZx = self._update_lambda(X, U, Z_x, weights_x)
         lambda_w, SWZw, SZZw = self._update_lambda(W, U, Z_w, weights_w)
 
-        gamma = float(self.config.ip_reg_gamma)
         inner_iters = int(self.config.ip_reg_inner_iters)
         if gamma <= 0.0 or inner_iters <= 0:
             return lambda_x, lambda_w, SXZx, SWZw
@@ -388,8 +517,8 @@ class LatticeLinearQuantizer:
         Z_w: torch.Tensor,
         lambda_x: torch.Tensor,
         lambda_w: torch.Tensor,
+        gamma: float,
     ) -> torch.Tensor:
-        gamma = float(self.config.ip_reg_gamma)
         if gamma <= 0.0:
             return torch.zeros((), dtype=X.dtype, device=X.device)
 
@@ -409,11 +538,63 @@ class LatticeLinearQuantizer:
         P, _, Qt = torch.linalg.svd(M, full_matrices=False)
         return P @ Qt
 
+    def _lambda_quantile_target(self) -> float:
+        positive_max = float(torch.max(self.codebook).item())
+        if positive_max > self.config.eps:
+            return positive_max
+        abs_max = float(torch.max(torch.abs(self.codebook)).item())
+        return max(abs_max, float(self.config.eps))
+
+    def _init_lambda_from_quantiles(
+        self,
+        proj: torch.Tensor,
+        target_value: float,
+    ) -> torch.Tensor:
+        p = float(self.config.lambda_quantile_p)
+        rho = float(self.config.lambda_quantile_rho)
+        eps = float(self.config.eps)
+        lambda_min = float(self.config.lambda_min_value)
+        lambda_max = float(self.config.lambda_max_value)
+
+        q = torch.quantile(proj.abs(), p, dim=1)
+        target = max(rho * target_value, eps)
+        lam = q / target
+        lam = torch.clamp(lam, min=lambda_min, max=lambda_max)
+        return lam
+
+    def _rebalance_lambda_from_quantiles(
+        self,
+        proj: torch.Tensor,
+        lambda_diag: torch.Tensor,
+        target_value: float,
+    ) -> torch.Tensor:
+        p = float(self.config.lambda_quantile_p)
+        rho = float(self.config.lambda_quantile_rho)
+        alpha = float(self.config.lambda_quantile_alpha)
+        eps = float(self.config.eps)
+        ratio_min = float(self.config.lambda_rebalance_ratio_min)
+        ratio_max = float(self.config.lambda_rebalance_ratio_max)
+        lambda_min = float(self.config.lambda_min_value)
+        lambda_max = float(self.config.lambda_max_value)
+
+        safe_lambda = torch.clamp(lambda_diag, min=eps)
+        z_tilde = proj / safe_lambda.unsqueeze(1)
+        q = torch.quantile(z_tilde.abs(), p, dim=1)
+
+        target = max(rho * target_value, eps)
+        ratio = (q / target).clamp(min=eps).pow(alpha)
+        ratio = ratio.clamp(min=ratio_min, max=ratio_max)
+
+        new_lambda = lambda_diag * ratio
+        new_lambda = torch.clamp(new_lambda, min=lambda_min, max=lambda_max)
+        return new_lambda
+
     def fit(self, X: torch.Tensor, W: torch.Tensor, tag: str = "") -> QuantizationState:
         fit_start = time.perf_counter()
         X = X.to(dtype=self.dtype)
         W = W.to(dtype=self.dtype)
         self.codebook = self.codebook.to(X.device)
+        gamma = self._resolve_ip_reg_gamma(tag)
 
         if X.ndim != 2 or W.ndim != 2:
             raise ValueError("X and W must both be 2D matrices.")
@@ -431,28 +612,40 @@ class LatticeLinearQuantizer:
 
         if self.logger is not None:
             self.logger.info(
-                "Fit quantizer | tag=%s d=%d tokens=%d out_features=%d beta=%.4f ip_reg_gamma=%.4f max_iters=%d tol=%.2e",
+                "Fit quantizer | tag=%s d=%d tokens=%d out_features=%d init_mode=%s beta=%.4f beta_pca=%.4f ip_reg_gamma=%.4f max_iters=%d tol=%.2e",
                 tag,
                 feature_dim,
                 num_tokens,
                 out_features,
+                self.config.init_mode,
                 self.config.beta,
-                self.config.ip_reg_gamma,
+                self.config.beta_pca,
+                gamma,
                 self.config.max_iters,
                 self.config.tol,
             )
+            self.logger.info(
+                "Lambda quantile init=%s rebalance=%s p=%.3f rho=%.3f alpha=%.3f",
+                self.config.lambda_quantile_init_enable,
+                self.config.lambda_quantile_rebalance_enable,
+                self.config.lambda_quantile_p,
+                self.config.lambda_quantile_rho,
+                self.config.lambda_quantile_alpha,
+            )
 
-        if self.config.init_mode == "pca":
-            U = self._pca_init(X)
-        elif self.config.init_mode == "random":
-            U = self._random_init(X)
-        else:
-            raise ValueError(f"Unsupported init_mode: {self.config.init_mode}")
+        U, U_zx_init, U_zw_init = self._init_bases(X, W, weights_x, weights_w)
 
         U_init = U.detach().clone()
         U_prev = U.detach().clone()
-        lambda_x = torch.ones(feature_dim, dtype=X.dtype, device=X.device)
-        lambda_w = torch.ones(feature_dim, dtype=W.dtype, device=W.device)
+        latent_target = self._lambda_quantile_target()
+        if self.config.lambda_quantile_init_enable:
+            proj_x = U_zx_init.T @ X
+            proj_w = U_zw_init.T @ W
+            lambda_x = self._init_lambda_from_quantiles(proj_x, latent_target)
+            lambda_w = self._init_lambda_from_quantiles(proj_w, latent_target)
+        else:
+            lambda_x = torch.ones(feature_dim, dtype=X.dtype, device=X.device)
+            lambda_w = torch.ones(feature_dim, dtype=W.dtype, device=W.device)
         lambda_x_prev = lambda_x.detach().clone()
         lambda_w_prev = lambda_w.detach().clone()
         Z_x_prev = None
@@ -470,8 +663,10 @@ class LatticeLinearQuantizer:
         for iteration in range(1, self.config.max_iters + 1):
             iter_start = time.perf_counter()
 
-            Z_x = self._e_step(X, U, lambda_x)
-            Z_w = self._e_step(W, U, lambda_w)
+            U_for_zx = U_zx_init if iteration == 1 else U
+            U_for_zw = U_zw_init if iteration == 1 else U
+            Z_x = self._e_step(X, U_for_zx, lambda_x)
+            Z_w = self._e_step(W, U_for_zw, lambda_w)
 
             lambda_x, lambda_w, SXZx, SWZw = self._update_lambdas(
                 X=X,
@@ -479,9 +674,21 @@ class LatticeLinearQuantizer:
                 U=U,
                 Z_x=Z_x,
                 Z_w=Z_w,
+                gamma=gamma,
                 weights_x=weights_x,
                 weights_w=weights_w,
             )
+
+            if self.config.lambda_quantile_rebalance_enable:
+                proj_x = U_for_zx.T @ X
+                proj_w = U_for_zw.T @ W
+                lambda_x = self._rebalance_lambda_from_quantiles(proj_x, lambda_x, latent_target)
+                lambda_w = self._rebalance_lambda_from_quantiles(proj_w, lambda_w, latent_target)
+
+                Z_x = self._e_step(X, U_for_zx, lambda_x)
+                Z_w = self._e_step(W, U_for_zw, lambda_w)
+                SXZx = weighted_cross(X, weights_x, Z_x)
+                SWZw = weighted_cross(W, weights_w, Z_w)
 
             U_new = self._update_U(lambda_x, lambda_w, SXZx, SWZw)
 
@@ -515,7 +722,7 @@ class LatticeLinearQuantizer:
             W_hat = U @ (lambda_w.unsqueeze(1) * Z_w)
             objective_x = reconstruction_objective(X, X_hat, weights_x, self.config.error_mode, average=True)
             objective_w = reconstruction_objective(W, W_hat, weights_w, self.config.error_mode, average=True)
-            objective_ip = self._compute_ip_regularizer(X, W, Z_x, Z_w, lambda_x, lambda_w)
+            objective_ip = self._compute_ip_regularizer(X, W, Z_x, Z_w, lambda_x, lambda_w, gamma)
             objective = objective_x + self.config.beta * objective_w + objective_ip
 
             objective_history.append(float(objective.item()))

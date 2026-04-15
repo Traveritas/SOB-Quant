@@ -11,8 +11,8 @@ from typing import Dict, List, Optional, Tuple
 import torch
 import torch.nn as nn
 
-from qkvo_refactor.cli import add_experiment_args
-from qkvo_refactor.common import (
+from qkvo_refactor_hadamard_u.cli import add_experiment_args
+from qkvo_refactor_hadamard_u.common import (
     get_torch_dtype,
     infer_sq_bitwidth_from_codebook,
     scalar_quant_scale_maxabs,
@@ -23,9 +23,9 @@ from qkvo_refactor.common import (
     write_json,
     write_text,
 )
-from qkvo_refactor.config import DataConfig, EvalConfig, TargetConfig, parse_block_indices, parse_codebook, parse_target_linear_names
-from qkvo_refactor.experiment import compute_sq_metrics, evaluate_perplexity_sliding_window, save_loss_plots
-from qkvo_refactor.model_utils import (
+from qkvo_refactor_hadamard_u.config import DataConfig, EvalConfig, TargetConfig, parse_block_indices, parse_codebook, parse_target_linear_names
+from qkvo_refactor_hadamard_u.experiment import compute_sq_metrics, evaluate_perplexity_sliding_window, save_loss_plots
+from qkvo_refactor_hadamard_u.model_utils import (
     ScalarQuantizedXWLinear,
     TargetModuleSpec,
     build_runtime_bias,
@@ -38,7 +38,7 @@ from qkvo_refactor.model_utils import (
     restore_target_modules,
     tokenize_text,
 )
-from qkvo_refactor.quantizer import LatticeLinearQuantizer, QuantizationState
+from qkvo_refactor_hadamard_u.quantizer import LatticeLinearQuantizer, QuantizationState
 
 
 def default_target_config() -> TargetConfig:

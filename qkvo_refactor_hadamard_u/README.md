@@ -84,7 +84,7 @@ python -m qkvo_refactor.sweep --config ./my_sweep_config.json
 ```bash
 python -m qkvo_refactor.sweep \
   --output-dir ./qkvo_sweep_outputs \
-  --grid-json "{\"quant.beta\":[0.5,1.0],\"quant.init_mode\":[\"random\",\"pca\"],\"quant.codebook\":[\"d5\",\"s8\"]}"
+  --grid-json "{\"quant.beta\":[0.5,1.0],\"quant.beta_pca\":[0.5,1.0],\"quant.init_mode\":[\"random\",\"random_hadamard\",\"pca\",\"split_pca_z_init\",\"joint_weighted_pca\"],\"quant.codebook\":[\"d5\",\"s8\"]}"
 ```
 
 如果只想先看看会生成哪些组合：

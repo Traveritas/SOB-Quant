@@ -4,7 +4,14 @@ import argparse
 import json
 from dataclasses import asdict
 
-from .config import ExperimentConfig, parse_block_indices, parse_codebook, parse_target_linear_names
+from .config import (
+    ExperimentConfig,
+    INIT_MODES,
+    normalize_ip_reg_gamma_overrides,
+    parse_block_indices,
+    parse_codebook,
+    parse_target_linear_names,
+)
 
 
 def add_experiment_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -18,15 +25,43 @@ def add_experiment_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
     parser.add_argument("--block-indices", default="8,9,10,11", help="Comma-separated block indices, or 'all'.")
     parser.add_argument("--target-linear-names", default="q_proj,k_proj,v_proj,out_proj")
     parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--max-iters", type=int, default=80)
+    parser.add_argument("--beta-pca", type=float, default=1.0)
+    parser.add_argument("--max-iters", type=int, default=300)
     parser.add_argument("--tol", type=float, default=1e-5)
-    parser.add_argument("--codebook", default="d5", help="Codebook alias or comma-separated float values.")
+    parser.add_argument("--codebook", default="s8", help="Codebook alias or comma-separated float values.")
     parser.add_argument("--dtype", default="float32")
-    parser.add_argument("--init-mode", choices=("random", "pca"), default="random")
+    parser.add_argument("--init-mode", choices=INIT_MODES, default="random")
     parser.add_argument("--error-mode", choices=("relative", "absolute"), default="relative")
     parser.add_argument("--latent-mode", choices=("discrete", "continuous"), default="discrete")
     parser.add_argument("--ip-reg-gamma", type=float, default=0.0)
+    parser.add_argument(
+        "--ip-reg-gamma-overrides",
+        default=None,
+        help=(
+            "JSON object or @path/to/json mapping layer tag or linear name to gamma. "
+            'Example: {"q_proj": 0.1, "block8.q_proj": 0.3}'
+        ),
+    )
     parser.add_argument("--ip-reg-inner-iters", type=int, default=1)
+    parser.add_argument(
+        "--lambda-quantile-init",
+        dest="lambda_quantile_init_enable",
+        action="store_true",
+        help="Initialize lambda_x/lambda_w from projection quantiles instead of all-ones.",
+    )
+    parser.add_argument(
+        "--lambda-quantile-rebalance",
+        dest="lambda_quantile_rebalance_enable",
+        action="store_true",
+        help="Rebalance lambda_x/lambda_w from projection quantiles after each lambda update.",
+    )
+    parser.add_argument("--lambda-quantile-p", type=float, default=0.95)
+    parser.add_argument("--lambda-quantile-rho", type=float, default=0.8)
+    parser.add_argument("--lambda-quantile-alpha", type=float, default=0.0)
+    parser.add_argument("--lambda-rebalance-ratio-min", type=float, default=0.8)
+    parser.add_argument("--lambda-rebalance-ratio-max", type=float, default=1.25)
+    parser.add_argument("--lambda-min-value", type=float, default=1e-4)
+    parser.add_argument("--lambda-max-value", type=float, default=1e4)
     parser.add_argument("--fit-device", default="cpu")
     parser.add_argument("--device", default=None, help="Runtime device for model eval. Defaults to torch auto detection.")
     parser.add_argument("--stride", type=int, default=512)
@@ -57,6 +92,7 @@ def args_to_config(args: argparse.Namespace) -> ExperimentConfig:
     config.target.target_linear_names = parse_target_linear_names(args.target_linear_names)
 
     config.quant.beta = args.beta
+    config.quant.beta_pca = args.beta_pca
     config.quant.max_iters = args.max_iters
     config.quant.tol = args.tol
     config.quant.codebook = parse_codebook(args.codebook)
@@ -65,7 +101,18 @@ def args_to_config(args: argparse.Namespace) -> ExperimentConfig:
     config.quant.error_mode = args.error_mode
     config.quant.latent_mode = args.latent_mode
     config.quant.ip_reg_gamma = args.ip_reg_gamma
+    if args.ip_reg_gamma_overrides is not None:
+        config.quant.ip_reg_gamma_overrides = normalize_ip_reg_gamma_overrides(args.ip_reg_gamma_overrides)
     config.quant.ip_reg_inner_iters = args.ip_reg_inner_iters
+    config.quant.lambda_quantile_init_enable = args.lambda_quantile_init_enable
+    config.quant.lambda_quantile_rebalance_enable = args.lambda_quantile_rebalance_enable
+    config.quant.lambda_quantile_p = args.lambda_quantile_p
+    config.quant.lambda_quantile_rho = args.lambda_quantile_rho
+    config.quant.lambda_quantile_alpha = args.lambda_quantile_alpha
+    config.quant.lambda_rebalance_ratio_min = args.lambda_rebalance_ratio_min
+    config.quant.lambda_rebalance_ratio_max = args.lambda_rebalance_ratio_max
+    config.quant.lambda_min_value = args.lambda_min_value
+    config.quant.lambda_max_value = args.lambda_max_value
     config.quant.fit_device = args.fit_device
 
     if args.device is not None:

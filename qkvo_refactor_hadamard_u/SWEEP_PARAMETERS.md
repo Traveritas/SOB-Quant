@@ -11,7 +11,8 @@
 ```python
 SWEEP_GRID = {
     "quant.beta": (0.5, 1.0, 2.0),
-    "quant.init_mode": ("random", "pca"),
+    "quant.beta_pca": (0.5, 1.0, 2.0),
+    "quant.init_mode": ("random", "random_hadamard", "pca", "pca_uncentered", "split_pca_z_init", "joint_weighted_pca", "joint_weighted_pca_uncentered"),
     "target.block_indices": ((8, 9, 10, 11), (10, 11)),
 }
 ```
@@ -89,6 +90,10 @@ SWEEP_GRID = {
   类型：`float`
   说明：目标函数里 `J_w` 的权重
 
+- `quant.beta_pca`
+  类型：`float`
+  说明：`joint_weighted_pca` 初始化里 `W D_w W^T` 项的系数
+
 - `quant.max_iters`
   类型：`int`
   说明：量化迭代最大轮数
@@ -120,7 +125,7 @@ SWEEP_GRID = {
 
 - `quant.init_mode`
   类型：`str`
-  常见值：`"random"`, `"pca"`
+  常见值：`"random"`, `"random_hadamard"`, `"pca"`, `"pca_uncentered"`, `"split_pca_z_init"`, `"joint_weighted_pca"`, `"joint_weighted_pca_uncentered"`
 
 - `quant.error_mode`
   类型：`str`
@@ -185,6 +190,7 @@ SWEEP_GRID = {
 如果你是做量化实验，通常更值得 sweep 的是这些：
 
 - `quant.beta`
+- `quant.beta_pca`
 - `quant.codebook`
 - `quant.init_mode`
 - `quant.error_mode`
@@ -241,8 +247,9 @@ SWEEP_GRID = {
 ```python
 SWEEP_GRID = {
     "quant.beta": (0.5, 1.0, 2.0),
+    "quant.beta_pca": (0.5, 1.0, 2.0),
     "quant.codebook": ("d5", "s8", "4b"),
-    "quant.init_mode": ("random", "pca"),
+    "quant.init_mode": ("random", "random_hadamard", "pca", "split_pca_z_init", "joint_weighted_pca"),
 }
 ```
 
