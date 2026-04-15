@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .cli import add_experiment_args
-from .config import CODEBOOKS, ExperimentConfig, parse_block_indices, parse_codebook, parse_target_linear_names
+from .config import (
+    CODEBOOKS,
+    ExperimentConfig,
+    normalize_ip_reg_gamma_overrides,
+    parse_block_indices,
+    parse_codebook,
+    parse_target_linear_names,
+)
 from . import sweep_config as default_sweep_config
 
 DEFAULT_SWEEP_GRID: Dict[str, Tuple[Any, ...]] = default_sweep_config.SWEEP_GRID
@@ -153,6 +160,8 @@ def set_dotted_attr(obj: Any, dotted_path: str, value: Any) -> None:
 def _ensure_iterable(name: str, values: Iterable[Any]) -> Tuple[Any, ...]:
     if isinstance(values, (str, bytes)):
         return (values,)
+    if name == "quant.ip_reg_gamma_overrides" and isinstance(values, dict):
+        return (values,)
     try:
         seq = tuple(values)
     except TypeError as error:
@@ -171,6 +180,8 @@ def normalize_grid_value(path: str, value: Any) -> Any:
         if isinstance(value, str):
             return parse_codebook(value)
         return tuple(float(item) for item in value)
+    if path == "quant.ip_reg_gamma_overrides":
+        return normalize_ip_reg_gamma_overrides(value)
     if path == "target.block_indices":
         if value is None:
             return None
@@ -191,6 +202,8 @@ def normalize_override_value(path: str, value: Any) -> Any:
         if isinstance(value, str):
             return parse_codebook(value)
         return tuple(float(item) for item in value)
+    if path == "quant.ip_reg_gamma_overrides":
+        return normalize_ip_reg_gamma_overrides(value)
     if path == "target.block_indices":
         if value is None:
             return None
@@ -232,11 +245,26 @@ def sanitize_value(value: Any) -> str:
         return "t" if value else "f"
     if isinstance(value, float):
         text = f"{value:.6g}"
+    elif isinstance(value, dict):
+        items = [f"{key}-{sanitize_value(item)}" for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))]
+        text = "__".join(items) if items else "empty"
     elif isinstance(value, (tuple, list)):
         text = "-".join(sanitize_value(item) for item in value)
     else:
         text = str(value)
-    for old, new in [("/", "-"), (" ", ""), ("(", ""), (")", ""), (",", "-"), ("'", ""), (".", "p")]:
+    for old, new in [
+        ("/", "-"),
+        (" ", ""),
+        ("(", ""),
+        (")", ""),
+        (",", "-"),
+        ("'", ""),
+        (".", "p"),
+        ("{", ""),
+        ("}", ""),
+        (":", "-"),
+        ("\"", ""),
+    ]:
         text = text.replace(old, new)
     return text
 
@@ -587,6 +615,7 @@ def build_base_config(args: argparse.Namespace, file_config: SweepFileConfig) ->
         "block_indices": ("target.block_indices", parse_block_indices(args.block_indices), (8, 9, 10, 11)),
         "target_linear_names": ("target.target_linear_names", parse_target_linear_names(args.target_linear_names), ("q_proj", "k_proj", "v_proj", "out_proj")),
         "beta": ("quant.beta", args.beta, 1.0),
+        "beta_pca": ("quant.beta_pca", args.beta_pca, 1.0),
         "max_iters": ("quant.max_iters", args.max_iters, 80),
         "tol": ("quant.tol", args.tol, 1e-5),
         "codebook": ("quant.codebook", parse_codebook(args.codebook), parse_codebook("d5")),
@@ -596,6 +625,19 @@ def build_base_config(args: argparse.Namespace, file_config: SweepFileConfig) ->
         "latent_mode": ("quant.latent_mode", args.latent_mode, "discrete"),
         "ip_reg_gamma": ("quant.ip_reg_gamma", args.ip_reg_gamma, 0.0),
         "ip_reg_inner_iters": ("quant.ip_reg_inner_iters", args.ip_reg_inner_iters, 1),
+        "lambda_quantile_init_enable": ("quant.lambda_quantile_init_enable", args.lambda_quantile_init_enable, False),
+        "lambda_quantile_rebalance_enable": (
+            "quant.lambda_quantile_rebalance_enable",
+            args.lambda_quantile_rebalance_enable,
+            False,
+        ),
+        "lambda_quantile_p": ("quant.lambda_quantile_p", args.lambda_quantile_p, 0.95),
+        "lambda_quantile_rho": ("quant.lambda_quantile_rho", args.lambda_quantile_rho, 0.8),
+        "lambda_quantile_alpha": ("quant.lambda_quantile_alpha", args.lambda_quantile_alpha, 0.0),
+        "lambda_rebalance_ratio_min": ("quant.lambda_rebalance_ratio_min", args.lambda_rebalance_ratio_min, 0.8),
+        "lambda_rebalance_ratio_max": ("quant.lambda_rebalance_ratio_max", args.lambda_rebalance_ratio_max, 1.25),
+        "lambda_min_value": ("quant.lambda_min_value", args.lambda_min_value, 1e-4),
+        "lambda_max_value": ("quant.lambda_max_value", args.lambda_max_value, 1e4),
         "fit_device": ("quant.fit_device", args.fit_device, "cpu"),
         "stride": ("eval.stride", args.stride, 512),
         "output_dir": ("output_dir", args.output_dir, "./qkvo_refactor_outputs"),
@@ -606,6 +648,13 @@ def build_base_config(args: argparse.Namespace, file_config: SweepFileConfig) ->
     for _, (path, value, default) in cli_override_fields.items():
         if value != default:
             set_dotted_attr(config, path, value)
+
+    if args.ip_reg_gamma_overrides is not None:
+        set_dotted_attr(
+            config,
+            "quant.ip_reg_gamma_overrides",
+            normalize_ip_reg_gamma_overrides(args.ip_reg_gamma_overrides),
+        )
 
     if args.device is not None:
         set_dotted_attr(config, "eval.device", args.device)

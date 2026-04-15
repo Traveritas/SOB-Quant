@@ -1,0 +1,4 @@
+14:14:28 | INFO | Load model/tokenizer | model=opt-125m
+14:16:42 | INFO | Load model/tokenizer | model=opt-125m
+14:16:44 | INFO | Model loaded | hidden_size=768 vocab_size=50272 device=cpu time=1.291s
+14:16:44 | INFO | Load dataset split | split=train

@@ -1,8 +1,9 @@
 .vscode/settings.json
 outputs_opt_qkvo_general_sweep_u_tracking/
 outputs_opt_qkvo_lastk_sweep_v4_config/
-outputs_opt_qkvo_lastk_sweep_v4_config.zip
-outputs_opt_qkvo_general_sweep_u_tracking.zip
+4braw/
+logs/
+origin/
 opt-125m/
 *.tar.gz
 out_qkvo_ref/
@@ -10,3 +11,5 @@ out_qkvo_ref/
 *.zip
 Camparison/
 .new_quant_function/
+qkvo_sweep*/
+*output*/

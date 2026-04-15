@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import argparse
+import gc
 import json
 import logging
 import math
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import torch
@@ -19,36 +23,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # 配置
 # ============================================================
 
-def normalize_ip_reg_gamma_overrides(value: Optional[str | Mapping[str, float]]) -> Dict[str, float]:
-    if value is None:
-        return {}
-
-    payload: object
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return {}
-        if text.startswith("@"):
-            text = Path(text[1:]).read_text(encoding="utf-8")
-        payload = json.loads(text)
-    else:
-        payload = dict(value)
-
-    if not isinstance(payload, dict):
-        raise ValueError("ip_reg_gamma_overrides must be a JSON object or mapping.")
-
-    overrides: Dict[str, float] = {}
-    for raw_key, raw_gamma in payload.items():
-        key = str(raw_key).strip()
-        if not key:
-            raise ValueError("ip_reg_gamma_overrides keys cannot be empty.")
-        overrides[key] = float(raw_gamma)
-    return overrides
-
 
 @dataclass
 class DataConfig:
-    model_name: str = "facebook/opt-125m"
+    model_name: str = "meta-llama/Llama-2-7b-hf"
+    model_dtype: str = "float16"
     dataset_name: str = "wikitext"
     dataset_config: str = "wikitext-2-raw-v1"
     calib_split: str = "train"
@@ -72,20 +51,33 @@ class QuantizerConfig:
     error_mode: str = "relative"
     latent_mode: str = "discrete"
     ip_reg_gamma: float = 0.0
-    ip_reg_gamma_overrides: Dict[str, float] = field(default_factory=dict)
     ip_reg_inner_iters: int = 1
+    lambda_quantile_init_enable: bool = True
+    lambda_quantile_p: float = 0.95
+    lambda_quantile_rho: float = 0.8
+    lambda_min_value: float = 1e-4
+    lambda_max_value: float = 1e4
+    x_codebook_mode: str = "int4"
 
 
 @dataclass
 class EvalConfig:
     stride: int = 512
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    fit_devices: Optional[Tuple[str, ...]] = None
+    run_baseline_ppl: bool = False
+    run_sq_baseline: bool = False
 
 
 @dataclass
 class TargetConfig:
-    block_indices: Optional[Tuple[int, ...]] = field(default_factory=lambda: tuple(range(12)))
-    target_linear_names: Tuple[str, ...] = ("k_proj", "v_proj")
+    # qkvo: only attention q/k/v/o
+    # linear: all nn.Linear modules inside transformer blocks
+    # all: linear + supported top-level matrix layers (currently lm_head if linear)
+    target_mode: str = "qkvo"
+    block_indices: Optional[Tuple[int, ...]] = None
+    include_lm_head_when_all: bool = True
+    qkvo_order: Tuple[str, ...] = ("q_proj", "k_proj", "v_proj", "o_proj")
 
 
 @dataclass
@@ -94,18 +86,37 @@ class ExperimentConfig:
     quant: QuantizerConfig = field(default_factory=QuantizerConfig)
     eval: EvalConfig = field(default_factory=EvalConfig)
     target: TargetConfig = field(default_factory=TargetConfig)
-    output_dir: str = "./Camparison/RPTQnew"
+    output_dir: str = "./outputs_llama_full32"
     seed: int = 42
-    run_mode: str = "both"
+    run_mode: str = "discrete"
     continuous_subdir: str = "continuous"
+    experiment_name: str = "full32_qkvo"
 
 
-config = ExperimentConfig(
-    target=TargetConfig(
-        block_indices=(8, 9, 10, 11),
-        target_linear_names=("q_proj", "k_proj", "v_proj", "out_proj"),
-    )
+# 这一组配置直接配合 Slurm job-array 使用。
+# 现在先只放“全 32 层”的三种目标范围；之后拆 K 时，在这里继续追加条目即可。
+ARRAY_EXPERIMENTS: Tuple[Dict[str, object], ...] = (
+    {
+        "experiment_name": "full32_qkvo",
+        "target_mode": "qkvo",
+        "block_indices": None,
+    },
+    {
+        "experiment_name": "full32_linear",
+        "target_mode": "linear",
+        "block_indices": None,
+    },
+    {
+        "experiment_name": "full32_all",
+        "target_mode": "all",
+        "block_indices": None,
+    },
 )
+
+
+def build_default_config() -> ExperimentConfig:
+    return ExperimentConfig()
+
 
 # ============================================================
 # 工具函数
@@ -137,7 +148,7 @@ def get_torch_dtype(dtype_name: str) -> torch.dtype:
 
 
 def setup_logger(output_dir: Path) -> logging.Logger:
-    logger = logging.getLogger(f"opt_all_blocks_qkvo_stage1_{output_dir.resolve()}")
+    logger = logging.getLogger(f"matrix_quant_experiment_{output_dir.resolve()}")
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
     logger.propagate = False
@@ -171,7 +182,7 @@ def infer_sq_bitwidth_from_codebook(codebook: Tuple[float, ...]) -> int:
 
 
 def scalar_quant_scale_maxabs(x: torch.Tensor, bits: int, eps: float = 1e-8) -> torch.Tensor:
-    qmax = float((2 ** bits) - 1)
+    qmax = float((2 ** (bits - 1)) - 1)
     maxabs = torch.max(torch.abs(x))
     scale = maxabs / qmax
     return torch.clamp(scale, min=eps)
@@ -186,8 +197,8 @@ def scalar_quantize_maxabs(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if scale is None:
         scale = scalar_quant_scale_maxabs(x, bits=bits, eps=eps)
-    qmin = -(2 ** bits)
-    qmax = (2 ** bits) - 1
+    qmin = -(2 ** (bits - 1))
+    qmax = (2 ** (bits - 1)) - 1
     q = torch.clamp(torch.round(x / scale), qmin, qmax)
     x_q = q * scale
     return x_q, scale
@@ -303,6 +314,40 @@ def average_metrics(metrics_by_layer: Dict[str, Dict[str, float]]) -> Dict[str, 
     }
 
 
+def parse_device_list(device_list_text: Optional[str]) -> Optional[Tuple[str, ...]]:
+    if device_list_text is None or device_list_text.strip() == "":
+        return None
+    return tuple(item.strip() for item in device_list_text.split(",") if item.strip())
+
+
+def resolve_fit_devices(config: ExperimentConfig) -> List[str]:
+    if config.eval.fit_devices:
+        return list(config.eval.fit_devices)
+    eval_device = str(config.eval.device)
+    if eval_device.startswith("cuda") and torch.cuda.is_available():
+        return [f"cuda:{idx}" for idx in range(torch.cuda.device_count())]
+    return [eval_device]
+
+
+def quantization_state_to_cpu(state: "QuantizationState") -> "QuantizationState":
+    return QuantizationState(
+        U=state.U.detach().cpu(),
+        lambda_x=state.lambda_x.detach().cpu(),
+        lambda_w=state.lambda_w.detach().cpu(),
+        Z_x=state.Z_x.detach().cpu(),
+        Z_w=state.Z_w.detach().cpu(),
+        codebook=state.codebook.detach().cpu(),
+        x_codebook=None if state.x_codebook is None else state.x_codebook.detach().cpu(),
+        objective_history=list(state.objective_history),
+        objective_x_history=list(state.objective_x_history),
+        objective_w_history=list(state.objective_w_history),
+        objective_ip_history=list(state.objective_ip_history),
+        convergence_iter=state.convergence_iter,
+        fit_time_sec=state.fit_time_sec,
+        latent_mode=state.latent_mode,
+    )
+
+
 
 def build_analysis_summary(artifacts: "ExperimentArtifacts") -> str:
     lines: List[str] = []
@@ -310,11 +355,17 @@ def build_analysis_summary(artifacts: "ExperimentArtifacts") -> str:
     latent_mode = artifacts.config.get("quant", {}).get("latent_mode", "discrete")
     lines.append(f"- latent_mode: {latent_mode}")
     lines.append(f"- 量化是否完成: {artifacts.quantization_completed}")
-    lines.append(f"- baseline PPL: {artifacts.baseline_ppl:.6f}")
-    lines.append(f"- SQ-AllBlocks-QKVO baseline PPL: {artifacts.sq_baseline_ppl:.6f}")
-    lines.append(f"- Ours-AllBlocks-QKVO quantized PPL: {artifacts.quantized_ppl:.6f}")
-    lines.append(f"- Ours 相对 FP 的 PPL 增量: {artifacts.quantized_ppl - artifacts.baseline_ppl:.6f}")
-    lines.append(f"- SQ 相对 FP 的 PPL 增量: {artifacts.sq_baseline_ppl - artifacts.baseline_ppl:.6f}")
+    lines.append(f"- baseline PPL: {'skipped' if artifacts.baseline_ppl is None else f'{artifacts.baseline_ppl:.6f}'}")
+    lines.append(f"- SQ baseline PPL: {'skipped' if artifacts.sq_baseline_ppl is None else f'{artifacts.sq_baseline_ppl:.6f}'}")
+    lines.append(f"- Ours quantized PPL: {artifacts.quantized_ppl:.6f}")
+    if artifacts.baseline_ppl is not None:
+        lines.append(f"- Ours 相对 FP 的 PPL 增量: {artifacts.quantized_ppl - artifacts.baseline_ppl:.6f}")
+    else:
+        lines.append("- Ours 相对 FP 的 PPL 增量: skipped")
+    if artifacts.sq_baseline_ppl is not None and artifacts.baseline_ppl is not None:
+        lines.append(f"- SQ 相对 FP 的 PPL 增量: {artifacts.sq_baseline_ppl - artifacts.baseline_ppl:.6f}")
+    else:
+        lines.append("- SQ 相对 FP 的 PPL 增量: skipped")
     lines.append("")
 
     lines.append("SQ 对照组各层误差")
@@ -368,9 +419,11 @@ class QuantizationState:
     Z_x: torch.Tensor
     Z_w: torch.Tensor
     codebook: torch.Tensor
+    x_codebook: Optional[torch.Tensor]
     objective_history: List[float]
     objective_x_history: List[float]
     objective_w_history: List[float]
+    objective_ip_history: List[float]
     convergence_iter: int
     fit_time_sec: float
     latent_mode: str
@@ -405,22 +458,20 @@ class LatticeLinearQuantizer:
         self.dtype = get_torch_dtype(config.dtype)
         self.device = torch.device("cpu")
         self.codebook = torch.tensor(config.codebook, dtype=self.dtype)
+        self.x_codebook = self._build_x_codebook_tensor()
         self.logger = logger
 
-    def _resolve_ip_reg_gamma(self, tag: str) -> float:
-        overrides = getattr(self.config, "ip_reg_gamma_overrides", {}) or {}
-        if not tag:
-            return float(getattr(self.config, "ip_reg_gamma", 0.0))
-
-        if tag in overrides:
-            return float(overrides[tag])
-
-        block_tag, _, linear_name = tag.partition(".")
-        if block_tag and block_tag in overrides:
-            return float(overrides[block_tag])
-        if linear_name and linear_name in overrides:
-            return float(overrides[linear_name])
-        return float(getattr(self.config, "ip_reg_gamma", 0.0))
+    def _build_x_codebook_tensor(self) -> Optional[torch.Tensor]:
+        mode = str(getattr(self.config, "x_codebook_mode", "int4")).lower()
+        if mode == "none":
+            return None
+        if mode == "int4":
+            values = tuple(float(v) for v in range(-8, 8))
+        elif mode == "int6":
+            values = tuple(float(v) for v in range(-32, 32))
+        else:
+            raise ValueError(f"Unsupported x_codebook_mode: {self.config.x_codebook_mode}")
+        return torch.tensor(values, dtype=self.dtype)
 
     def _pca_init(self, X: torch.Tensor) -> torch.Tensor:
         mu = X.mean(dim=1, keepdim=True)
@@ -433,9 +484,12 @@ class LatticeLinearQuantizer:
 
     def _random_init(self, X: torch.Tensor) -> torch.Tensor:
         d = X.shape[0]
-        random_mat = torch.randn((d, d), dtype=X.dtype, device=X.device)
+        # Keep the random orthogonal init, but build it on CPU to avoid
+        # CUDA lazy-wrapper failures when multiple shard workers initialize in
+        # parallel across devices.
+        random_mat = torch.randn((d, d), dtype=torch.float32, device="cpu")
         Q, _ = torch.linalg.qr(random_mat)
-        return Q
+        return Q.to(dtype=X.dtype, device=X.device)
 
     def _latent_step(self, Data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
         s = U.T @ Data
@@ -451,6 +505,41 @@ class LatticeLinearQuantizer:
         if getattr(self.config, "latent_mode", "discrete") == "continuous":
             return z_tilde
         return quantize_nearest(z_tilde, self.codebook.to(Data.device))
+
+    def _e_step_x(self, Data: torch.Tensor, U: torch.Tensor, lambda_diag: torch.Tensor) -> torch.Tensor:
+        z_tilde = self._latent_step(Data, U, lambda_diag)
+        if getattr(self.config, "latent_mode", "discrete") == "continuous":
+            return z_tilde
+        if self.x_codebook is None:
+            return z_tilde
+        return quantize_nearest(z_tilde, self.x_codebook.to(Data.device))
+
+    def _init_lambda_from_quantiles(
+        self,
+        proj: torch.Tensor,
+        qmax: float,
+    ) -> torch.Tensor:
+        """
+        proj: shape [d, N], usually U.T @ X or U.T @ W
+        returns lambda_diag: shape [d]
+
+        target:
+            quantile(abs(proj_i / lambda_i), p) ~= rho * qmax
+
+        therefore:
+            lambda_i = quantile(abs(proj_i), p) / (rho * qmax)
+        """
+        p = float(getattr(self.config, "lambda_quantile_p", 0.95))
+        rho = float(getattr(self.config, "lambda_quantile_rho", 0.8))
+        eps = float(self.config.eps)
+        lambda_min = float(getattr(self.config, "lambda_min_value", 1e-4))
+        lambda_max = float(getattr(self.config, "lambda_max_value", 1e4))
+
+        q = torch.quantile(proj.abs(), p, dim=1)
+        target = max(rho * qmax, eps)
+        lam = q / target
+        lam = torch.clamp(lam, min=lambda_min, max=lambda_max)
+        return lam
 
     def _update_lambda(
         self,
@@ -513,13 +602,13 @@ class LatticeLinearQuantizer:
         U: torch.Tensor,
         Z_x: torch.Tensor,
         Z_w: torch.Tensor,
-        gamma: float,
         inv_norms_x: torch.Tensor,
         inv_norms_w: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         lambda_x, SXZx, SZZx = self._update_lambda(X, U, Z_x, inv_norms_x)
         lambda_w, SWZw, SZZw = self._update_lambda(W, U, Z_w, inv_norms_w)
 
+        gamma = float(getattr(self.config, "ip_reg_gamma", 0.0))
         inner_iters = int(getattr(self.config, "ip_reg_inner_iters", 1))
         if gamma <= 0.0 or inner_iters <= 0:
             return lambda_x, lambda_w, SXZx, SWZw
@@ -543,6 +632,21 @@ class LatticeLinearQuantizer:
 
         return lambda_x, lambda_w, SXZx, SWZw
 
+    def _compute_ip_reconstruction_error(
+        self,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        Z_x: torch.Tensor,
+        Z_w: torch.Tensor,
+        lambda_x: torch.Tensor,
+        lambda_w: torch.Tensor,
+    ) -> torch.Tensor:
+        target_inner = X.T @ W
+        approx_inner = Z_x.T @ ((lambda_x * lambda_w).unsqueeze(1) * Z_w)
+        diff = target_inner - approx_inner
+        denom = torch.sum(target_inner * target_inner)
+        return torch.sum(diff * diff) / torch.clamp(denom, min=self.config.eps)
+
     def _compute_ip_regularizer(
         self,
         X: torch.Tensor,
@@ -551,14 +655,11 @@ class LatticeLinearQuantizer:
         Z_w: torch.Tensor,
         lambda_x: torch.Tensor,
         lambda_w: torch.Tensor,
-        gamma: float,
     ) -> torch.Tensor:
+        gamma = float(getattr(self.config, "ip_reg_gamma", 0.0))
         if gamma <= 0.0:
             return torch.zeros((), dtype=X.dtype, device=X.device)
-        target_inner = X.T @ W
-        approx_inner = Z_x.T @ ((lambda_x * lambda_w).unsqueeze(1) * Z_w)
-        diff = target_inner - approx_inner
-        return gamma * torch.sum(diff * diff) / max(diff.numel(), 1)
+        return gamma * self._compute_ip_reconstruction_error(X, W, Z_x, Z_w, lambda_x, lambda_w)
 
     def _update_U(
         self,
@@ -573,12 +674,13 @@ class LatticeLinearQuantizer:
 
     def fit(self, X: torch.Tensor, W: torch.Tensor, tag: str = "") -> QuantizationState:
         fit_start = time.perf_counter()
-        X = X.to(dtype=self.dtype)
-        W = W.to(dtype=self.dtype)
+        X = X.to(dtype=self.dtype, device=X.device)
+        W = W.to(dtype=self.dtype, device=W.device)
         device = X.device
         self.device = device
         self.codebook = self.codebook.to(device)
-        gamma = self._resolve_ip_reg_gamma(tag)
+        if self.x_codebook is not None:
+            self.x_codebook = self.x_codebook.to(device)
 
         d, n = X.shape
         _, m = W.shape
@@ -599,12 +701,13 @@ class LatticeLinearQuantizer:
                 n,
                 m,
                 self.config.beta,
-                gamma,
+                float(getattr(self.config, "ip_reg_gamma", 0.0)),
                 int(getattr(self.config, "ip_reg_inner_iters", 1)),
                 self.config.max_iters,
                 self.config.tol,
                 list(self.config.codebook),
             )
+            self.logger.info("X codebook mode | mode=%s", str(getattr(self.config, "x_codebook_mode", "int4")))
 
         if getattr(self.config, "init_mode", "pca") == "random":
             if self.logger is not None:
@@ -614,19 +717,45 @@ class LatticeLinearQuantizer:
             if self.logger is not None:
                 self.logger.info("Using PCA Initialization")
             U = self._pca_init(X)
-        lambda_x = torch.ones(d, dtype=X.dtype, device=device)
-        lambda_w = torch.ones(d, dtype=W.dtype, device=device)
+        latent_bits = infer_sq_bitwidth_from_codebook(self.config.codebook)
+        qmax = float((2 ** (latent_bits - 1)) - 1)
+        proj_x = U.T @ X
+        proj_w = U.T @ W
+        use_lambda_quantile_init = bool(getattr(self.config, "lambda_quantile_init_enable", True))
+        if self.logger is not None:
+            self.logger.info(
+                "Lambda quantile init | enabled=%s p=%.4f rho=%.4f qmax=%.4f",
+                str(use_lambda_quantile_init),
+                float(getattr(self.config, "lambda_quantile_p", 0.95)),
+                float(getattr(self.config, "lambda_quantile_rho", 0.8)),
+                qmax,
+            )
+        if use_lambda_quantile_init:
+            lambda_x = self._init_lambda_from_quantiles(proj_x, qmax)
+            lambda_w = self._init_lambda_from_quantiles(proj_w, qmax)
+        else:
+            lambda_x = torch.ones(d, dtype=X.dtype, device=device)
+            lambda_w = torch.ones(d, dtype=W.dtype, device=device)
+        if self.logger is not None:
+            self.logger.info(
+                "Lambda init stats | lambda_x[min,max]=[%.6f, %.6f] lambda_w[min,max]=[%.6f, %.6f]",
+                float(lambda_x.min().item()),
+                float(lambda_x.max().item()),
+                float(lambda_w.min().item()),
+                float(lambda_w.max().item()),
+            )
 
         J_old = float("inf")
         hist_J: List[float] = []
         hist_Jx: List[float] = []
         hist_Jw: List[float] = []
+        hist_Jip: List[float] = []
         convergence_iter = self.config.max_iters
 
         for t in range(1, self.config.max_iters + 1):
             iter_start = time.perf_counter()
 
-            Z_x = self._e_step(X, U, lambda_x)
+            Z_x = self._e_step_x(X, U, lambda_x)
             Z_w = self._e_step(W, U, lambda_w)
 
             lambda_x, lambda_w, SXZx, SWZw = self._update_lambdas_with_ip_reg(
@@ -635,7 +764,6 @@ class LatticeLinearQuantizer:
                 U=U,
                 Z_x=Z_x,
                 Z_w=Z_w,
-                gamma=gamma,
                 inv_norms_x=inv_norms_x,
                 inv_norms_w=inv_norms_w,
             )
@@ -646,12 +774,14 @@ class LatticeLinearQuantizer:
             W_hat = U @ (lambda_w.unsqueeze(1) * Z_w)
             J_x = relative_weighted_reconstruction_error(X, X_hat, inv_norms_x, average=True)
             J_w = relative_weighted_reconstruction_error(W, W_hat, inv_norms_w, average=True)
-            J_ip = self._compute_ip_regularizer(X, W, Z_x, Z_w, lambda_x, lambda_w, gamma)
-            J = J_x + self.config.beta * J_w + J_ip
+            J_ip_recon = self._compute_ip_reconstruction_error(X, W, Z_x, Z_w, lambda_x, lambda_w)
+            J_ip = self._compute_ip_regularizer(X, W, Z_x, Z_w, lambda_x, lambda_w)
+            J = J_x + self.config.beta * J_w + J_ip + J_ip_recon
 
             hist_J.append(float(J.item()))
             hist_Jx.append(float(J_x.item()))
             hist_Jw.append(float(J_w.item()))
+            hist_Jip.append(float(J_ip_recon.item()))
 
             if math.isfinite(J_old):
                 rel_change = abs(float(J.item()) - J_old) / max(1.0, abs(J_old))
@@ -661,7 +791,7 @@ class LatticeLinearQuantizer:
 
             if self.logger is not None and (t == 1 or t % self.config.log_every == 0):
                 self.logger.info(
-                    "tag=%s iter=%03d | J=%.6f J_x=%.6f J_w=%.6f J_ip=%.6f rel_change=%.6e | "
+                    "tag=%s iter=%03d | J=%.6f J_x=%.6f J_w=%.6f J_ip=%.6f J_ip_recon=%.6f rel_change=%.6e | "
                     "lambda_x[min,max]=[%.6f, %.6f] lambda_w[min,max]=[%.6f, %.6f] | time=%.3fs",
                     tag,
                     t,
@@ -669,6 +799,7 @@ class LatticeLinearQuantizer:
                     float(J_x.item()),
                     float(J_w.item()),
                     float(J_ip.item()),
+                    float(J_ip_recon.item()),
                     rel_change,
                     float(lambda_x.min().item()),
                     float(lambda_x.max().item()),
@@ -696,16 +827,18 @@ class LatticeLinearQuantizer:
             Z_x=Z_x,
             Z_w=Z_w,
             codebook=self.codebook,
+            x_codebook=self.x_codebook,
             objective_history=hist_J,
             objective_x_history=hist_Jx,
             objective_w_history=hist_Jw,
+            objective_ip_history=hist_Jip,
             convergence_iter=convergence_iter,
             fit_time_sec=fit_time_sec,
             latent_mode=getattr(self.config, "latent_mode", "discrete"),
         )
 
     def reconstruct_X(self, X: torch.Tensor, state: QuantizationState) -> torch.Tensor:
-        Z_x = self._e_step(X.to(state.U.device, dtype=state.U.dtype), state.U, state.lambda_x)
+        Z_x = self._e_step_x(X.to(state.U.device, dtype=state.U.dtype), state.U, state.lambda_x)
         return state.U @ (state.lambda_x.unsqueeze(1) * Z_x)
 
     def reconstruct_W(self, state: QuantizationState) -> torch.Tensor:
@@ -726,6 +859,10 @@ class QuantizedLinear(nn.Module):
         self.register_buffer("coeff", state.coeff.detach().clone())
         self.register_buffer("Z_w", state.Z_w.detach().clone())
         self.register_buffer("codebook", state.codebook.detach().clone())
+        if state.x_codebook is None:
+            self.x_codebook = None
+        else:
+            self.register_buffer("x_codebook", state.x_codebook.detach().clone())
         self.latent_mode = state.latent_mode
         if bias is None:
             self.bias = None
@@ -743,7 +880,9 @@ class QuantizedLinear(nn.Module):
         z_cont = s / safe_lambda_x.unsqueeze(0)
         if self.latent_mode == "continuous":
             return z_cont
-        return quantize_nearest(z_cont, self.codebook)
+        if self.x_codebook is None:
+            return z_cont
+        return quantize_nearest(z_cont, self.x_codebook)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         orig_shape = hidden_states.shape[:-1]
@@ -853,19 +992,24 @@ def load_model_and_tokenizer(config: ExperimentConfig, logger: logging.Logger):
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(config.data.model_name)
+    model_dtype = get_torch_dtype(config.data.model_dtype)
+    model = AutoModelForCausalLM.from_pretrained(
+        config.data.model_name,
+        torch_dtype=model_dtype,
+        low_cpu_mem_usage=True,
+    )
     model.eval()
     model.to(config.eval.device)
     elapsed = time.perf_counter() - t0
     logger.info(
-        "模型加载完成 | hidden_size=%s vocab_size=%s device=%s elapsed=%.3fs",
+        "模型加载完成 | hidden_size=%s vocab_size=%s device=%s model_dtype=%s elapsed=%.3fs",
         getattr(model.config, "hidden_size", "unknown"),
         getattr(model.config, "vocab_size", "unknown"),
         config.eval.device,
+        config.data.model_dtype,
         elapsed,
     )
     return model, tokenizer, elapsed
-
 
 
 def load_text_split(config: ExperimentConfig, split: str, logger: logging.Logger) -> str:
@@ -891,37 +1035,126 @@ def tokenize_text(text: str, tokenizer, max_tokens: Optional[int] = None) -> tor
 
 
 
-def get_all_block_attention_targets(
+def _parse_attr_path(root: nn.Module, qualified_name: str) -> Tuple[nn.Module, str]:
+    parts = [p for p in qualified_name.split(".") if p]
+    if not parts:
+        raise ValueError("qualified_name cannot be empty")
+    parent = root
+    for part in parts[:-1]:
+        parent = getattr(parent, part)
+    return parent, parts[-1]
+
+
+def resolve_transformer_blocks(model) -> Tuple[Sequence[nn.Module], str]:
+    if hasattr(model, "model"):
+        inner = model.model
+        if hasattr(inner, "layers"):
+            return inner.layers, "llama_like"
+        if hasattr(inner, "decoder") and hasattr(inner.decoder, "layers"):
+            return inner.decoder.layers, "opt_like"
+    if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
+        return model.transformer.h, "gpt2_like"
+    raise ValueError("Unsupported model structure: cannot locate transformer blocks.")
+
+
+def _resolve_qkvo_attr_names(attn_module: nn.Module) -> Tuple[str, ...]:
+    resolved: List[str] = []
+    alias_map = {
+        "q_proj": ("q_proj",),
+        "k_proj": ("k_proj",),
+        "v_proj": ("v_proj",),
+        "o_proj": ("o_proj", "out_proj"),
+    }
+    for canonical_name in ("q_proj", "k_proj", "v_proj", "o_proj"):
+        candidates = alias_map[canonical_name]
+        matched = None
+        for name in candidates:
+            if hasattr(attn_module, name):
+                matched = name
+                break
+        if matched is None:
+            raise AttributeError(f"self_attn missing expected {canonical_name} aliases={candidates}")
+        resolved.append(matched)
+    return tuple(resolved)
+
+
+def _collect_block_linear_specs(block: nn.Module, block_index: int) -> Dict[str, TargetModuleSpec]:
+    specs: Dict[str, TargetModuleSpec] = {}
+    for rel_name, module in block.named_modules():
+        if not rel_name:
+            continue
+        if not isinstance(module, nn.Linear):
+            continue
+        parent, attr_name = _parse_attr_path(block, rel_name)
+        key = f"block{block_index}.{rel_name}"
+        specs[key] = TargetModuleSpec(
+            key=key,
+            block_index=int(block_index),
+            linear_name=attr_name,
+            parent_module=parent,
+            module=module,
+        )
+    return specs
+
+
+def get_target_specs(
     model,
-    target_linear_names: Tuple[str, ...],
-    block_indices: Optional[Tuple[int, ...]] = None,
+    target_config: TargetConfig,
+    logger: Optional[logging.Logger] = None,
 ) -> Dict[str, TargetModuleSpec]:
-    decoder_layers = model.model.decoder.layers
-    if block_indices is None:
-        resolved_block_indices = tuple(range(len(decoder_layers)))
+    blocks, arch_name = resolve_transformer_blocks(model)
+    if target_config.block_indices is None:
+        resolved_block_indices = tuple(range(len(blocks)))
     else:
-        resolved_block_indices = tuple(block_indices)
+        resolved_block_indices = tuple(target_config.block_indices)
+
+    target_mode = target_config.target_mode.lower()
+    if target_mode not in {"qkvo", "linear", "all"}:
+        raise ValueError(f"Unsupported target_mode: {target_config.target_mode}")
 
     specs: Dict[str, TargetModuleSpec] = {}
     for block_index in resolved_block_indices:
-        block = decoder_layers[block_index]
-        attn = block.self_attn
-        for name in target_linear_names:
-            if not hasattr(attn, name):
-                raise AttributeError(f"Block {block_index} self_attn has no linear named: {name}")
-            module = getattr(attn, name)
-            if not isinstance(module, nn.Linear):
-                raise TypeError(f"Target module block {block_index} {name} is not nn.Linear, got {type(module)}")
-            key = f"block{block_index}.{name}"
-            specs[key] = TargetModuleSpec(
-                key=key,
-                block_index=int(block_index),
-                linear_name=name,
-                parent_module=attn,
-                module=module,
-            )
-    return specs
+        block = blocks[block_index]
+        if target_mode == "qkvo":
+            if not hasattr(block, "self_attn"):
+                raise AttributeError(f"Block {block_index} has no self_attn")
+            attn = block.self_attn
+            actual_names = _resolve_qkvo_attr_names(attn)
+            for actual_name in actual_names:
+                module = getattr(attn, actual_name)
+                if not isinstance(module, nn.Linear):
+                    raise TypeError(f"Target module block {block_index} {actual_name} is not nn.Linear")
+                key = f"block{block_index}.{actual_name}"
+                specs[key] = TargetModuleSpec(
+                    key=key,
+                    block_index=int(block_index),
+                    linear_name=actual_name,
+                    parent_module=attn,
+                    module=module,
+                )
+        else:
+            specs.update(_collect_block_linear_specs(block, block_index))
 
+    if target_mode == "all" and target_config.include_lm_head_when_all and hasattr(model, "lm_head"):
+        lm_head = model.lm_head
+        if isinstance(lm_head, nn.Linear):
+            specs["lm_head"] = TargetModuleSpec(
+                key="lm_head",
+                block_index=-1,
+                linear_name="lm_head",
+                parent_module=model,
+                module=lm_head,
+            )
+
+    if logger is not None:
+        logger.info(
+            "目标层解析完成 | arch=%s target_mode=%s num_targets=%d block_indices=%s",
+            arch_name,
+            target_mode,
+            len(specs),
+            list(resolved_block_indices),
+        )
+    return specs
 
 
 def collect_target_inputs(
@@ -996,7 +1229,10 @@ def compute_linear_relative_error(
             state.lambda_x,
         )
         z_cont = s / safe_lambda.unsqueeze(1)
-        Z_x = quantize_nearest(z_cont, state.codebook)
+        if state.x_codebook is None:
+            Z_x = z_cont
+        else:
+            Z_x = quantize_nearest(z_cont, state.x_codebook)
         Y_hat = (Z_x.T * coeff.unsqueeze(0)) @ state.Z_w
 
         diff = Y_true - Y_hat
@@ -1206,8 +1442,8 @@ def restore_target_modules(target_specs: Dict[str, TargetModuleSpec], original_m
 class ExperimentArtifacts:
     config: Dict
     quantization_completed: bool
-    baseline_ppl: float
-    sq_baseline_ppl: float
+    baseline_ppl: Optional[float]
+    sq_baseline_ppl: Optional[float]
     quantized_ppl: float
     sq_metrics: Dict[str, Dict[str, float]]
     sq_metrics_avg: Dict[str, float]
@@ -1225,54 +1461,205 @@ class ExperimentArtifacts:
 
 
 
+def _prepare_layer_quant_payloads(
+    target_specs: Dict[str, TargetModuleSpec],
+    X_calib_by_layer: Dict[str, torch.Tensor],
+    quant_dtype: torch.dtype,
+) -> Dict[str, Dict[str, torch.Tensor]]:
+    payloads: Dict[str, Dict[str, torch.Tensor]] = {}
+    for layer_name, spec in target_specs.items():
+        module = spec.module
+        payloads[layer_name] = {
+            "X_calib": X_calib_by_layer[layer_name].detach().cpu(),
+            "W": module.weight.detach().T.cpu().to(dtype=quant_dtype),
+            "bias": None if module.bias is None else module.bias.detach().cpu().to(dtype=quant_dtype),
+        }
+    return payloads
+
+
+def _quantize_layer_shard(
+    shard_layer_names: Sequence[str],
+    payloads: Dict[str, Dict[str, torch.Tensor]],
+    quant_config: QuantizerConfig,
+    logger: logging.Logger,
+    fit_device: str,
+) -> Dict[str, Tuple[QuantizationState, Dict[str, float], Dict[str, object], Optional[torch.Tensor]]]:
+    results: Dict[str, Tuple[QuantizationState, Dict[str, float], Dict[str, object], Optional[torch.Tensor]]] = {}
+    if not shard_layer_names:
+        return results
+
+    if fit_device.startswith("cuda") and torch.cuda.is_available():
+        torch.cuda.set_device(fit_device)
+
+    quantizer = LatticeLinearQuantizer(quant_config, logger=logger)
+    fit_dtype = get_torch_dtype(quant_config.dtype)
+
+    for layer_name in shard_layer_names:
+        payload = payloads[layer_name]
+        X_fit = payload["X_calib"].to(device=fit_device, dtype=fit_dtype, non_blocking=True)
+        W_fit = payload["W"].to(device=fit_device, dtype=fit_dtype, non_blocking=True)
+        bias_cpu = payload["bias"]
+
+        try:
+            state_gpu = quantizer.fit(X_fit, W_fit, tag=f"{layer_name}@{fit_device}")
+            metrics = compute_reconstruction_errors(X_fit, W_fit, state_gpu, quantizer, logger, layer_name=layer_name)
+            state_cpu = quantization_state_to_cpu(state_gpu)
+            tensor_info = {
+                f"{layer_name}.X_calib": tensor_stats(payload["X_calib"]),
+                f"{layer_name}.W": tensor_stats(payload["W"]),
+                f"{layer_name}.U": tensor_stats(state_cpu.U),
+                f"{layer_name}.lambda_x": tensor_stats(state_cpu.lambda_x),
+                f"{layer_name}.lambda_w": tensor_stats(state_cpu.lambda_w),
+                f"{layer_name}.Z_w": tensor_stats(state_cpu.Z_w),
+            }
+            if bias_cpu is not None:
+                tensor_info[f"{layer_name}.bias"] = tensor_stats(bias_cpu)
+            results[layer_name] = (state_cpu, metrics, tensor_info, bias_cpu)
+        finally:
+            del X_fit, W_fit
+            if fit_device.startswith("cuda") and torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            gc.collect()
+
+    return results
+
+
+def _build_device_shards(
+    target_specs: Dict[str, TargetModuleSpec],
+    fit_devices: Sequence[str],
+) -> Dict[str, List[str]]:
+    device_shards: Dict[str, List[str]] = {fit_device: [] for fit_device in fit_devices}
+    if not fit_devices or not target_specs:
+        return device_shards
+
+    grouped_layer_names: List[List[str]] = []
+
+    block_indices = sorted({spec.block_index for spec in target_specs.values() if spec.block_index >= 0})
+    for block_index in block_indices:
+        block_layers = [
+            layer_name
+            for layer_name, spec in target_specs.items()
+            if spec.block_index == block_index
+        ]
+        if block_layers:
+            grouped_layer_names.append(block_layers)
+
+    extra_layer_names = [
+        layer_name
+        for layer_name, spec in target_specs.items()
+        if spec.block_index < 0
+    ]
+    for layer_name in extra_layer_names:
+        grouped_layer_names.append([layer_name])
+
+    groups_per_device = max(1, math.ceil(len(grouped_layer_names) / len(fit_devices)))
+    for device_idx, fit_device in enumerate(fit_devices):
+        start = device_idx * groups_per_device
+        end = min(start + groups_per_device, len(grouped_layer_names))
+        for group in grouped_layer_names[start:end]:
+            device_shards[fit_device].extend(group)
+
+    return device_shards
+
+
 def build_quantized_target_modules(
     target_specs: Dict[str, TargetModuleSpec],
     X_calib_by_layer: Dict[str, torch.Tensor],
     quantizer: LatticeLinearQuantizer,
     logger: logging.Logger,
     device: str,
+    fit_devices: Sequence[str],
 ) -> Tuple[
     Dict[str, nn.Module],
     Dict[str, QuantizationState],
     Dict[str, Dict[str, float]],
     Dict[str, Dict[str, object]],
 ]:
-    logger.info("开始为所有目标 transformer blocks 的 Q/K/V/O 线性层构建 Ours 量化器。")
+    logger.info("开始为所有目标层构建 Ours 量化器。")
     quantized_modules: Dict[str, nn.Module] = {}
     states: Dict[str, QuantizationState] = {}
     metrics_by_layer: Dict[str, Dict[str, float]] = {}
     tensor_info: Dict[str, Dict[str, object]] = {}
 
-    for layer_name, spec in target_specs.items():
-        module = spec.module
-        X_calib = X_calib_by_layer[layer_name]
-        W = module.weight.detach().T.cpu().to(dtype=get_torch_dtype(quantizer.config.dtype))
-        bias = None if module.bias is None else module.bias.detach().to(device=device, dtype=get_torch_dtype(quantizer.config.dtype))
+    fit_devices = list(fit_devices) if fit_devices else [device]
+    logger.info("Ours 量化拟合设备: %s", fit_devices)
 
-        log_tensor_stats(logger, f"{layer_name}.X_calib", X_calib)
-        log_tensor_stats(logger, f"{layer_name}.W", W)
+    payloads = _prepare_layer_quant_payloads(
+        target_specs=target_specs,
+        X_calib_by_layer=X_calib_by_layer,
+        quant_dtype=get_torch_dtype(quantizer.config.dtype),
+    )
 
-        state = quantizer.fit(X_calib, W, tag=layer_name)
-        metrics = compute_reconstruction_errors(X_calib, W, state, quantizer, logger, layer_name=layer_name)
-        quantized_module = QuantizedLinear(state, bias=bias)
-        quantized_module.to(device)
+    ordered_layer_names = list(target_specs.keys())
+    device_shards = _build_device_shards(target_specs=target_specs, fit_devices=fit_devices)
+    for fit_device, shard_layer_names in device_shards.items():
+        shard_block_indices = sorted(
+            {
+                target_specs[layer_name].block_index
+                for layer_name in shard_layer_names
+                if target_specs[layer_name].block_index >= 0
+            }
+        )
+        shard_extra_targets = [
+            layer_name
+            for layer_name in shard_layer_names
+            if target_specs[layer_name].block_index < 0
+        ]
+        logger.info(
+            "设备分片 | fit_device=%s num_layers=%d block_indices=%s extra_targets=%s layers=%s",
+            fit_device,
+            len(shard_layer_names),
+            shard_block_indices,
+            shard_extra_targets,
+            list(shard_layer_names),
+        )
+
+    shard_results: Dict[str, Tuple[QuantizationState, Dict[str, float], Dict[str, object], Optional[torch.Tensor]]] = {}
+
+    if len(fit_devices) == 1:
+        only_device = fit_devices[0]
+        shard_results.update(
+            _quantize_layer_shard(
+                shard_layer_names=device_shards[only_device],
+                payloads=payloads,
+                quant_config=quantizer.config,
+                logger=logger,
+                fit_device=only_device,
+            )
+        )
+    else:
+        with ThreadPoolExecutor(max_workers=len(fit_devices)) as executor:
+            futures = {
+                executor.submit(
+                    _quantize_layer_shard,
+                    shard_layer_names=device_shards[fit_device],
+                    payloads=payloads,
+                    quant_config=quantizer.config,
+                    logger=logger,
+                    fit_device=fit_device,
+                ): fit_device
+                for fit_device in fit_devices
+                if device_shards[fit_device]
+            }
+            for future in as_completed(futures):
+                fit_device = futures[future]
+                shard_output = future.result()
+                logger.info("拟合分片完成 | fit_device=%s num_layers=%d", fit_device, len(shard_output))
+                shard_results.update(shard_output)
+
+    for layer_name in ordered_layer_names:
+        state, metrics, layer_tensor_info, bias_cpu = shard_results[layer_name]
+        quantized_module = QuantizedLinear(state, bias=bias_cpu)
+        inference_dtype = target_specs[layer_name].module.weight.dtype
+        quantized_module.to(device=device, dtype=inference_dtype)
 
         quantized_modules[layer_name] = quantized_module
         states[layer_name] = state
         metrics_by_layer[layer_name] = metrics
-
-        tensor_info[f"{layer_name}.X_calib"] = tensor_stats(X_calib)
-        tensor_info[f"{layer_name}.W"] = tensor_stats(W)
-        tensor_info[f"{layer_name}.U"] = tensor_stats(state.U)
-        tensor_info[f"{layer_name}.lambda_x"] = tensor_stats(state.lambda_x)
-        tensor_info[f"{layer_name}.lambda_w"] = tensor_stats(state.lambda_w)
-        tensor_info[f"{layer_name}.Z_w"] = tensor_stats(state.Z_w)
-        if bias is not None:
-            tensor_info[f"{layer_name}.bias"] = tensor_stats(bias)
+        tensor_info.update(layer_tensor_info)
 
     logger.info("Ours 量化模块构建完成。")
     return quantized_modules, states, metrics_by_layer, tensor_info
-
 
 
 def build_sq_target_modules(
@@ -1287,27 +1674,28 @@ def build_sq_target_modules(
     Dict[str, Dict[str, float]],
     Dict[str, Dict[str, object]],
 ]:
-    logger.info("开始为所有目标 transformer blocks 的 Q/K/V/O 线性层构建 SQ-XW 对照组。")
+    logger.info("开始为所有目标层构建 SQ-XW 对照组。")
     sq_modules: Dict[str, nn.Module] = {}
     sq_metrics_by_layer: Dict[str, Dict[str, float]] = {}
     sq_tensor_info: Dict[str, Dict[str, object]] = {}
 
     bits = infer_sq_bitwidth_from_codebook(quant_config.codebook)
-    dtype = get_torch_dtype(quant_config.dtype)
+    quant_dtype = get_torch_dtype(quant_config.dtype)
 
     for layer_name, spec in target_specs.items():
         module = spec.module
-        X_calib = X_calib_by_layer[layer_name].to(dtype=dtype)
-        W = module.weight.detach().T.cpu().to(dtype=dtype)
-        bias = None if module.bias is None else module.bias.detach().to(device=device, dtype=dtype)
+        inference_dtype = module.weight.dtype
+        X_calib = X_calib_by_layer[layer_name].to(dtype=quant_dtype)
+        W = module.weight.detach().T.cpu().to(dtype=quant_dtype)
+        bias = None if module.bias is None else module.bias.detach().cpu().to(dtype=inference_dtype)
 
         x_scale = scalar_quant_scale_maxabs(X_calib, bits=bits, eps=quant_config.eps)
         W_q, w_scale = scalar_quantize_maxabs(W, bits=bits, eps=quant_config.eps)
         sq_metrics = compute_sq_xw_metrics(X_calib, W, x_scale, w_scale, bits=bits, logger=logger, layer_name=layer_name)
 
         sq_module = ScalarQuantizedXWLinear(
-            weight_quantized=W_q,
-            x_scale=x_scale,
+            weight_quantized=W_q.to(dtype=inference_dtype),
+            x_scale=x_scale.to(dtype=inference_dtype),
             bits=bits,
             bias=bias,
             eps=quant_config.eps,
@@ -1334,7 +1722,7 @@ def build_sq_target_modules(
 
 
 
-def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifacts:
+def run_quant_experiment(config: ExperimentConfig) -> ExperimentArtifacts:
     set_seed(config.seed)
     output_dir = Path(config.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1342,44 +1730,62 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
 
     logger.info("========== 实验开始 ==========")
     logger.info("实验配置：%s", json.dumps(asdict(config), ensure_ascii=False, indent=2))
-    logger.info("说明：本版本沿用 v8 的评测口径；将所有目标 transformer blocks 的 Q/K/V/O 量化，并加入独立 SQ-XW 对照组。")
-    logger.info("当前 latent_mode=%s", config.quant.latent_mode)
+    logger.info("说明：本版本沿用你当前脚本的评测口径；支持 qkvo / linear / all 三种目标范围，并加入独立 SQ-XW 对照组。")
+    fit_devices = resolve_fit_devices(config)
+    logger.info(
+        "当前 latent_mode=%s | target_mode=%s | experiment_name=%s | fit_devices=%s",
+        config.quant.latent_mode,
+        config.target.target_mode,
+        config.experiment_name,
+        fit_devices,
+    )
 
     timing_info: Dict[str, float] = {}
     ppl_eval_info: Dict[str, Dict[str, float]] = {}
     quantization_completed = False
+    baseline_ppl: Optional[float] = None
+    sq_baseline_ppl: Optional[float] = None
+    sq_bits: Optional[int] = None
+    sq_metrics_by_layer: Dict[str, Dict[str, float]] = {}
+    sq_tensor_info: Dict[str, Dict[str, object]] = {}
 
     model, tokenizer, model_load_time = load_model_and_tokenizer(config, logger)
     timing_info["model_load_sec"] = model_load_time
 
-    target_specs = get_all_block_attention_targets(
-        model,
-        target_linear_names=config.target.target_linear_names,
-        block_indices=config.target.block_indices,
+    target_specs = get_target_specs(
+        model=model,
+        target_config=config.target,
+        logger=logger,
     )
     target_modules = {layer_name: spec.module for layer_name, spec in target_specs.items()}
-    resolved_block_indices = sorted({spec.block_index for spec in target_specs.values()})
+    resolved_block_indices = sorted({spec.block_index for spec in target_specs.values() if spec.block_index >= 0})
+    extra_top_level_targets = [key for key, spec in target_specs.items() if spec.block_index < 0]
     logger.info(
-        "目标层定位完成 | num_blocks=%d block_indices=%s target_layers=%d",
+        "目标层定位完成 | experiment=%s num_blocks=%d block_indices=%s extra_top_level_targets=%s target_layers=%d",
+        config.experiment_name,
         len(resolved_block_indices),
         resolved_block_indices,
+        extra_top_level_targets,
         len(target_specs),
     )
 
     calib_text = load_text_split(config, config.data.calib_split, logger)
     eval_text = load_text_split(config, config.data.eval_split, logger)
 
-    baseline_ppl, baseline_eval_stats = evaluate_perplexity_sliding_window(
-        model=model,
-        tokenizer=tokenizer,
-        text=eval_text,
-        device=config.eval.device,
-        stride=config.eval.stride,
-        max_eval_tokens=config.data.eval_num_tokens,
-        logger=logger,
-        tag="baseline_fp",
-    )
-    ppl_eval_info["baseline_fp"] = baseline_eval_stats
+    if config.eval.run_baseline_ppl:
+        baseline_ppl, baseline_eval_stats = evaluate_perplexity_sliding_window(
+            model=model,
+            tokenizer=tokenizer,
+            text=eval_text,
+            device=config.eval.device,
+            stride=config.eval.stride,
+            max_eval_tokens=config.data.eval_num_tokens,
+            logger=logger,
+            tag="baseline_fp",
+        )
+        ppl_eval_info["baseline_fp"] = baseline_eval_stats
+    else:
+        logger.info("跳过原始模型 baseline PPL 评测。")
 
     t0 = time.perf_counter()
     calib_input_ids = tokenize_text(calib_text, tokenizer, max_tokens=config.data.calib_num_tokens)
@@ -1398,32 +1804,35 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
     timing_info["collect_target_inputs_sec"] = time.perf_counter() - t0
 
     # ---------- 构建 SQ-XW 对照组（独立，不影响 Ours） ----------
-    t0 = time.perf_counter()
-    sq_modules, sq_bits, sq_metrics_by_layer, sq_tensor_info = build_sq_target_modules(
-        target_specs=target_specs,
-        X_calib_by_layer=X_calib_by_layer,
-        quant_config=config.quant,
-        logger=logger,
-        device=config.eval.device,
-    )
-    timing_info["build_sq_baseline_sec"] = time.perf_counter() - t0
-
-    original_modules = replace_target_modules(target_specs, sq_modules)
-    try:
-        sq_baseline_ppl, sq_eval_stats = evaluate_perplexity_sliding_window(
-            model=model,
-            tokenizer=tokenizer,
-            text=eval_text,
-            device=config.eval.device,
-            stride=config.eval.stride,
-            max_eval_tokens=config.data.eval_num_tokens,
+    if config.eval.run_sq_baseline:
+        t0 = time.perf_counter()
+        sq_modules, sq_bits, sq_metrics_by_layer, sq_tensor_info = build_sq_target_modules(
+            target_specs=target_specs,
+            X_calib_by_layer=X_calib_by_layer,
+            quant_config=config.quant,
             logger=logger,
-            tag="sq_all_blocks_qkvo",
+            device=config.eval.device,
         )
-        ppl_eval_info["sq_all_blocks_qkvo"] = sq_eval_stats
-        logger.info("SQ-XW 对照组（全目标层）评测完成。")
-    finally:
-        restore_target_modules(target_specs, original_modules)
+        timing_info["build_sq_baseline_sec"] = time.perf_counter() - t0
+
+        original_modules = replace_target_modules(target_specs, sq_modules)
+        try:
+            sq_baseline_ppl, sq_eval_stats = evaluate_perplexity_sliding_window(
+                model=model,
+                tokenizer=tokenizer,
+                text=eval_text,
+                device=config.eval.device,
+                stride=config.eval.stride,
+                max_eval_tokens=config.data.eval_num_tokens,
+                logger=logger,
+                tag=f"sq_{config.target.target_mode}",
+            )
+            ppl_eval_info["sq_quantized"] = sq_eval_stats
+            logger.info("SQ-XW 对照组评测完成。")
+        finally:
+            restore_target_modules(target_specs, original_modules)
+    else:
+        logger.info("跳过 SQ-XW 对照组构建与评测。")
 
     # ---------- 构建 Ours（与 v8 同口径） ----------
     quantizer = LatticeLinearQuantizer(config.quant, logger=logger)
@@ -1434,6 +1843,7 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
         quantizer=quantizer,
         logger=logger,
         device=config.eval.device,
+        fit_devices=fit_devices,
     )
     timing_info["fit_quantizer_and_metrics_sec"] = time.perf_counter() - t0
     timing_info["fit_quantizer_sec_total"] = sum(state.fit_time_sec for state in states.values())
@@ -1448,11 +1858,11 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
             stride=config.eval.stride,
             max_eval_tokens=config.data.eval_num_tokens,
             logger=logger,
-            tag="ours_all_blocks_qkvo",
+            tag=f"ours_{config.target.target_mode}",
         )
-        ppl_eval_info["ours_all_blocks_qkvo"] = quantized_eval_stats
+        ppl_eval_info["ours_quantized"] = quantized_eval_stats
         quantization_completed = True
-        logger.info("全目标层量化推理完成，quantized PPL 已得到。")
+        logger.info("目标层量化推理完成，quantized PPL 已得到。")
     finally:
         restore_target_modules(target_specs, original_modules)
 
@@ -1470,7 +1880,8 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
 
     merged_tensor_info = dict(tensor_info)
     merged_tensor_info.update(sq_tensor_info)
-    merged_tensor_info["sq_bitwidth"] = {"value": sq_bits}
+    if sq_bits is not None:
+        merged_tensor_info["sq_bitwidth"] = {"value": sq_bits}
 
     convergence_iters = {layer_name: state.convergence_iter for layer_name, state in states.items()}
     objective_histories = {layer_name: state.objective_history for layer_name, state in states.items()}
@@ -1480,10 +1891,14 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
     target_info = {
         "block_indices": resolved_block_indices,
         "num_blocks": len(resolved_block_indices),
-        "target_linear_names": list(config.target.target_linear_names),
+        "target_mode": config.target.target_mode,
+        "target_keys": list(target_specs.keys()),
         "collected_token_counts": collected_token_counts,
         "model_name": config.data.model_name,
         "latent_mode": config.quant.latent_mode,
+        "experiment_name": config.experiment_name,
+        "extra_top_level_targets": extra_top_level_targets,
+        "fit_devices": fit_devices,
     }
 
     artifacts = ExperimentArtifacts(
@@ -1507,7 +1922,7 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
         target_info=target_info,
     )
 
-    with open(output_dir / "all_blocks_qkvo_results.json", "w", encoding="utf-8") as f:
+    with open(output_dir / "results.json", "w", encoding="utf-8") as f:
         json.dump(asdict(artifacts), f, ensure_ascii=False, indent=2)
 
     summary_text = build_analysis_summary(artifacts)
@@ -1523,14 +1938,139 @@ def run_all_blocks_qkvo_experiment(config: ExperimentConfig) -> ExperimentArtifa
 
 
 
+def parse_block_indices(block_indices_text: Optional[str]) -> Optional[Tuple[int, ...]]:
+    if block_indices_text is None or block_indices_text.strip() == "":
+        return None
+    values = []
+    for item in block_indices_text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        values.append(int(item))
+    return tuple(values)
+
+
+def get_array_index(cli_array_index: Optional[int]) -> Optional[int]:
+    if cli_array_index is not None:
+        return int(cli_array_index)
+    env_val = os.environ.get("SLURM_ARRAY_TASK_ID")
+    if env_val is None:
+        return None
+    return int(env_val)
+
+
+def apply_array_experiment(base_config: ExperimentConfig, array_index: int) -> ExperimentConfig:
+    if array_index < 0 or array_index >= len(ARRAY_EXPERIMENTS):
+        raise IndexError(f"array_index={array_index} out of range for {len(ARRAY_EXPERIMENTS)} experiments")
+    spec = ARRAY_EXPERIMENTS[array_index]
+    target = replace(
+        base_config.target,
+        target_mode=str(spec["target_mode"]),
+        block_indices=spec["block_indices"],
+    )
+    output_dir = str(Path(base_config.output_dir) / str(spec["experiment_name"]))
+    return replace(
+        base_config,
+        target=target,
+        output_dir=output_dir,
+        experiment_name=str(spec["experiment_name"]),
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="SOB quantization experiment with qkvo/linear/all target modes.")
+    parser.add_argument("--array_index", type=int, default=None)
+    parser.add_argument("--model_name", type=str, default=None)
+    parser.add_argument("--model_dtype", type=str, default=None)
+    parser.add_argument("--output_dir", type=str, default=None)
+    parser.add_argument("--device", type=str, default=None)
+    parser.add_argument("--fit_devices", type=str, default=None)
+    parser.add_argument("--run_mode", type=str, choices=["discrete", "continuous", "both"], default=None)
+    parser.add_argument("--calib_num_tokens", type=int, default=None)
+    parser.add_argument("--eval_num_tokens", type=int, default=None)
+    parser.add_argument("--stride", type=int, default=None)
+    parser.add_argument("--beta", type=float, default=None)
+    parser.add_argument("--gamma", type=float, default=None)
+    parser.add_argument("--lambda_inner_iters", type=int, default=None)
+    parser.add_argument("--max_iters", type=int, default=None)
+    parser.add_argument("--init_mode", type=str, default=None)
+    parser.add_argument("--error_mode", type=str, default=None)
+    parser.add_argument("--target_mode", type=str, choices=["qkvo", "linear", "all"], default=None)
+    parser.add_argument("--block_indices", type=str, default=None)
+    parser.add_argument("--run_baseline_ppl", type=str, choices=["true", "false"], default=None)
+    parser.add_argument("--run_sq_baseline", type=str, choices=["true", "false"], default=None)
+    parser.add_argument("--x_codebook_mode", type=str, choices=["int4", "int6", "none"], default=None)
+    return parser.parse_args()
+
+
+def build_config_from_args(args: argparse.Namespace) -> ExperimentConfig:
+    config = build_default_config()
+    array_index = get_array_index(args.array_index)
+    manual_target_selection = args.target_mode is not None or args.block_indices is not None
+    if array_index is not None and (args.array_index is not None or not manual_target_selection):
+        config = apply_array_experiment(config, array_index)
+
+    if args.model_name is not None:
+        config = replace(config, data=replace(config.data, model_name=args.model_name))
+    if args.model_dtype is not None:
+        config = replace(config, data=replace(config.data, model_dtype=args.model_dtype))
+    if args.output_dir is not None:
+        config = replace(config, output_dir=args.output_dir)
+    if args.device is not None:
+        config = replace(config, eval=replace(config.eval, device=args.device))
+    parsed_fit_devices = parse_device_list(args.fit_devices)
+    if args.fit_devices is not None:
+        config = replace(config, eval=replace(config.eval, fit_devices=parsed_fit_devices))
+    if args.run_mode is not None:
+        config = replace(config, run_mode=args.run_mode)
+    if args.calib_num_tokens is not None:
+        config = replace(config, data=replace(config.data, calib_num_tokens=args.calib_num_tokens))
+    if args.eval_num_tokens is not None:
+        config = replace(config, data=replace(config.data, eval_num_tokens=args.eval_num_tokens))
+    if args.stride is not None:
+        config = replace(config, eval=replace(config.eval, stride=args.stride))
+    if args.beta is not None:
+        config = replace(config, quant=replace(config.quant, beta=args.beta))
+    if args.gamma is not None:
+        config = replace(config, quant=replace(config.quant, ip_reg_gamma=args.gamma))
+    if args.lambda_inner_iters is not None:
+        config = replace(config, quant=replace(config.quant, ip_reg_inner_iters=args.lambda_inner_iters))
+    if args.max_iters is not None:
+        config = replace(config, quant=replace(config.quant, max_iters=args.max_iters))
+    if args.init_mode is not None:
+        config = replace(config, quant=replace(config.quant, init_mode=args.init_mode))
+    if args.error_mode is not None:
+        config = replace(config, quant=replace(config.quant, error_mode=args.error_mode))
+    if args.run_baseline_ppl is not None:
+        config = replace(
+            config,
+            eval=replace(config.eval, run_baseline_ppl=(args.run_baseline_ppl.lower() == "true")),
+        )
+    if args.run_sq_baseline is not None:
+        config = replace(
+            config,
+            eval=replace(config.eval, run_sq_baseline=(args.run_sq_baseline.lower() == "true")),
+        )
+    if args.x_codebook_mode is not None:
+        config = replace(config, quant=replace(config.quant, x_codebook_mode=args.x_codebook_mode))
+    if args.target_mode is not None:
+        config = replace(config, target=replace(config.target, target_mode=args.target_mode))
+    parsed_block_indices = parse_block_indices(args.block_indices)
+    if args.block_indices is not None:
+        config = replace(config, target=replace(config.target, block_indices=parsed_block_indices))
+    return config
+
+
 def main() -> None:
-    config = ExperimentConfig()
+    args = parse_args()
+    config = build_config_from_args(args)
+
     run_mode = config.run_mode.lower()
     if run_mode not in {"discrete", "continuous", "both"}:
         raise ValueError(f"Unsupported run_mode: {config.run_mode}")
 
     if run_mode in {"discrete", "both"}:
-        discrete_artifacts = run_all_blocks_qkvo_experiment(config)
+        discrete_artifacts = run_quant_experiment(config)
         print(json.dumps(asdict(discrete_artifacts), ensure_ascii=False, indent=2))
         print("\n===== Discrete Summary =====\n")
         print(build_analysis_summary(discrete_artifacts))
@@ -1546,7 +2086,7 @@ def main() -> None:
             ),
             run_mode="continuous",
         )
-        continuous_artifacts = run_all_blocks_qkvo_experiment(continuous_config)
+        continuous_artifacts = run_quant_experiment(continuous_config)
         print("\n===== Continuous Summary =====\n")
         print(build_analysis_summary(continuous_artifacts))
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from pathlib import Path
+from typing import Dict, Mapping, Optional, Tuple
 
 try:
     import torch
@@ -10,6 +12,8 @@ except ImportError:  # pragma: no cover
 
 
 Codebook = Tuple[float, ...]
+GammaOverrideMap = Dict[str, float]
+InitMode = str
 
 CODEBOOKS: dict[str, Codebook] = {
     "d5": (-2.0, -1.0, 0.0, 1.0, 2.0),
@@ -21,6 +25,16 @@ CODEBOOKS: dict[str, Codebook] = {
     "4b": (-8.0, -7.0, -6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0),
     "4b2": (-16.0, -8.0, -4.0, -2.0, -1.0, -0.5, -0.25, -0.125, 0.0, 0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0),
 }
+
+INIT_MODES: Tuple[InitMode, ...] = (
+    "random",
+    "random_hadamard",
+    "pca",
+    "pca_uncentered",
+    "split_pca_z_init",
+    "joint_weighted_pca",
+    "joint_weighted_pca_uncentered",
+)
 
 
 def parse_codebook(spec: str) -> Codebook:
@@ -54,6 +68,33 @@ def parse_target_linear_names(spec: str) -> Tuple[str, ...]:
     return values
 
 
+def normalize_ip_reg_gamma_overrides(value: Optional[str | Mapping[str, float]]) -> GammaOverrideMap:
+    if value is None:
+        return {}
+
+    payload: object
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return {}
+        if text.startswith("@"):
+            text = Path(text[1:]).read_text(encoding="utf-8")
+        payload = json.loads(text)
+    else:
+        payload = dict(value)
+
+    if not isinstance(payload, dict):
+        raise ValueError("ip_reg_gamma_overrides must be a JSON object or mapping.")
+
+    overrides: GammaOverrideMap = {}
+    for raw_key, raw_gamma in payload.items():
+        key = str(raw_key).strip()
+        if not key:
+            raise ValueError("ip_reg_gamma_overrides keys cannot be empty.")
+        overrides[key] = float(raw_gamma)
+    return overrides
+
+
 @dataclass
 class DataConfig:
     model_name: str = "facebook/opt-125m"
@@ -69,6 +110,7 @@ class DataConfig:
 @dataclass
 class QuantizerConfig:
     beta: float = 1.0
+    beta_pca: float = 1.0
     max_iters: int = 80
     tol: float = 1e-5
     convergence_check_every: int = 1
@@ -76,11 +118,21 @@ class QuantizerConfig:
     codebook: Codebook = CODEBOOKS["d5"]
     dtype: str = "float32"
     eps: float = 1e-8
-    init_mode: str = "random"
+    init_mode: InitMode = "random"
     error_mode: str = "relative"
     latent_mode: str = "discrete"
     ip_reg_gamma: float = 0.0
+    ip_reg_gamma_overrides: GammaOverrideMap = field(default_factory=dict)
     ip_reg_inner_iters: int = 1
+    lambda_quantile_init_enable: bool = False
+    lambda_quantile_rebalance_enable: bool = False
+    lambda_quantile_p: float = 0.95
+    lambda_quantile_rho: float = 0.8
+    lambda_quantile_alpha: float = 0.0
+    lambda_rebalance_ratio_min: float = 0.8
+    lambda_rebalance_ratio_max: float = 1.25
+    lambda_min_value: float = 1e-4
+    lambda_max_value: float = 1e4
     fit_device: str = "cpu"
 
 
