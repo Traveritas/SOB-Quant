@@ -16,7 +16,9 @@ from .cli import add_experiment_args
 from .config import (
     CODEBOOKS,
     ExperimentConfig,
+    REORTH_METHODS,
     normalize_ip_reg_gamma_overrides,
+    normalize_reorth_method,
     parse_block_indices,
     parse_codebook,
     parse_target_linear_names,
@@ -192,6 +194,8 @@ def normalize_grid_value(path: str, value: Any) -> Any:
         if isinstance(value, str):
             return parse_target_linear_names(value)
         return tuple(str(item) for item in value)
+    if path == "quant_ext.reorth_method":
+        return normalize_reorth_method(str(value))
     if path == "output_dir":
         return str(value)
     return value
@@ -214,6 +218,8 @@ def normalize_override_value(path: str, value: Any) -> Any:
         if isinstance(value, str):
             return parse_target_linear_names(value)
         return tuple(str(item) for item in value)
+    if path == "quant_ext.reorth_method":
+        return normalize_reorth_method(str(value))
     return value
 
 
@@ -300,6 +306,7 @@ def combo_to_name(combo: Dict[str, Any]) -> str:
         else:
             short = (
                 path.replace("quant.", "q_")
+                .replace("quant_ext.", "qx_")
                 .replace("target.", "t_")
                 .replace("data.", "d_")
                 .replace("eval.", "e_")
@@ -639,6 +646,9 @@ def build_base_config(args: argparse.Namespace, file_config: SweepFileConfig) ->
         "lambda_min_value": ("quant.lambda_min_value", args.lambda_min_value, 1e-4),
         "lambda_max_value": ("quant.lambda_max_value", args.lambda_max_value, 1e4),
         "fit_device": ("quant.fit_device", args.fit_device, "cpu"),
+        "log_orth_error": ("quant_ext.log_orth_error", args.log_orth_error, False),
+        "reorth_after_u_update": ("quant_ext.reorth_after_u_update", args.reorth_after_u_update, False),
+        "reorth_method": ("quant_ext.reorth_method", normalize_reorth_method(args.reorth_method), REORTH_METHODS[0]),
         "stride": ("eval.stride", args.stride, 512),
         "output_dir": ("output_dir", args.output_dir, "./qkvo_refactor_outputs"),
         "seed": ("seed", args.seed, 42),

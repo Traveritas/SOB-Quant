@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover
 Codebook = Tuple[float, ...]
 GammaOverrideMap = Dict[str, float]
 InitMode = str
+ReorthMethod = str
 
 CODEBOOKS: dict[str, Codebook] = {
     "d5": (-2.0, -1.0, 0.0, 1.0, 2.0),
@@ -35,6 +36,8 @@ INIT_MODES: Tuple[InitMode, ...] = (
     "joint_weighted_pca",
     "joint_weighted_pca_uncentered",
 )
+
+REORTH_METHODS: Tuple[ReorthMethod, ...] = ("svd", "qr")
 
 
 def parse_codebook(spec: str) -> Codebook:
@@ -95,6 +98,14 @@ def normalize_ip_reg_gamma_overrides(value: Optional[str | Mapping[str, float]])
     return overrides
 
 
+def normalize_reorth_method(spec: str) -> ReorthMethod:
+    method = spec.strip().lower()
+    if method not in REORTH_METHODS:
+        choices = ", ".join(REORTH_METHODS)
+        raise ValueError(f"Unsupported reorth_method {spec!r}. Expected one of: {choices}")
+    return method
+
+
 @dataclass
 class DataConfig:
     model_name: str = "facebook/opt-125m"
@@ -137,6 +148,16 @@ class QuantizerConfig:
 
 
 @dataclass
+class QuantExtConfig:
+    log_orth_error: bool = False
+    reorth_after_u_update: bool = False
+    reorth_method: ReorthMethod = REORTH_METHODS[0]
+
+    def __post_init__(self) -> None:
+        self.reorth_method = normalize_reorth_method(self.reorth_method)
+
+
+@dataclass
 class EvalConfig:
     stride: int = 512
     device: str = "cuda" if torch is not None and torch.cuda.is_available() else "cpu"
@@ -152,6 +173,7 @@ class TargetConfig:
 class ExperimentConfig:
     data: DataConfig = field(default_factory=DataConfig)
     quant: QuantizerConfig = field(default_factory=QuantizerConfig)
+    quant_ext: QuantExtConfig = field(default_factory=QuantExtConfig)
     eval: EvalConfig = field(default_factory=EvalConfig)
     target: TargetConfig = field(default_factory=TargetConfig)
     output_dir: str = "./qkvo_refactor_outputs"

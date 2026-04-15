@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import logging
 import math
@@ -39,6 +40,7 @@ from .model_utils import (
 )
 from .quantizer import LatticeLinearQuantizer, QuantizationState
 from .quantizer import QuantizerTrackingOptions, UTraceObserver
+from .orthogonality import ORTHOGONALITY_DIAGNOSTIC_COLUMNS
 
 
 @dataclass
@@ -61,6 +63,7 @@ class ExperimentArtifacts:
     ppl_eval_info: Dict[str, Dict[str, float]]
     plot_paths: Dict[str, Dict[str, str]]
     tracking_info: Dict[str, Dict[str, object]]
+    diagnostic_paths: Dict[str, Dict[str, str]]
     target_info: Dict[str, object]
 
 
@@ -76,6 +79,70 @@ def average_metrics(metrics_by_layer: Dict[str, Dict[str, float]]) -> Dict[str, 
 
 def layer_prefix(layer_name: str) -> str:
     return layer_name.replace(".", "_")
+
+
+def write_records_csv(path: Path, rows: List[Dict[str, object]], fieldnames: Tuple[str, ...]) -> None:
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(fieldnames), extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
+def save_u_orthogonality_diagnostics(
+    output_root: Path,
+    tracking_by_layer: Dict[str, Dict[str, object]],
+    logger: logging.Logger,
+) -> Dict[str, Dict[str, str]]:
+    diagnostic_paths: Dict[str, Dict[str, str]] = {}
+    aggregate_json_payload: List[Dict[str, object]] = []
+    aggregate_csv_rows: List[Dict[str, object]] = []
+
+    for layer_name, tracking in tracking_by_layer.items():
+        orth_payload = tracking.get("u_orthogonality")
+        if not isinstance(orth_payload, dict):
+            continue
+
+        history = orth_payload.get("history", [])
+        if not isinstance(history, list) or not history:
+            continue
+
+        layer_dir = output_root / "diagnostics" / layer_prefix(layer_name)
+        json_path = layer_dir / "u_orthogonality.json"
+        csv_path = layer_dir / "u_orthogonality.csv"
+        payload = {"layer_name": layer_name, **orth_payload}
+        write_json(json_path, payload)
+        write_records_csv(csv_path, history, ORTHOGONALITY_DIAGNOSTIC_COLUMNS)
+
+        diagnostic_paths[layer_name] = {
+            "u_orthogonality_json": str(json_path),
+            "u_orthogonality_csv": str(csv_path),
+        }
+        tracking["u_orthogonality_paths"] = diagnostic_paths[layer_name]
+        aggregate_json_payload.append(payload)
+        aggregate_csv_rows.extend({"layer_name": layer_name, **row} for row in history)
+        logger.info("Saved U orthogonality diagnostics | tag=%s json=%s csv=%s", layer_name, json_path, csv_path)
+
+    if aggregate_json_payload:
+        diagnostics_dir = output_root / "diagnostics"
+        aggregate_json_path = diagnostics_dir / "u_orthogonality_all_layers.json"
+        aggregate_csv_path = diagnostics_dir / "u_orthogonality_all_layers.csv"
+        write_json(aggregate_json_path, aggregate_json_payload)
+        write_records_csv(aggregate_csv_path, aggregate_csv_rows, ("layer_name",) + ORTHOGONALITY_DIAGNOSTIC_COLUMNS)
+        diagnostic_paths["_aggregate"] = {
+            "u_orthogonality_json": str(aggregate_json_path),
+            "u_orthogonality_csv": str(aggregate_csv_path),
+        }
+        logger.info(
+            "Saved aggregated U orthogonality diagnostics | json=%s csv=%s",
+            aggregate_json_path,
+            aggregate_csv_path,
+        )
+
+    return diagnostic_paths
 
 
 def save_loss_plots(
@@ -308,6 +375,7 @@ def build_quantized_modules(
     Dict[str, Dict[str, object]],
     Dict[str, Dict[str, str]],
     Dict[str, Dict[str, object]],
+    Dict[str, Dict[str, str]],
 ]:
     logger.info("Build quantized modules")
 
@@ -333,6 +401,7 @@ def build_quantized_modules(
             logger=logger,
             observers=observers,
             tracking_options=tracking_options,
+            quant_ext_config=config.quant_ext,
         )
         X_calib = X_calib_by_layer[layer_name].to(device=config.quant.fit_device, dtype=quantizer.dtype)
         state = quantizer.fit(X_calib, W, tag=layer_name)
@@ -361,7 +430,8 @@ def build_quantized_modules(
         else:
             plot_paths[layer_name] = {}
 
-    return quantized_modules, states, metrics_by_layer, tensor_info, plot_paths, tracking_by_layer
+    diagnostic_paths = save_u_orthogonality_diagnostics(Path(config.output_dir), tracking_by_layer, logger)
+    return quantized_modules, states, metrics_by_layer, tensor_info, plot_paths, tracking_by_layer, diagnostic_paths
 
 
 def build_sq_modules(
@@ -532,7 +602,7 @@ def run_experiment(
             restore_target_modules(target_specs, original_modules)
 
     start = time.perf_counter()
-    quantized_modules, states, quant_metrics_by_layer, tensor_info, plot_paths, tracking_info = build_quantized_modules(
+    quantized_modules, states, quant_metrics_by_layer, tensor_info, plot_paths, tracking_info, diagnostic_paths = build_quantized_modules(
         target_specs=target_specs,
         X_calib_by_layer=X_calib_by_layer,
         config=config,
@@ -583,6 +653,7 @@ def run_experiment(
         ppl_eval_info=ppl_eval_info,
         plot_paths=plot_paths,
         tracking_info=tracking_info,
+        diagnostic_paths=diagnostic_paths,
         target_info={
             "block_indices": resolved_block_indices,
             "target_linear_names": list(config.target.target_linear_names),

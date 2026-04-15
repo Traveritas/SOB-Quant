@@ -10,7 +10,12 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 import torch
 
 from .common import get_torch_dtype, quantize_nearest, reconstruction_objective, weighted_cross, weighted_gram
-from .config import QuantizerConfig
+from .config import QuantExtConfig, QuantizerConfig
+from .orthogonality import (
+    compute_orthogonality_error_stats,
+    compute_orthogonality_fro_error,
+    reorthogonalize_matrix,
+)
 
 
 @dataclass
@@ -97,6 +102,29 @@ def _should_save_u_matrix(iteration: int, max_iters: int, options: QuantizerTrac
         return True
     interval = max(1, options.track_u_save_interval)
     return iteration % interval == 0
+
+
+def _format_optional_float(value: Optional[float]) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.6e}"
+
+
+def _summarize_u_orthogonality_history(history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    fro_values = [float(point["orth_err_fro"]) for point in history if point.get("orth_err_fro") is not None]
+    summary: Dict[str, Any] = {
+        "num_records": len(history),
+        "reorth_applied_count": sum(1 for point in history if bool(point.get("reorth_applied"))),
+    }
+    if fro_values:
+        summary.update(
+            {
+                "orth_err_fro_min": min(fro_values),
+                "orth_err_fro_max": max(fro_values),
+                "orth_err_fro_final": fro_values[-1],
+            }
+        )
+    return summary
 
 
 def compute_u_trace_point(
@@ -253,6 +281,7 @@ class LatticeLinearQuantizer:
         logger: Optional[logging.Logger] = None,
         observers: Optional[Sequence[QuantizerObserver]] = None,
         tracking_options: Optional[QuantizerTrackingOptions] = None,
+        quant_ext_config: Optional[QuantExtConfig] = None,
     ):
         self.config = config
         self.dtype = get_torch_dtype(config.dtype)
@@ -260,6 +289,69 @@ class LatticeLinearQuantizer:
         self.logger = logger
         self.observers = list(observers or [])
         self.tracking_options = tracking_options or QuantizerTrackingOptions()
+        self.quant_ext_config = quant_ext_config or QuantExtConfig()
+
+    def _orthogonality_enabled(self) -> bool:
+        return bool(self.quant_ext_config.log_orth_error or self.quant_ext_config.reorth_after_u_update)
+
+    def _orthogonality_config_payload(self) -> Dict[str, Any]:
+        return {
+            "log_orth_error": bool(self.quant_ext_config.log_orth_error),
+            "reorth_after_u_update": bool(self.quant_ext_config.reorth_after_u_update),
+            "reorth_method": str(self.quant_ext_config.reorth_method),
+        }
+
+    def _process_u_update_orthogonality(
+        self,
+        U_new: torch.Tensor,
+        *,
+        tag: str,
+        iteration: int,
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, Any]]]:
+        if not self._orthogonality_enabled():
+            return U_new, None
+
+        record: Dict[str, Any] = {
+            "iteration": int(iteration),
+            "orth_metrics_stage": "post_update",
+            "orth_err_fro": None,
+            "orth_err_spec": None,
+            "orth_diag_max": None,
+            "orth_offdiag_max": None,
+            "reorth_applied": bool(self.quant_ext_config.reorth_after_u_update),
+            "reorth_method": self.quant_ext_config.reorth_method if self.quant_ext_config.reorth_after_u_update else None,
+            "reorth_orth_err_fro_before": None,
+            "reorth_orth_err_fro_after": None,
+        }
+
+        if self.quant_ext_config.reorth_after_u_update:
+            record["reorth_orth_err_fro_before"] = compute_orthogonality_fro_error(U_new)
+            U_new = reorthogonalize_matrix(U_new, method=self.quant_ext_config.reorth_method)
+            record["reorth_orth_err_fro_after"] = compute_orthogonality_fro_error(U_new)
+            record["orth_metrics_stage"] = "post_reorth"
+
+        if self.quant_ext_config.log_orth_error:
+            record.update(compute_orthogonality_error_stats(U_new))
+        elif record["reorth_orth_err_fro_after"] is not None:
+            record["orth_err_fro"] = float(record["reorth_orth_err_fro_after"])
+
+        if self.logger is not None:
+            self.logger.info(
+                "tag=%s iter=%03d | U orth stage=%s fro=%s spec=%s diag_max=%s offdiag_max=%s reorth=%s method=%s fro_before=%s fro_after=%s",
+                tag,
+                iteration,
+                record["orth_metrics_stage"],
+                _format_optional_float(record["orth_err_fro"]),
+                _format_optional_float(record["orth_err_spec"]),
+                _format_optional_float(record["orth_diag_max"]),
+                _format_optional_float(record["orth_offdiag_max"]),
+                record["reorth_applied"],
+                record["reorth_method"] or "off",
+                _format_optional_float(record["reorth_orth_err_fro_before"]),
+                _format_optional_float(record["reorth_orth_err_fro_after"]),
+            )
+
+        return U_new, record
 
     def _resolve_ip_reg_gamma(self, tag: str) -> float:
         overrides = getattr(self.config, "ip_reg_gamma_overrides", {}) or {}
@@ -632,6 +724,12 @@ class LatticeLinearQuantizer:
                 self.config.lambda_quantile_rho,
                 self.config.lambda_quantile_alpha,
             )
+            self.logger.info(
+                "Orth diagnostics log_orth_error=%s reorth_after_u_update=%s reorth_method=%s",
+                self.quant_ext_config.log_orth_error,
+                self.quant_ext_config.reorth_after_u_update,
+                self.quant_ext_config.reorth_method,
+            )
 
         U, U_zx_init, U_zw_init = self._init_bases(X, W, weights_x, weights_w)
 
@@ -655,6 +753,7 @@ class LatticeLinearQuantizer:
         objective_history: List[float] = []
         objective_x_history: List[float] = []
         objective_w_history: List[float] = []
+        orthogonality_history: List[Dict[str, Any]] = []
         previous_objective = float("inf")
 
         for observer in self.observers:
@@ -691,6 +790,13 @@ class LatticeLinearQuantizer:
                 SWZw = weighted_cross(W, weights_w, Z_w)
 
             U_new = self._update_U(lambda_x, lambda_w, SXZx, SWZw)
+            U_new, orthogonality_record = self._process_u_update_orthogonality(
+                U_new,
+                tag=tag,
+                iteration=iteration,
+            )
+            if orthogonality_record is not None:
+                orthogonality_history.append(orthogonality_record)
 
             for observer in self.observers:
                 observer.on_iteration_end(
@@ -757,6 +863,13 @@ class LatticeLinearQuantizer:
         tracking: Dict[str, Any] = {}
         for observer in self.observers:
             tracking.update(observer.build_state_fields())
+        if self._orthogonality_enabled():
+            tracking["u_orthogonality"] = {
+                "config": self._orthogonality_config_payload(),
+                "history": orthogonality_history,
+                "summary": _summarize_u_orthogonality_history(orthogonality_history),
+                "final": orthogonality_history[-1] if orthogonality_history else None,
+            }
 
         return QuantizationState(
             U=U,

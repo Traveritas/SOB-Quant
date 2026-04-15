@@ -1,0 +1,438 @@
+{
+  "input_sweep_dirs": [
+    "qkvo_sweep_abs_gamma",
+    "qkvo_sweep_abs_gamma_again",
+    "qkvo_sweep_abs_gamma_again2"
+  ],
+  "num_runs": 27,
+  "num_unique_gammas": 9,
+  "best_gamma_by_mean_ppl": 0.0,
+  "best_mean_ppl": 41.160701751708984,
+  "records": [
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0",
+      "gamma": 0.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.48704147338867,
+      "quantized_delta": 17.986331939697266,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0",
+      "gamma": 0.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 40.79431915283203,
+      "quantized_delta": 17.293609619140625,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0",
+      "gamma": 0.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.20074462890625,
+      "quantized_delta": 17.700035095214844,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/000_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_0/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100",
+      "gamma": 100.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 43.439056396484375,
+      "quantized_delta": 19.93834686279297,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100",
+      "gamma": 100.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.700870513916016,
+      "quantized_delta": 19.20016098022461,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100",
+      "gamma": 100.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.51708984375,
+      "quantized_delta": 19.016380310058594,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/001_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_100/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500",
+      "gamma": 500.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.44721984863281,
+      "quantized_delta": 18.946510314941406,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500",
+      "gamma": 500.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.5678596496582,
+      "quantized_delta": 18.067150115966797,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500",
+      "gamma": 500.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.47343444824219,
+      "quantized_delta": 17.97272491455078,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/002_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750",
+      "gamma": 750.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.51569747924805,
+      "quantized_delta": 18.01498794555664,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750",
+      "gamma": 750.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 44.84905242919922,
+      "quantized_delta": 21.348342895507812,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750",
+      "gamma": 750.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.39795684814453,
+      "quantized_delta": 17.897247314453125,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/003_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_750/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000",
+      "gamma": 1000.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.43976974487305,
+      "quantized_delta": 18.93906021118164,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000",
+      "gamma": 1000.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 43.65008544921875,
+      "quantized_delta": 20.149375915527344,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000",
+      "gamma": 1000.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 46.668617248535156,
+      "quantized_delta": 23.16790771484375,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/004_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500",
+      "gamma": 1500.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.997901916503906,
+      "quantized_delta": 18.4971923828125,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500",
+      "gamma": 1500.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 43.2312126159668,
+      "quantized_delta": 19.73050308227539,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500",
+      "gamma": 1500.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 40.86274337768555,
+      "quantized_delta": 17.36203384399414,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/005_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_1500/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000",
+      "gamma": 2000.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 44.252220153808594,
+      "quantized_delta": 20.751510620117188,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000",
+      "gamma": 2000.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 45.00592803955078,
+      "quantized_delta": 21.505218505859375,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000",
+      "gamma": 2000.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.515045166015625,
+      "quantized_delta": 18.01433563232422,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/006_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_2000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000",
+      "gamma": 5000.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.28789520263672,
+      "quantized_delta": 18.787185668945312,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000",
+      "gamma": 5000.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.80839920043945,
+      "quantized_delta": 19.307689666748047,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000",
+      "gamma": 5000.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.79576873779297,
+      "quantized_delta": 19.295059204101562,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/007_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_5000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again2",
+      "run_name": "008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000",
+      "gamma": 10000.0,
+      "seed": 42,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 41.339962005615234,
+      "quantized_delta": 17.839252471923828,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again2/008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma_again",
+      "run_name": "008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000",
+      "gamma": 10000.0,
+      "seed": 4242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 40.57524490356445,
+      "quantized_delta": 17.074535369873047,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma_again/008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000/results.json"
+    },
+    {
+      "sweep_dir": "qkvo_sweep_abs_gamma",
+      "run_name": "008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000",
+      "gamma": 10000.0,
+      "seed": 424242,
+      "baseline_ppl": 23.500709533691406,
+      "quantized_ppl": 42.08993911743164,
+      "quantized_delta": 18.589229583740234,
+      "results_path": "D:/Documents/HTA/College/Projects/LattiBoxiGusinini Quant/qkvo_sweep_abs_gamma/008_b0-11__q_error_mode_absolute__q_beta_700__q_ip_reg_gamma_10000/results.json"
+    }
+  ],
+  "summary_by_gamma": [
+    {
+      "gamma": 0.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 41.160701751708984,
+      "ppl_std": 0.34809284301752136,
+      "ppl_min": 40.79431915283203,
+      "ppl_max": 41.48704147338867,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 17.659992218017578,
+      "quantized_delta_std": 0.34809284301752136
+    },
+    {
+      "gamma": 100.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 42.88567225138346,
+      "ppl_std": 0.48797473573789396,
+      "ppl_min": 42.51708984375,
+      "ppl_max": 43.439056396484375,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 19.38496271769206,
+      "quantized_delta_std": 0.48797473573789396
+    },
+    {
+      "gamma": 500.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 41.8295046488444,
+      "ppl_std": 0.5370363867587015,
+      "ppl_min": 41.47343444824219,
+      "ppl_max": 42.44721984863281,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 18.328795115152996,
+      "quantized_delta_std": 0.5370363867587015
+    },
+    {
+      "gamma": 750.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 42.58756891886393,
+      "ppl_std": 1.9593867573023889,
+      "ppl_min": 41.39795684814453,
+      "ppl_max": 44.84905242919922,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 19.086859385172527,
+      "quantized_delta_std": 1.9593867573023889
+    },
+    {
+      "gamma": 1000.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 44.25282414754232,
+      "ppl_std": 2.1779022604676053,
+      "ppl_min": 42.43976974487305,
+      "ppl_max": 46.668617248535156,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 20.75211461385091,
+      "quantized_delta_std": 2.1779022604676053
+    },
+    {
+      "gamma": 1500.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 42.030619303385414,
+      "ppl_std": 1.1845735324260824,
+      "ppl_min": 40.86274337768555,
+      "ppl_max": 43.2312126159668,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 18.52990976969401,
+      "quantized_delta_std": 1.1845735324260824
+    },
+    {
+      "gamma": 2000.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 43.591064453125,
+      "ppl_std": 1.8369569822385818,
+      "ppl_min": 41.515045166015625,
+      "ppl_max": 45.00592803955078,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 20.090354919433594,
+      "quantized_delta_std": 1.8369569822385818
+    },
+    {
+      "gamma": 5000.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 42.63068771362305,
+      "ppl_std": 0.2969341868796855,
+      "ppl_min": 42.28789520263672,
+      "ppl_max": 42.80839920043945,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 19.12997817993164,
+      "quantized_delta_std": 0.2969341868796855
+    },
+    {
+      "gamma": 10000.0,
+      "n_runs": 3,
+      "seeds": [
+        42,
+        4242,
+        424242
+      ],
+      "ppl_mean": 41.33504867553711,
+      "ppl_std": 0.7573590601491651,
+      "ppl_min": 40.57524490356445,
+      "ppl_max": 42.08993911743164,
+      "baseline_ppl_mean": 23.500709533691406,
+      "baseline_ppl_std": 0.0,
+      "quantized_delta_mean": 17.834339141845703,
+      "quantized_delta_std": 0.7573590601491651
+    }
+  ]
+}
